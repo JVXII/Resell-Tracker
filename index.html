@@ -319,12 +319,7 @@ document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('act
 document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
 document.getElementById(tab).classList.add('active');
 document.querySelector(`button[onclick="showTab('${tab}')"]`).classList.add('active');
-if(tab === 'charts') {
-setTimeout(() => {
-renderProfitChart();
-renderChart();
-}, 10);
-}
+// Charts are rendered in render(), so they are always ready
 }
 
 function del(i){items.splice(i,1);save();}
