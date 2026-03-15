@@ -98,6 +98,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <option value="Lager">Lager</option>
 <option value="Verkauft">Verkauft</option>
 </select>
+<input id="tracking" placeholder="Sendungsverfolgung URL" style="display:none">
 <input id="sellPrice" type="number" placeholder="Verkaufspreis €">
 <div style="display:flex;gap:10px;align-items:center;">
 <label class="fileUpload" for="image">📤 Bild hochladen</label>
@@ -129,6 +130,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <th>Datum</th>
 <th>Einkauf</th>
 <th>Status</th>
+<th>Tracking</th>
 <th>Verkauf</th>
 <th>Profit</th>
 <th>Aktionen</th>
@@ -157,6 +159,7 @@ const orderEl = document.getElementById('order');
 const dateEl = document.getElementById('date');
 const buyPriceEl = document.getElementById('buyPrice');
 const statusEl = document.getElementById('status');
+const trackingEl = document.getElementById('tracking');
 const sellPriceEl = document.getElementById('sellPrice');
 const imageEl = document.getElementById('image');
 const fileNameEl = document.getElementById('fileName');
@@ -168,6 +171,10 @@ function updateFileName(){
 }
 
 imageEl.addEventListener('change', updateFileName);
+
+statusEl.addEventListener('change', () => {
+  trackingEl.style.display = statusEl.value === 'Gekauft' ? 'block' : 'none';
+});
 
 function login(){
 const input=password.value;
@@ -202,6 +209,7 @@ order:orderEl.value,
 date:dateEl.value,
 buy:parseFloat(buyPriceEl.value)||0,
 status:statusEl.value,
+tracking: statusEl.value === 'Gekauft' ? trackingEl.value : '',
 sell:parseFloat(sellPriceEl.value)||0,
 image:reader.result||items[editIndex]?.image||''
 };
@@ -226,6 +234,8 @@ statusEl.value="Gekauft";
 sellPriceEl.value="";
 imageEl.value="";
 updateFileName();
+trackingEl.value = '';
+trackingEl.style.display = 'none';
 }
 
 function editItem(i){
@@ -238,6 +248,8 @@ statusEl.value=item.status;
 sellPriceEl.value=item.sell;
 editIndex=i;
 window.scrollTo({top:0,behavior:'smooth'});
+trackingEl.value = item.tracking || '';
+trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
 }
 
 function setFilter(f){filter=f;render();}
@@ -272,6 +284,7 @@ body.innerHTML+=`<tr>
 <td>${item.date}</td>
 <td>${item.buy.toFixed(2)}€</td>
 <td><span class="status-${item.status}">${item.status}</span></td>
+<td>${item.status === 'Gekauft' && item.tracking ? `<a href="${item.tracking}" target="_blank">📦</a>` : ''}</td>
 <td>${item.sell?item.sell.toFixed(2)+'€':'-'}</td>
 <td>${item.sell?profit.toFixed(2)+'€':'-'}</td>
 <td>
@@ -309,9 +322,9 @@ window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €
 }
 
 function downloadBackup(){
-let csv="platform,order,date,buy,status,sell,image\n";
+let csv="platform,order,date,buy,status,sell,image,tracking\n";
 items.forEach(i=>{
-csv+=`${i.platform},${i.order},${i.date},${i.buy},${i.status},${i.sell},${i.image}\n`;
+csv+=`${i.platform},${i.order},${i.date},${i.buy},${i.status},${i.sell},${i.image},${i.tracking || ''}\n`;
 });
 const blob=new Blob([csv],{type:"text/csv"});
 const url=URL.createObjectURL(blob);
@@ -331,8 +344,8 @@ lines.shift();
 const imported=[];
 lines.forEach(l=>{
 if(!l.trim())return;
-const [platform,order,date,buy,status,sell,image]=l.split(",");
-imported.push({platform,order,date,buy:parseFloat(buy)||0,status,sell:parseFloat(sell)||0,image});
+const [platform,order,date,buy,status,sell,image,tracking]=l.split(",");
+imported.push({platform,order,date,buy:parseFloat(buy)||0,status,sell:parseFloat(sell)||0,image,tracking: tracking || ''});
 });
 items=imported;
 save();
