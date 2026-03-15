@@ -315,11 +315,13 @@ function setFilter(f){filter=f;render();}
 function setChartPeriod(p){chartPeriod=p;renderProfitChart();}
 
 function showTab(tab) {
+console.log('Switching to tab:', tab);
 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
 document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
 document.getElementById(tab).classList.add('active');
 document.querySelector(`button[onclick="showTab('${tab}')"]`).classList.add('active');
 if(tab === 'charts') {
+console.log('Rendering charts...');
 renderProfitChart();
 renderChart();
 }
@@ -375,6 +377,7 @@ body.innerHTML+=`<tr>
 }
 
 function renderChart(){
+console.log('renderChart called, Chart:', typeof Chart);
 if(typeof Chart === 'undefined') {
 console.error('Chart.js not loaded');
 return;
@@ -386,24 +389,29 @@ const m=i.date.slice(0,7);
 monthly[m]=(monthly[m]||0)+(i.sell-i.buy);
 }
 });
+console.log('Monthly data:', monthly);
 
 const labels=Object.keys(monthly);
 const data=Object.values(monthly);
 
 const ctx=document.getElementById('chart');
+console.log('Monthly canvas:', ctx);
 ctx.width = 400;
 ctx.height = 100;
 if(window.chart && typeof window.chart.destroy === 'function') window.chart.destroy();
 
 window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €',data}]}});
+console.log('Monthly chart created');
 }
 
 function renderProfitChart(){
+console.log('renderProfitChart called, Chart:', typeof Chart);
 if(typeof Chart === 'undefined') {
 console.error('Chart.js not loaded');
 return;
 }
 const ctx=document.getElementById('profitChart');
+console.log('Profit canvas:', ctx);
 ctx.width = 400;
 ctx.height = 100;
 if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
