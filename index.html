@@ -317,6 +317,10 @@ renderProfitChart();
 }
 
 function renderChart(){
+if(typeof Chart === 'undefined') {
+console.error('Chart.js not loaded');
+return;
+}
 const monthly={};
 items.forEach(i=>{
 if(i.status==='Verkauft' && i.date){
@@ -335,6 +339,10 @@ window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €
 }
 
 function renderProfitChart(){
+if(typeof Chart === 'undefined') {
+console.error('Chart.js not loaded');
+return;
+}
 const ctx=document.getElementById('profitChart');
 // Chart.js handles destroying previous chart automatically
 
