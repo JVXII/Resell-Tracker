@@ -123,6 +123,17 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 const PASSWORD="resell123";
 let editIndex=null;
 
+// Element references (avoid conflicts with reserved globals like `status`)
+const platformEl = document.getElementById('platform');
+const orderEl = document.getElementById('order');
+const dateEl = document.getElementById('date');
+const buyPriceEl = document.getElementById('buyPrice');
+const statusEl = document.getElementById('status');
+const sellPriceEl = document.getElementById('sellPrice');
+const imageEl = document.getElementById('image');
+const searchEl = document.getElementById('search');
+const tableBodyEl = document.getElementById('tableBody');
+
 function login(){
 const input=password.value;
 if(input===PASSWORD){
@@ -146,17 +157,17 @@ render();
 }
 
 function saveItem(){
-const file=image.files[0];
+const file=imageEl.files[0];
 const reader=new FileReader();
 
 reader.onload=function(){
 const item={
-platform:platform.value,
-order:order.value,
-date:date.value,
-buy:parseFloat(buyPrice.value)||0,
-status:status.value,
-sell:parseFloat(sellPrice.value)||0,
+platform:platformEl.value,
+order:orderEl.value,
+date:dateEl.value,
+buy:parseFloat(buyPriceEl.value)||0,
+status:statusEl.value,
+sell:parseFloat(sellPriceEl.value)||0,
 image:reader.result||items[editIndex]?.image||''
 };
 
@@ -173,20 +184,21 @@ if(file)reader.readAsDataURL(file);else reader.onload();
 }
 
 function clearForm(){
-order.value="";
-date.value="";
-buyPrice.value="";
-sellPrice.value="";
+orderEl.value="";
+dateEl.value="";
+buyPriceEl.value="";
+statusEl.value="Gekauft";
+sellPriceEl.value="";
 }
 
 function editItem(i){
 const item=items[i];
-platform.value=item.platform;
-order.value=item.order;
-date.value=item.date;
-buyPrice.value=item.buy;
-status.value=item.status;
-sellPrice.value=item.sell;
+platformEl.value=item.platform;
+orderEl.value=item.order;
+dateEl.value=item.date;
+buyPriceEl.value=item.buy;
+statusEl.value=item.status;
+sellPriceEl.value=item.sell;
 editIndex=i;
 window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -196,10 +208,10 @@ function setFilter(f){filter=f;render();}
 function del(i){items.splice(i,1);save();}
 
 function render(){
-const body=tableBody;
+const body=tableBodyEl;
 body.innerHTML='';
 
-const searchText=search.value.toLowerCase();
+const searchText=searchEl.value.toLowerCase();
 
 let totalProfit=0,soldCount=0,stockCount=0,stockValue=0;
 
