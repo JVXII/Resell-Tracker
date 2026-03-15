@@ -374,8 +374,17 @@ label:'Kumulierter Gesamtprofit €',
 data:cumulative,
 borderColor:'green',
 backgroundColor:'rgba(0,128,0,0.1)',
-fill:true
+fill:true,
+pointRadius: 5,
+pointHoverRadius: 7
 }]
+},
+options: {
+scales: {
+y: {
+beginAtZero: true
+}
+}
 }
 });
 }
