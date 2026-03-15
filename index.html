@@ -140,6 +140,16 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 </div>
 
 <div class="card">
+<h3>Gesamtprofit Entwicklung</h3>
+<div style="margin-bottom:10px;">
+<button onclick="setChartPeriod('day')">Tag</button>
+<button onclick="setChartPeriod('week')">Woche</button>
+<button onclick="setChartPeriod('month')">Monat</button>
+</div>
+<canvas id="profitChart" height="100"></canvas>
+</div>
+
+<div class="card">
 <h3>Monatsstatistik (Profit)</h3>
 <canvas id="chart" height="100"></canvas>
 </div>
@@ -191,6 +201,7 @@ app.style.display='block';
 
 let items=JSON.parse(localStorage.getItem('resellItems')||'[]');
 let filter='all';
+let chartPeriod = 'month';
 
 function save(){
 localStorage.setItem('resellItems',JSON.stringify(items));
@@ -253,6 +264,8 @@ trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
 
 function setFilter(f){filter=f;render();}
 
+function setChartPeriod(p){chartPeriod=p;renderProfitChart();}
+
 function del(i){items.splice(i,1);save();}
 
 function render(){
@@ -300,6 +313,7 @@ body.innerHTML+=`<tr>
  document.getElementById('stockValue').innerText=stockValue.toFixed(2)+'€';
 
 renderChart();
+renderProfitChart();
 }
 
 function renderChart(){
