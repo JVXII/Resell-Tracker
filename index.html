@@ -333,7 +333,7 @@ const labels=Object.keys(monthly);
 const data=Object.values(monthly);
 
 const ctx=document.getElementById('chart');
-if(window.chart)window.chart.destroy();
+if(window.chart && typeof window.chart.destroy === 'function') window.chart.destroy();
 
 window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €',data}]}});
 }
