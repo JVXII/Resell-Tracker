@@ -337,7 +337,7 @@ window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €
 function renderProfitChart(){
 console.log('Rendering profit chart...');
 const ctx=document.getElementById('profitChart');
-if(window.profitChart)window.profitChart.destroy();
+if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
 
 let data={};
 items.forEach(item=>{
@@ -369,6 +369,7 @@ cumulative.push(sum);
 });
 console.log('Cumulative:', cumulative);
 
+try {
 window.profitChart=new Chart(ctx,{
 type:'line',
 data:{
@@ -383,6 +384,9 @@ fill:true
 }
 });
 console.log('Chart created');
+} catch (e) {
+console.error('Error creating chart:', e);
+}
 }
 
 function downloadBackup(){
