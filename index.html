@@ -337,7 +337,8 @@ window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €
 function renderProfitChart(){
 console.log('Rendering profit chart...');
 const ctx=document.getElementById('profitChart');
-if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
+// Chart.js handles destroying previous chart automatically
+// if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
 
 let data={};
 items.forEach(item=>{
