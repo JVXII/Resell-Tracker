@@ -46,6 +46,13 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 .topbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
 .search{margin-left:auto}
 
+/* Collapsible card styling */
+.card summary {
+cursor: pointer;
+font-weight: bold;
+margin-bottom: 20px;
+}
+
 #loginScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f1117;display:flex;align-items:center;justify-content:center}
 .loginBox{background:#161b22;padding:40px;border-radius:14px;text-align:center;width:320px}
 .loginBox input{width:100%;margin-top:10px;margin-bottom:15px}
@@ -82,8 +89,8 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <div class="stat">Kapital im Lager: <b id="stockValue">0€</b></div>
 </div>
 
-<div class="card">
-<h3>Artikel hinzufügen / bearbeiten</h3>
+<details class="card" open>
+<summary>Artikel hinzufügen / bearbeiten</summary>
 <div class="formGrid">
 <select id="platform">
 <option value="eBay">eBay</option>
@@ -106,7 +113,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <input id="image" type="file" accept="image/*" class="hiddenInput" onchange="updateFileName()">
 <button onclick="saveItem()">Speichern</button>
 </div>
-</div>
+</details>
 
 
 
