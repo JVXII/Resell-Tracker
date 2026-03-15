@@ -344,7 +344,7 @@ console.error('Chart.js not loaded');
 return;
 }
 const ctx=document.getElementById('profitChart');
-// Chart.js handles destroying previous chart automatically
+if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
 
 let data={};
 items.forEach(item=>{
