@@ -20,7 +20,8 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
 .stat{background:#161b22;padding:15px;border-radius:12px}
 .filterButtons button{margin-right:10px;margin-bottom:10px}
-.topbar{display:flex;gap:10px;margin-bottom:15px}
+.topbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+.search{margin-left:auto}
 
 #loginScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f1117;display:flex;align-items:center;justify-content:center}
 .loginBox{background:#161b22;padding:40px;border-radius:14px;text-align:center;width:320px}
@@ -47,6 +48,8 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <button onclick="downloadBackup()">⬇ Backup herunterladen</button>
 <button onclick="document.getElementById('backupFile').click()">⬆ Backup hochladen</button>
 <input type="file" id="backupFile" accept=".csv" style="display:none" onchange="uploadBackup(event)">
+
+<input class="search" id="search" placeholder="🔎 Suche Bestellnummer..." oninput="render()">
 </div>
 
 <div class="dashboard">
@@ -57,7 +60,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 </div>
 
 <div class="card">
-<h3>Artikel hinzufügen</h3>
+<h3>Artikel hinzufügen / bearbeiten</h3>
 <div class="grid">
 <select id="platform">
 <option value="eBay">eBay</option>
@@ -73,7 +76,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 </select>
 <input id="sellPrice" type="number" placeholder="Verkaufspreis €">
 <input id="image" type="file" accept="image/*">
-<button onclick="addItem()">Speichern</button>
+<button onclick="saveItem()">Speichern</button>
 </div>
 </div>
 
@@ -100,7 +103,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <th>Status</th>
 <th>Verkauf</th>
 <th>Profit</th>
-<th></th>
+<th>Aktionen</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -117,25 +120,24 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 
-const PASSWORD = "resell123";
+const PASSWORD="resell123";
+let editIndex=null;
 
 function login(){
-const input=document.getElementById('password').value;
+const input=password.value;
 if(input===PASSWORD){
 localStorage.setItem("loggedIn",true);
-document.getElementById('loginScreen').style.display='none';
-document.getElementById('app').style.display='block';
-}else{
-document.getElementById('error').innerText="Falsches Passwort";
-}
+loginScreen.style.display='none';
+app.style.display='block';
+}else error.innerText="Falsches Passwort";
 }
 
 if(localStorage.getItem("loggedIn")){
-document.getElementById('loginScreen').style.display='none';
-document.getElementById('app').style.display='block';
+loginScreen.style.display='none';
+app.style.display='block';
 }
 
-let items = JSON.parse(localStorage.getItem('resellItems')||'[]');
+let items=JSON.parse(localStorage.getItem('resellItems')||'[]');
 let filter='all';
 
 function save(){
@@ -143,8 +145,8 @@ localStorage.setItem('resellItems',JSON.stringify(items));
 render();
 }
 
-function addItem(){
-const file=document.getElementById('image').files[0];
+function saveItem(){
+const file=image.files[0];
 const reader=new FileReader();
 
 reader.onload=function(){
@@ -155,63 +157,61 @@ date:date.value,
 buy:parseFloat(buyPrice.value)||0,
 status:status.value,
 sell:parseFloat(sellPrice.value)||0,
-image:reader.result||''
+image:reader.result||items[editIndex]?.image||''
 };
 
-if(item.status==='Verkauft' && !item.sell){
-alert('Verkaufspreis eingeben');
-return;
-}
+if(editIndex!==null){
+items[editIndex]=item;
+editIndex=null;
+}else items.push(item);
 
-items.push(item);
+clearForm();
 save();
 }
 
 if(file)reader.readAsDataURL(file);else reader.onload();
 }
 
-function setFilter(f){
-filter=f;
-render();
+function clearForm(){
+order.value="";
+date.value="";
+buyPrice.value="";
+sellPrice.value="";
 }
 
-function del(i){
-items.splice(i,1);
-save();
+function editItem(i){
+const item=items[i];
+platform.value=item.platform;
+order.value=item.order;
+date.value=item.date;
+buyPrice.value=item.buy;
+status.value=item.status;
+sellPrice.value=item.sell;
+editIndex=i;
+window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function updateStatus(i,val){
-items[i].status=val;
-if(val==='Verkauft'){
-let p=prompt('Verkaufspreis');
-items[i].sell=parseFloat(p)||0;
-}
-if(val!=='Verkauft')items[i].sell=0;
-save();
-}
+function setFilter(f){filter=f;render();}
+
+function del(i){items.splice(i,1);save();}
 
 function render(){
-const body=document.getElementById('tableBody');
+const body=tableBody;
 body.innerHTML='';
 
-let totalProfit=0;
-let soldCount=0;
-let stockCount=0;
-let stockValue=0;
+const searchText=search.value.toLowerCase();
+
+let totalProfit=0,soldCount=0,stockCount=0,stockValue=0;
 
 items.forEach((item,i)=>{
 
 if(filter!=='all' && item.status!==filter)return;
+if(searchText && !item.order.toLowerCase().includes(searchText))return;
 
 const profit=item.sell-item.buy;
-if(item.status==='Verkauft'){
-totalProfit+=profit;
-soldCount++;
-}
-if(item.status==='Lager'){
-stockCount++;
-stockValue+=item.buy;
-}
+
+if(item.status==='Verkauft'){totalProfit+=profit;soldCount++;}
+if(item.status==='Lager'){stockCount++;stockValue+=item.buy;}
 
 body.innerHTML+=`<tr>
 <td>${item.image?`<img src="${item.image}">`:''}</td>
@@ -219,23 +219,21 @@ body.innerHTML+=`<tr>
 <td>${item.order}</td>
 <td>${item.date}</td>
 <td>${item.buy.toFixed(2)}€</td>
-<td>
-<select onchange="updateStatus(${i},this.value)">
-<option ${item.status==='Gekauft'?'selected':''}>Gekauft</option>
-<option ${item.status==='Lager'?'selected':''}>Lager</option>
-<option ${item.status==='Verkauft'?'selected':''}>Verkauft</option>
-</select>
-</td>
+<td>${item.status}</td>
 <td>${item.sell?item.sell.toFixed(2)+'€':'-'}</td>
 <td>${item.sell?profit.toFixed(2)+'€':'-'}</td>
-<td><button onclick="del(${i})">X</button></td>
+<td>
+<button onclick="editItem(${i})">✏️</button>
+<button onclick="del(${i})">🗑</button>
+</td>
 </tr>`;
 });
 
-document.getElementById('totalProfit').innerText=totalProfit.toFixed(2)+'€';
-document.getElementById('soldCount').innerText=soldCount;
-document.getElementById('stockCount').innerText=stockCount;
-document.getElementById('stockValue').innerText=stockValue.toFixed(2)+'€';
+ totalProfitEl=totalProfit.toFixed(2)+'€';
+ document.getElementById('totalProfit').innerText=totalProfitEl;
+ document.getElementById('soldCount').innerText=soldCount;
+ document.getElementById('stockCount').innerText=stockCount;
+ document.getElementById('stockValue').innerText=stockValue.toFixed(2)+'€';
 
 renderChart();
 }
@@ -245,8 +243,7 @@ const monthly={};
 items.forEach(i=>{
 if(i.status==='Verkauft' && i.date){
 const m=i.date.slice(0,7);
-const profit=i.sell-i.buy;
-monthly[m]=(monthly[m]||0)+profit;
+monthly[m]=(monthly[m]||0)+(i.sell-i.buy);
 }
 });
 
@@ -254,19 +251,16 @@ const labels=Object.keys(monthly);
 const data=Object.values(monthly);
 
 const ctx=document.getElementById('chart');
-
 if(window.chart)window.chart.destroy();
 
-window.chart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Profit €',data:data}]}});
+window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €',data}]}});
 }
 
-/* BACKUP DOWNLOAD */
 function downloadBackup(){
 let csv="platform,order,date,buy,status,sell,image\n";
 items.forEach(i=>{
 csv+=`${i.platform},${i.order},${i.date},${i.buy},${i.status},${i.sell},${i.image}\n`;
 });
-
 const blob=new Blob([csv],{type:"text/csv"});
 const url=URL.createObjectURL(blob);
 const a=document.createElement("a");
@@ -275,38 +269,23 @@ a.download="resell-backup.csv";
 a.click();
 }
 
-/* BACKUP UPLOAD */
 function uploadBackup(e){
 const file=e.target.files[0];
 if(!file)return;
-
 const reader=new FileReader();
 reader.onload=function(){
 const lines=reader.result.split("\n");
 lines.shift();
-
 const imported=[];
-
 lines.forEach(l=>{
 if(!l.trim())return;
 const [platform,order,date,buy,status,sell,image]=l.split(",");
-
-imported.push({
-platform,
-order,
-date,
-buy:parseFloat(buy)||0,
-status,
-sell:parseFloat(sell)||0,
-image
+imported.push({platform,order,date,buy:parseFloat(buy)||0,status,sell:parseFloat(sell)||0,image});
 });
-});
-
 items=imported;
 save();
-alert("Backup erfolgreich geladen");
+alert("Backup geladen");
 };
-
 reader.readAsText(file);
 }
 
