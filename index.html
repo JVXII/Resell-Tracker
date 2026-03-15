@@ -391,6 +391,8 @@ const labels=Object.keys(monthly);
 const data=Object.values(monthly);
 
 const ctx=document.getElementById('chart');
+ctx.width = 400;
+ctx.height = 100;
 if(window.chart && typeof window.chart.destroy === 'function') window.chart.destroy();
 
 window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €',data}]}});
@@ -402,6 +404,8 @@ console.error('Chart.js not loaded');
 return;
 }
 const ctx=document.getElementById('profitChart');
+ctx.width = 400;
+ctx.height = 100;
 if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
 
 let data={};
