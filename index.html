@@ -373,6 +373,8 @@ renderProfitChart();
 }
 
 function renderChart(){
+console.log('Rendering monthly chart...');
+console.log('Chart loaded:', typeof Chart);
 if(typeof Chart === 'undefined') {
 console.error('Chart.js not loaded');
 return;
@@ -384,22 +386,29 @@ const m=i.date.slice(0,7);
 monthly[m]=(monthly[m]||0)+(i.sell-i.buy);
 }
 });
-
+console.log('Monthly data:', monthly);
 const labels=Object.keys(monthly);
 const data=Object.values(monthly);
+console.log('Labels:', labels, 'Data:', data);
 
 const ctx=document.getElementById('chart');
+console.log('Canvas element:', ctx);
 if(window.chart && typeof window.chart.destroy === 'function') window.chart.destroy();
 
 window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €',data}]}});
+console.log('Monthly chart created');
 }
 
 function renderProfitChart(){
+console.log('Rendering profit chart...');
+console.log('Chart loaded:', typeof Chart);
+console.log('Verkaufte Items:', items.filter(i => i.status === 'Verkauft'));
 if(typeof Chart === 'undefined') {
 console.error('Chart.js not loaded');
 return;
 }
 const ctx=document.getElementById('profitChart');
+console.log('Canvas element:', ctx);
 if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
 
 let data={};
