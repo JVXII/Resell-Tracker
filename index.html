@@ -250,6 +250,9 @@ body.innerHTML='';
 
 const searchText=searchEl.value.toLowerCase();
 
+// Sortiere Artikel nach Datum (neueste zuerst)
+items.sort((a, b) => new Date(b.date || '1970-01-01') - new Date(a.date || '1970-01-01'));
+
 let totalProfit=0,soldCount=0,stockCount=0,stockValue=0;
 
 items.forEach((item,i)=>{
