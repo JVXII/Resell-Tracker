@@ -70,7 +70,7 @@ img{width:50px;height:50px;object-fit:cover;border-radius:6px}
 <div class="topbar">
 <button onclick="downloadBackup()">⬇ Backup herunterladen</button>
 <button onclick="document.getElementById('backupFile').click()">⬆ Backup hochladen</button>
-<input type="file" id="backupFile" accept=".csv" style="display:none" onchange="uploadBackup(event)">
+<input type="file" id="backupFile" accept=".json" style="display:none" onchange="uploadBackup(event)">
 
 <input class="search" id="search" placeholder="🔎 Suche Bestellnummer..." oninput="render()">
 </div>
@@ -321,15 +321,12 @@ window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €
 }
 
 function downloadBackup(){
-let csv="platform,order,date,buy,status,sell,image,tracking\n";
-items.forEach(i=>{
-csv+=`${i.platform},${i.order},${i.date},${i.buy},${i.status},${i.sell},${i.image},${i.tracking || ''}\n`;
-});
-const blob=new Blob([csv],{type:"text/csv"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download="resell-backup.csv";
+const data = JSON.stringify(items, null, 2);
+const blob = new Blob([data], {type: "application/json"});
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "resell-backup.json";
 a.click();
 }
 
@@ -338,15 +335,17 @@ const file=e.target.files[0];
 if(!file)return;
 const reader=new FileReader();
 reader.onload=function(){
-const lines=reader.result.split("\n");
-lines.shift();
-const imported=[];
-lines.forEach(l=>{
-if(!l.trim())return;
-const [platform,order,date,buy,status,sell,image,tracking]=l.split(",");
-imported.push({platform,order,date,buy:parseFloat(buy)||0,status,sell:parseFloat(sell)||0,image,tracking: tracking || ''});
-});
-items=imported;
+const imported = JSON.parse(reader.result);
+items = imported.map(i => ({
+platform: i.platform,
+order: i.order,
+date: i.date,
+buy: parseFloat(i.buy) || 0,
+status: i.status,
+sell: parseFloat(i.sell) || 0,
+image: i.image || '',
+tracking: i.tracking || ''
+}));
 save();
 alert("Backup geladen");
 };
