@@ -334,6 +334,57 @@ if(window.chart)window.chart.destroy();
 window.chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Profit €',data}]}});
 }
 
+function renderProfitChart(){
+console.log('Rendering profit chart...');
+const ctx=document.getElementById('profitChart');
+if(window.profitChart)window.profitChart.destroy();
+
+let data={};
+items.forEach(item=>{
+if(item.status==='Verkauft' && item.date){
+const date=new Date(item.date);
+const profit=item.sell-item.buy;
+let key;
+if(chartPeriod==='day'){
+key=date.toISOString().split('T')[0];
+}else if(chartPeriod==='week'){
+const weekStart=new Date(date);
+weekStart.setDate(date.getDate()-date.getDay());
+key=weekStart.toISOString().split('T')[0];
+}else{
+key=item.date.slice(0,7);
+}
+data[key]=(data[key]||0)+profit;
+}
+});
+
+console.log('Data:', data);
+const sortedKeys=Object.keys(data).sort();
+console.log('Sorted keys:', sortedKeys);
+const cumulative=[];
+let sum=0;
+sortedKeys.forEach(key=>{
+sum+=data[key];
+cumulative.push(sum);
+});
+console.log('Cumulative:', cumulative);
+
+window.profitChart=new Chart(ctx,{
+type:'line',
+data:{
+labels:sortedKeys,
+datasets:[{
+label:'Kumulierter Gesamtprofit €',
+data:cumulative,
+borderColor:'green',
+backgroundColor:'rgba(0,128,0,0.1)',
+fill:true
+}]
+}
+});
+console.log('Chart created');
+}
+
 function downloadBackup(){
 const data = JSON.stringify(items, null, 2);
 const blob = new Blob([data], {type: "application/json"});
