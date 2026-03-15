@@ -17,6 +17,21 @@ h1{margin-bottom:20px}
 .fileUpload span{font-size:12px;opacity:.85}
 .hiddenInput{display:none}
 input,select,button{padding:10px;border-radius:8px;border:1px solid #30363d;background:#0f1117;color:white}
+
+/* Placeholder text should be light gray (e.g., date placeholder "tt.mm.jjjj") */
+input::placeholder{color:#8b8b8b;opacity:1}
+
+/* Chrome/Edge date input placeholder styling */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field{color:#8b8b8b}
+
+/* When a date is entered, show it in white */
+input[type="date"]:not(:placeholder-shown)::-webkit-datetime-edit,
+input[type="date"]:focus::-webkit-datetime-edit{color:white}
+
 button{background:#4f46e5;border:none;cursor:pointer}
 button:hover{opacity:.9}
 table{width:100%;border-collapse:collapse;margin-top:10px}
