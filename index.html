@@ -1,27 +1,54 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resell Tracker</title>
 <style>
-body{font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;margin:0;padding:30px}
-.container{max-width:1000px;margin:auto}
+body{font-family:Arial,Helvetica,sans-serif;background:#0f1117;color:#e6e6e6;margin:0;padding:30px}
+.container{max-width:1100px;margin:auto}
 h1{margin-bottom:20px}
-.card{background:white;padding:20px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.08);margin-bottom:20px}
+.card{background:#161b22;padding:20px;border-radius:14px;margin-bottom:20px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-input,select,button{padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px}
-button{background:#4f46e5;color:white;border:none;cursor:pointer}
+input,select,button{padding:10px;border-radius:8px;border:1px solid #30363d;background:#0f1117;color:white}
+button{background:#4f46e5;border:none;cursor:pointer}
 button:hover{opacity:.9}
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
-th{background:#fafafa}
-.profit{font-weight:bold}
+th,td{padding:10px;border-bottom:1px solid #30363d;text-align:left}
+th{background:#0d1117}
+img{width:50px;height:50px;object-fit:cover;border-radius:6px}
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
+.stat{background:#161b22;padding:15px;border-radius:12px}
+.filterButtons button{margin-right:10px;margin-bottom:10px}
+
+/* LOGIN */
+#loginScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f1117;display:flex;align-items:center;justify-content:center}
+.loginBox{background:#161b22;padding:40px;border-radius:14px;text-align:center;width:320px}
+.loginBox input{width:100%;margin-top:10px;margin-bottom:15px}
+.error{color:#ff6b6b;font-size:14px}
 </style>
 </head>
 <body>
-<div class="container">
+
+<div id="loginScreen">
+<div class="loginBox">
+<h2>Login</h2>
+<p>Resell Tracker Zugriff</p>
+<input type="password" id="password" placeholder="Passwort">
+<button onclick="login()">Einloggen</button>
+<p id="error" class="error"></p>
+</div>
+</div>
+
+<div class="container" id="app" style="display:none">
 <h1>Resell Tracker</h1>
+
+<div class="dashboard">
+<div class="stat">Gesamtprofit: <b id="totalProfit">0€</b></div>
+<div class="stat">Verkaufte Artikel: <b id="soldCount">0</b></div>
+<div class="stat">Artikel im Lager: <b id="stockCount">0</b></div>
+<div class="stat">Kapital im Lager: <b id="stockValue">0€</b></div>
+</div>
 
 <div class="card">
 <h3>Artikel hinzufügen</h3>
@@ -30,16 +57,27 @@ th{background:#fafafa}
 <option value="eBay">eBay</option>
 <option value="Kleinanzeigen">Kleinanzeigen</option>
 </select>
-<input id="order" placeholder="Bestellnummer" />
-<input id="date" type="date" />
-<input id="buyPrice" type="number" placeholder="Einkaufspreis €" />
+<input id="order" placeholder="Bestellnummer">
+<input id="date" type="date">
+<input id="buyPrice" type="number" placeholder="Einkaufspreis €">
 <select id="status">
 <option value="Gekauft">Gekauft</option>
 <option value="Lager">Lager</option>
 <option value="Verkauft">Verkauft</option>
 </select>
-<input id="sellPrice" type="number" placeholder="Verkaufspreis € (wenn verkauft)" />
+<input id="sellPrice" type="number" placeholder="Verkaufspreis €">
+<input id="image" type="file" accept="image/*">
 <button onclick="addItem()">Speichern</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Filter</h3>
+<div class="filterButtons">
+<button onclick="setFilter('all')">Alle</button>
+<button onclick="setFilter('Lager')">Lager</button>
+<button onclick="setFilter('Verkauft')">Verkauft</button>
+<button onclick="setFilter('Gekauft')">Gekauft</button>
 </div>
 </div>
 
@@ -48,6 +86,7 @@ th{background:#fafafa}
 <table>
 <thead>
 <tr>
+<th>Bild</th>
 <th>Plattform</th>
 <th>Bestellnummer</th>
 <th>Datum</th>
@@ -61,10 +100,38 @@ th{background:#fafafa}
 <tbody id="tableBody"></tbody>
 </table>
 </div>
+
+<div class="card">
+<h3>Monatsstatistik (Profit)</h3>
+<canvas id="chart" height="100"></canvas>
 </div>
 
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let items = JSON.parse(localStorage.getItem('resellItems') || '[]');
+
+/* PASSWORD (hier ändern) */
+const PASSWORD = "resell123";
+
+function login(){
+const input=document.getElementById('password').value;
+if(input===PASSWORD){
+localStorage.setItem("loggedIn",true);
+document.getElementById('loginScreen').style.display='none';
+document.getElementById('app').style.display='block';
+}else{
+document.getElementById('error').innerText="Falsches Passwort";
+}
+}
+
+if(localStorage.getItem("loggedIn")){
+document.getElementById('loginScreen').style.display='none';
+document.getElementById('app').style.display='block';
+}
+
+let items = JSON.parse(localStorage.getItem('resellItems')||'[]');
+let filter='all';
 
 function save(){
 localStorage.setItem('resellItems',JSON.stringify(items));
@@ -72,17 +139,22 @@ render();
 }
 
 function addItem(){
+const file=document.getElementById('image').files[0];
+const reader=new FileReader();
+
+reader.onload=function(){
 const item={
-platform:document.getElementById('platform').value,
-order:document.getElementById('order').value,
-date:document.getElementById('date').value,
-buy:parseFloat(document.getElementById('buyPrice').value)||0,
-status:document.getElementById('status').value,
-sell:parseFloat(document.getElementById('sellPrice').value)||0
+platform:platform.value,
+order:order.value,
+date:date.value,
+buy:parseFloat(buyPrice.value)||0,
+status:status.value,
+sell:parseFloat(sellPrice.value)||0,
+image:reader.result||''
 };
 
 if(item.status==='Verkauft' && !item.sell){
-alert('Bitte Verkaufspreis eingeben');
+alert('Verkaufspreis eingeben');
 return;
 }
 
@@ -90,16 +162,12 @@ items.push(item);
 save();
 }
 
-function updateStatus(i,val){
-items[i].status=val;
-if(val!=='Verkauft'){
-items[i].sell=0;
+if(file)reader.readAsDataURL(file);else reader.onload();
 }
-if(val==='Verkauft'){
-let price=prompt('Verkaufspreis eingeben');
-items[i].sell=parseFloat(price)||0;
-}
-save();
+
+function setFilter(f){
+filter=f;
+render();
 }
 
 function del(i){
@@ -107,15 +175,41 @@ items.splice(i,1);
 save();
 }
 
+function updateStatus(i,val){
+items[i].status=val;
+if(val==='Verkauft'){
+let p=prompt('Verkaufspreis');
+items[i].sell=parseFloat(p)||0;
+}
+if(val!=='Verkauft')items[i].sell=0;
+save();
+}
+
 function render(){
 const body=document.getElementById('tableBody');
 body.innerHTML='';
 
-items.forEach((item,i)=>{
-const profit=item.sell-item.buy;
+let totalProfit=0;
+let soldCount=0;
+let stockCount=0;
+let stockValue=0;
 
-body.innerHTML+=`
-<tr>
+items.forEach((item,i)=>{
+
+if(filter!=='all' && item.status!==filter)return;
+
+const profit=item.sell-item.buy;
+if(item.status==='Verkauft'){
+totalProfit+=profit;
+soldCount++;
+}
+if(item.status==='Lager'){
+stockCount++;
+stockValue+=item.buy;
+}
+
+body.innerHTML+=`<tr>
+<td>${item.image?`<img src="${item.image}">`:''}</td>
 <td>${item.platform}</td>
 <td>${item.order}</td>
 <td>${item.date}</td>
@@ -128,11 +222,37 @@ body.innerHTML+=`
 </select>
 </td>
 <td>${item.sell?item.sell.toFixed(2)+'€':'-'}</td>
-<td class="profit">${item.sell?profit.toFixed(2)+'€':'-'}</td>
+<td>${item.sell?profit.toFixed(2)+'€':'-'}</td>
 <td><button onclick="del(${i})">X</button></td>
-</tr>
-`;
+</tr>`;
 });
+
+document.getElementById('totalProfit').innerText=totalProfit.toFixed(2)+'€';
+document.getElementById('soldCount').innerText=soldCount;
+document.getElementById('stockCount').innerText=stockCount;
+document.getElementById('stockValue').innerText=stockValue.toFixed(2)+'€';
+
+renderChart();
+}
+
+function renderChart(){
+const monthly={};
+items.forEach(i=>{
+if(i.status==='Verkauft' && i.date){
+const m=i.date.slice(0,7);
+const profit=i.sell-i.buy;
+monthly[m]=(monthly[m]||0)+profit;
+}
+});
+
+const labels=Object.keys(monthly);
+const data=Object.values(monthly);
+
+const ctx=document.getElementById('chart');
+
+if(window.chart)window.chart.destroy();
+
+window.chart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Profit €',data:data}]}});
 }
 
 render();
