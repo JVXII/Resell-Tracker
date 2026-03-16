@@ -115,7 +115,7 @@ margin-bottom: 20px;
 <button onclick="document.getElementById('backupFile').click()">⬆ Backup hochladen</button>
 <input type="file" id="backupFile" accept=".json" style="display:none" onchange="uploadBackup(event)">
 
-<input class="search" id="search" placeholder="🔎 Suche Bestellnummer..." oninput="render()">
+<input class="search" id="search" placeholder="🔎 Suche Bestellnummer...">
 </div>
 
 <div class="dashboard">
@@ -180,6 +180,11 @@ margin-bottom: 20px;
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
+<div id="pagination" style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:12px;">
+<button id="prevPageBtn" onclick="changePage(-1)">◀ Zurueck</button>
+<span id="pageInfo">Seite 1 / 1</span>
+<button id="nextPageBtn" onclick="changePage(1)">Weiter ▶</button>
+</div>
 </div>
 
 </div>
@@ -222,12 +227,23 @@ const imageEl = document.getElementById('image');
 const fileNameEl = document.getElementById('fileName');
 const searchEl = document.getElementById('search');
 const tableBodyEl = document.getElementById('tableBody');
+const pageInfoEl = document.getElementById('pageInfo');
+const prevPageBtnEl = document.getElementById('prevPageBtn');
+const nextPageBtnEl = document.getElementById('nextPageBtn');
+
+const ITEMS_PER_PAGE = 10;
+let currentPage = 1;
 
 function updateFileName(){
   fileNameEl.innerText = imageEl.files[0]?.name || 'Keine Datei';
 }
 
 imageEl.addEventListener('change', updateFileName);
+
+searchEl.addEventListener('input', () => {
+  currentPage = 1;
+  render();
+});
 
 statusEl.addEventListener('change', () => {
   trackingEl.style.display = statusEl.value === 'Gekauft' ? 'block' : 'none';
@@ -251,16 +267,97 @@ let items=JSON.parse(localStorage.getItem('resellItems')||'[]');
 let filter='all';
 let chartPeriod = 'month';
 
-function save(){
-localStorage.setItem('resellItems',JSON.stringify(items));
-render();
+function isQuotaError(err){
+return err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014);
 }
 
-function saveItem(){
-const file=imageEl.files[0];
-const reader=new FileReader();
+function tryStoreItems(data){
+localStorage.setItem('resellItems', JSON.stringify(data));
+}
 
-reader.onload=function(){
+function save(){
+try{
+tryStoreItems(items);
+}catch(err){
+if(!isQuotaError(err)) throw err;
+
+// Remove the largest images one by one until the data fits into localStorage.
+const trimmed = items.map(item => ({...item}));
+const byImageSize = trimmed
+  .map((item, index) => ({ index, size: (item.image || '').length }))
+  .filter(entry => entry.size > 0)
+  .sort((a, b) => b.size - a.size);
+
+let saved = false;
+for(const entry of byImageSize){
+trimmed[entry.index].image = '';
+try{
+tryStoreItems(trimmed);
+saved = true;
+break;
+}catch(storeErr){
+if(!isQuotaError(storeErr)) throw storeErr;
+}
+}
+
+if(!saved){
+alert('Speicher ist voll. Bitte Backup herunterladen und einige alte Eintraege loeschen.');
+return false;
+}
+
+items = trimmed;
+alert('Speicherlimit erreicht: Einige Bilder wurden entfernt, damit alles gespeichert werden kann.');
+}
+
+render();
+return true;
+}
+
+function optimizeImage(file){
+return new Promise((resolve, reject) => {
+const reader = new FileReader();
+reader.onload = () => {
+const img = new Image();
+img.onload = () => {
+const maxWidth = 900;
+const maxHeight = 900;
+
+let width = img.width;
+let height = img.height;
+const scale = Math.min(1, maxWidth / width, maxHeight / height);
+width = Math.round(width * scale);
+height = Math.round(height * scale);
+
+const canvas = document.createElement('canvas');
+canvas.width = width;
+canvas.height = height;
+
+const ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, width, height);
+
+resolve(canvas.toDataURL('image/jpeg', 0.75));
+};
+img.onerror = () => resolve(reader.result || '');
+img.src = reader.result;
+};
+reader.onerror = () => reject(reader.error);
+reader.readAsDataURL(file);
+});
+}
+
+async function saveItem(){
+const file=imageEl.files[0];
+let imageData = items[editIndex]?.image || '';
+
+if(file){
+try{
+imageData = await optimizeImage(file);
+}catch(_){
+alert('Bild konnte nicht verarbeitet werden. Bitte erneut versuchen.');
+return;
+}
+}
+
 const item={
 platform:platformEl.value,
 order:orderEl.value,
@@ -269,7 +366,7 @@ buy:parseFloat(buyPriceEl.value)||0,
 status:statusEl.value,
 tracking: statusEl.value === 'Gekauft' ? trackingEl.value : '',
 sell:parseFloat(sellPriceEl.value)||0,
-image:reader.result||items[editIndex]?.image||''
+image:imageData
 };
 
 if(editIndex!==null){
@@ -277,11 +374,9 @@ items[editIndex]=item;
 editIndex=null;
 }else items.push(item);
 
+if(save()){
 clearForm();
-save();
 }
-
-if(file)reader.readAsDataURL(file);else reader.onload();
 }
 
 function clearForm(){
@@ -310,7 +405,16 @@ trackingEl.value = item.tracking || '';
 trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
 }
 
-function setFilter(f){filter=f;render();}
+function setFilter(f){
+filter=f;
+currentPage=1;
+render();
+}
+
+function changePage(delta){
+currentPage += delta;
+render();
+}
 
 function setChartPeriod(p){chartPeriod=p;renderProfitChart();}
 
@@ -333,20 +437,36 @@ body.innerHTML='';
 
 const searchText=searchEl.value.toLowerCase();
 
-// Sortiere Artikel nach Datum (neueste zuerst)
-items.sort((a, b) => new Date(b.date || '1970-01-01') - new Date(a.date || '1970-01-01'));
+const sortedItems = items
+  .map((item, index) => ({ item, index }))
+  .sort((a, b) => new Date(b.item.date || '1970-01-01') - new Date(a.item.date || '1970-01-01'));
+
+const filteredItems = sortedItems.filter(({ item }) => {
+if(filter!=='all' && item.status!==filter) return false;
+if(searchText && !String(item.order || '').toLowerCase().includes(searchText)) return false;
+return true;
+});
+
+const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+if(currentPage > totalPages) currentPage = totalPages;
+if(currentPage < 1) currentPage = 1;
+
+const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+const pageItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
 let totalProfit=0,soldCount=0,stockCount=0,stockValue=0;
 
-items.forEach((item,i)=>{
-
-if(filter!=='all' && item.status!==filter)return;
-if(searchText && !item.order.toLowerCase().includes(searchText))return;
+filteredItems.forEach(({ item })=>{
 
 const profit=item.sell-item.buy;
 
 if(item.status==='Verkauft'){totalProfit+=profit;soldCount++;}
 if(item.status==='Lager'){stockCount++;stockValue+=item.buy;}
+});
+
+pageItems.forEach(({ item, index })=>{
+
+const profit=item.sell-item.buy;
 
 body.innerHTML+=`<tr>
 <td>${item.image?`<img src="${item.image}">`:''}</td>
@@ -359,11 +479,15 @@ body.innerHTML+=`<tr>
 <td>${item.sell?item.sell.toFixed(2)+'€':'-'}</td>
 <td>${item.sell?profit.toFixed(2)+'€':'-'}</td>
 <td>
-<button onclick="editItem(${i})">✏️</button>
-<button onclick="del(${i})">🗑</button>
+<button onclick="editItem(${index})">✏️</button>
+<button onclick="del(${index})">🗑</button>
 </td>
 </tr>`;
 });
+
+pageInfoEl.innerText = `Seite ${currentPage} / ${totalPages}`;
+prevPageBtnEl.disabled = currentPage === 1;
+nextPageBtnEl.disabled = currentPage === totalPages;
 
  totalProfitEl=totalProfit.toFixed(2)+'€';
  document.getElementById('totalProfit').innerText=totalProfitEl;
