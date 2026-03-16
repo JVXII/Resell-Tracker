@@ -488,6 +488,8 @@ body.innerHTML+=`<tr>
 pageInfoEl.innerText = `Seite ${currentPage} / ${totalPages}`;
 prevPageBtnEl.disabled = currentPage === 1;
 nextPageBtnEl.disabled = currentPage === totalPages;
+prevPageBtnEl.style.visibility = currentPage === 1 ? 'hidden' : 'visible';
+nextPageBtnEl.style.visibility = currentPage === totalPages ? 'hidden' : 'visible';
 
  totalProfitEl=totalProfit.toFixed(2)+'€';
  document.getElementById('totalProfit').innerText=totalProfitEl;
