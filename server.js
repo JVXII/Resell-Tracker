@@ -7,7 +7,7 @@ const fs = require('fs');
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
-const SQLiteStore = require('connect-sqlite3')(session);
+const FileStore = require('session-file-store')(session);
 const { db } = require('./db');
 
 const app = express();
@@ -16,7 +16,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
 app.use(session({
-  store: new SQLiteStore({ db: 'sessions.db', dir: dataDir }),
+  store: new FileStore({ path: path.join(dataDir, 'sessions'), retries: 1 }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
