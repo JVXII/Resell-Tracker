@@ -7,25 +7,38 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0d1117;
-      color: #e6edf3;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #060d14;
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
     }
     .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
+      background: #0c1520;
+      border: 1px solid #1e2d42;
+      border-radius: 16px;
       padding: 48px 40px;
       text-align: center;
       width: 360px;
     }
-    .logo { width: 80px; border-radius: 12px; margin-bottom: 24px; }
-    h1 { font-size: 1.4rem; margin-bottom: 8px; }
-    p { color: #8b949e; font-size: 0.9rem; margin-bottom: 32px; }
+    .logo-wrap { margin-bottom: 28px; }
+    .logo { width: 72px; border-radius: 12px; }
+    .brand {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 8px;
+      color: #e2e8f0;
+    }
+    .brand span { color: #4ade80; }
+    p {
+      color: #475569;
+      font-size: 13px;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
     .discord-btn {
       display: inline-flex;
       align-items: center;
@@ -35,20 +48,29 @@
       border: none;
       border-radius: 8px;
       padding: 12px 24px;
-      font-size: 1rem;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
       transition: background 0.2s;
+      width: 100%;
+      justify-content: center;
     }
     .discord-btn:hover { background: #4752c4; }
-    .discord-btn svg { width: 22px; height: 22px; }
+    .discord-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .footer-note {
+      margin-top: 24px;
+      color: #334155;
+      font-size: 11px;
+    }
   </style>
 </head>
 <body>
   <div class="card">
-    <img src="LogoJan.png" alt="Logo" class="logo">
-    <h1>Resell Tracker</h1>
+    <div class="logo-wrap">
+      <img src="LogoJan.png" alt="Logo" class="logo">
+    </div>
+    <div class="brand">Resell<span>.</span>Tracker</div>
     <p>Melde dich mit Discord an, um deine Produkte zu verwalten.</p>
     <a href="/auth/discord" class="discord-btn">
       <svg viewBox="0 0 127.14 96.36" fill="currentColor">
@@ -56,6 +78,7 @@
       </svg>
       Mit Discord anmelden
     </a>
+    <div class="footer-note">Resell Tracker · Nur für autorisierte Nutzer</div>
   </div>
 </body>
 </html>
