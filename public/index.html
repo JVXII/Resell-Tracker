@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resell Tracker</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#0f1117;color:#e6e6e6;margin:0;padding:30px}
+.container{max-width:1100px;margin:auto}
+h1{margin-bottom:20px}
+.card{background:#161b22;padding:20px;border-radius:14px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.formGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:end}
+.fileUpload{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:8px;border:1px solid #30363d;background:#21262d;color:#e6e6e6;cursor:pointer}
+.fileUpload:hover{background:#2a313c}
+.fileUpload span{font-size:12px;opacity:.85}
+.hiddenInput{display:none}
+input,select,button{padding:10px;border-radius:8px;border:1px solid #30363d;background:#0f1117;color:white}
+
+/* Placeholder text should be light gray (e.g., date placeholder "tt.mm.jjjj") */
+input::placeholder{color:#8b8b8b;opacity:1}
+
+/* Chrome/Edge date input placeholder styling */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field{color:#8b8b8b}
+
+/* When a date is entered, show it in white */
+input[type="date"]:not(:placeholder-shown)::-webkit-datetime-edit,
+input[type="date"]:focus::-webkit-datetime-edit{color:white}
+
+button{background:#4f46e5;border:none;cursor:pointer}
+button:hover{opacity:.9}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #30363d;text-align:left}
+th{background:#0d1117}
+img{width:50px;height:50px;object-fit:cover;border-radius:6px}
+.status-Gekauft{color:#ff6b6b;font-weight:700}
+.status-Lager{color:#ffa500;font-weight:700}
+.status-Verkauft{color:#2ed573;font-weight:700}
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
+.stat{background:#161b22;padding:15px;border-radius:12px}
+.filterButtons button{margin-right:10px;margin-bottom:10px}
+.topbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;align-items:center}
+.search{margin-left:auto}
+
+/* Tab navigation */
+.tabs {
+display: flex;
+gap: 10px;
+margin-bottom: 20px;
+border-bottom: 1px solid #30363d;
+padding-bottom: 10px;
+}
+.tab-button {
+background: #161b22;
+color: #e6e6e6;
+border: 1px solid #30363d;
+padding: 10px 15px;
+border-radius: 8px;
+cursor: pointer;
+}
+.tab-button:hover {
+background: #2a313c;
+}
+.tab-button.active {
+background: #4f46e5;
+border-color: #4f46e5;
+}
+.tab-content {
+display: none;
+}
+.tab-content.active {
+display: block;
+}
+
+/* Collapsible card styling */
+.card summary {
+cursor: pointer;
+font-weight: bold;
+margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <h1 style="margin:0">Resell Tracker</h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div id="user-badge" style="display:inline-flex;align-items:center;gap:6px"></div>
+    <button onclick="toggleShare()" style="background:#30363d;border:none;color:#e6edf3;padding:6px 14px;border-radius:6px;cursor:pointer">Teilen</button>
+  </div>
+</div>
+
+<div id="shared-banner" style="display:none;background:#1f2d1f;border:1px solid #238636;border-radius:8px;padding:10px 16px;margin:12px 0;color:#3fb950"></div>
+
+<div id="share-panel" style="display:none;background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;margin:16px 0">
+  <h3 style="margin-bottom:12px">Ansicht teilen</h3>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <input id="invite-link" readonly style="flex:1;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:8px;border-radius:6px">
+    <button onclick="copyInviteLink()" style="background:#238636;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer">Kopieren</button>
+    <button onclick="rotateToken()" style="background:#30363d;border:none;color:#e6edf3;padding:8px 14px;border-radius:6px;cursor:pointer">Neu generieren</button>
+  </div>
+  <div id="members-list"></div>
+</div>
+
+<nav class="tabs">
+<button onclick="showTab('overview')" class="tab-button active">Übersicht</button>
+<button onclick="showTab('charts')" class="tab-button">Charts</button>
+</nav>
+
+<div id="overview" class="tab-content active">
+
+<div class="topbar">
+<button onclick="exportBackup()">⬇ Backup herunterladen</button>
+<button onclick="document.getElementById('backupFile').click()">⬆ Backup hochladen</button>
+<input type="file" id="backupFile" accept=".json" style="display:none" onchange="importBackup(event.target.files[0])">
+<input class="search" id="search" placeholder="🔎 Suche Bestellnummer...">
+</div>
+
+<div class="dashboard">
+<div class="stat">Gesamtprofit: <b id="totalProfit">0€</b></div>
+<div class="stat">Verkaufte Artikel: <b id="soldCount">0</b></div>
+<div class="stat">Artikel im Lager: <b id="stockCount">0</b></div>
+<div class="stat">Kapital im Lager: <b id="stockValue">0€</b></div>
+</div>
+
+<details class="card" open>
+<summary>Artikel hinzufügen / bearbeiten</summary>
+<div class="formGrid">
+<select id="platform">
+<option value="eBay">eBay</option>
+<option value="Kleinanzeigen">Kleinanzeigen</option>
+</select>
+<input id="order" placeholder="Bestellnummer">
+<input id="date" type="date">
+<input id="buyPrice" type="number" placeholder="Einkaufspreis €">
+<select id="status">
+<option value="Gekauft">Gekauft</option>
+<option value="Lager">Lager</option>
+<option value="Verkauft">Verkauft</option>
+</select>
+<input id="tracking" placeholder="Sendungsverfolgung URL" style="display:none">
+<input id="sellPrice" type="number" placeholder="Verkaufspreis €">
+<div style="display:flex;gap:10px;align-items:center;">
+<label class="fileUpload" for="image">📤 Bild hochladen</label>
+<span id="fileName" class="fileName">Keine Datei</span>
+</div>
+<input id="image" type="file" accept="image/*" class="hiddenInput" onchange="updateFileName()">
+<button onclick="saveItem()">Speichern</button>
+</div>
+</details>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<h3 style="margin:0;">Artikel Übersicht</h3>
+<div class="filterButtons">
+<button onclick="setFilter('all')">Alle</button>
+<button onclick="setFilter('Lager')">Lager</button>
+<button onclick="setFilter('Verkauft')">Verkauft</button>
+<button onclick="setFilter('Gekauft')">Gekauft</button>
+</div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Bild</th>
+<th>Plattform</th>
+<th>Bestellnummer</th>
+<th>Datum</th>
+<th>Einkauf</th>
+<th>Status</th>
+<th>Tracking</th>
+<th>Verkauf</th>
+<th>Profit</th>
+<th>Aktionen</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+<div id="pagination" style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:12px;">
+<button id="prevPageBtn" onclick="changePage(-1)">◀ Zurueck</button>
+<span id="pageInfo">Seite 1 / 1</span>
+<button id="nextPageBtn" onclick="changePage(1)">Weiter ▶</button>
+</div>
+</div>
+
+</div>
+
+<div id="charts" class="tab-content">
+<div class="card">
+<h3>Gesamtprofit Entwicklung</h3>
+<div style="margin-bottom:10px;">
+<button onclick="setChartPeriod('day')">Tag</button>
+<button onclick="setChartPeriod('week')">Woche</button>
+<button onclick="setChartPeriod('month')">Monat</button>
+</div>
+<canvas id="profitChart" height="100"></canvas>
+</div>
+
+<div class="card">
+<h3>Monatsstatistik (Profit)</h3>
+<canvas id="chart" height="100"></canvas>
+</div>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+
+let currentUser = null;
+let items = [];
+let editId = null;
+let filter = 'all';
+let chartPeriod = 'month';
+
+// Element references
+const platformEl = document.getElementById('platform');
+const orderEl = document.getElementById('order');
+const dateEl = document.getElementById('date');
+const buyPriceEl = document.getElementById('buyPrice');
+const statusEl = document.getElementById('status');
+const trackingEl = document.getElementById('tracking');
+const sellPriceEl = document.getElementById('sellPrice');
+const imageEl = document.getElementById('image');
+const fileNameEl = document.getElementById('fileName');
+const searchEl = document.getElementById('search');
+const tableBodyEl = document.getElementById('tableBody');
+const pageInfoEl = document.getElementById('pageInfo');
+const prevPageBtnEl = document.getElementById('prevPageBtn');
+const nextPageBtnEl = document.getElementById('nextPageBtn');
+
+const ITEMS_PER_PAGE = 10;
+let currentPage = 1;
+
+async function init() {
+  const res = await fetch('/auth/me');
+  if (!res.ok || res.status === 401) {
+    window.location.href = '/login.html';
+    return;
+  }
+  currentUser = await res.json();
+  renderUserBadge();
+
+  // Check for shared view redirect
+  const params = new URLSearchParams(location.search);
+  const sharedOwnerId = params.get('sharedView');
+  if (sharedOwnerId) {
+    await loadSharedItems(parseInt(sharedOwnerId, 10));
+  } else {
+    await loadItems();
+  }
+}
+
+function renderUserBadge() {
+  const avatarUrl = currentUser.avatar
+    ? `https://cdn.discordapp.com/avatars/${currentUser.discord_id}/${currentUser.avatar}.png?size=32`
+    : 'https://cdn.discordapp.com/embed/avatars/0.png';
+  document.getElementById('user-badge').innerHTML = `
+    <img src="${avatarUrl}" style="width:28px;height:28px;border-radius:50%">
+    <span>${currentUser.username}</span>
+    <button onclick="logout()" style="background:#30363d;border:none;color:#e6edf3;padding:4px 10px;border-radius:6px;cursor:pointer">Logout</button>
+  `;
+}
+
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+async function loadItems() {
+  const res = await fetch('/api/items');
+  items = await res.json();
+  renderItems();
+  renderCharts();
+}
+
+async function loadSharedItems(ownerId) {
+  const res = await fetch(`/api/shared/${ownerId}/items`);
+  if (!res.ok) {
+    const banner = document.getElementById('shared-banner');
+    banner.style.display = 'block';
+    banner.textContent = 'Kein Zugriff auf diese Ansicht.';
+    banner.style.borderColor = '#da3633';
+    banner.style.color = '#f85149';
+    return;
+  }
+  items = await res.json();
+  const banner = document.getElementById('shared-banner');
+  banner.style.display = 'block';
+  banner.textContent = `Geteilte Ansicht (Benutzer #${ownerId}) – schreibgeschützt`;
+  renderItems();
+  renderCharts();
+}
+
+function updateFileName(){
+  fileNameEl.innerText = imageEl.files[0]?.name || 'Keine Datei';
+}
+
+imageEl.addEventListener('change', updateFileName);
+
+searchEl.addEventListener('input', () => {
+  currentPage = 1;
+  renderItems();
+});
+
+statusEl.addEventListener('change', () => {
+  trackingEl.style.display = statusEl.value === 'Gekauft' ? 'block' : 'none';
+});
+
+function optimizeImage(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 900;
+        const maxHeight = 900;
+        let width = img.width;
+        let height = img.height;
+        const scale = Math.min(1, maxWidth / width, maxHeight / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => resolve(reader.result || '');
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveItem() {
+  const file = imageEl.files[0];
+  let imageData = null;
+
+  if (file) {
+    try {
+      imageData = await optimizeImage(file);
+    } catch(_) {
+      alert('Bild konnte nicht verarbeitet werden. Bitte erneut versuchen.');
+      return;
+    }
+  } else if (editId) {
+    // Keep existing image when editing
+    const existing = items.find(i => i.id === editId);
+    imageData = existing?.image || null;
+  }
+
+  const data = {
+    platform: platformEl.value,
+    order_nr: orderEl.value,
+    date: dateEl.value,
+    buy_price: parseFloat(buyPriceEl.value) || 0,
+    status: statusEl.value,
+    tracking: statusEl.value === 'Gekauft' ? trackingEl.value : null,
+    sell_price: parseFloat(sellPriceEl.value) || null,
+    image: imageData,
+  };
+
+  if (editId) data.id = editId;
+
+  const method = editId ? 'PUT' : 'POST';
+  const url = editId ? `/api/items/${editId}` : '/api/items';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    alert('Fehler: ' + (err.errors?.join(', ') || err.error));
+    return;
+  }
+
+  editId = null;
+  clearForm();
+  await loadItems();
+}
+
+async function deleteItem(id) {
+  if (!confirm('Produkt löschen?')) return;
+  await fetch(`/api/items/${id}`, { method: 'DELETE' });
+  await loadItems();
+}
+
+function clearForm(){
+  orderEl.value = '';
+  dateEl.value = '';
+  buyPriceEl.value = '';
+  statusEl.value = 'Gekauft';
+  sellPriceEl.value = '';
+  imageEl.value = '';
+  updateFileName();
+  trackingEl.value = '';
+  trackingEl.style.display = 'none';
+  editId = null;
+}
+
+function editItem(id){
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  platformEl.value = item.platform;
+  orderEl.value = item.order_nr;
+  dateEl.value = item.date;
+  buyPriceEl.value = item.buy_price;
+  statusEl.value = item.status;
+  sellPriceEl.value = item.sell_price || '';
+  editId = id;
+  window.scrollTo({top:0,behavior:'smooth'});
+  trackingEl.value = item.tracking || '';
+  trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
+}
+
+function setFilter(f){
+  filter = f;
+  currentPage = 1;
+  renderItems();
+}
+
+function changePage(delta){
+  currentPage += delta;
+  renderItems();
+}
+
+function setChartPeriod(p){ chartPeriod = p; renderProfitChart(); }
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.querySelector(`button[onclick="showTab('${tab}')"]`).classList.add('active');
+  if(tab === 'charts') {
+    renderProfitChart();
+    renderChart();
+  }
+}
+
+function renderItems(){
+  const body = tableBodyEl;
+  body.innerHTML = '';
+
+  const searchText = searchEl.value.toLowerCase();
+
+  const sortedItems = items
+    .map(item => ({ item }))
+    .sort((a, b) => new Date(b.item.date || '1970-01-01') - new Date(a.item.date || '1970-01-01'));
+
+  const filteredItems = sortedItems.filter(({ item }) => {
+    if(filter !== 'all' && item.status !== filter) return false;
+    if(searchText && !String(item.order_nr || '').toLowerCase().includes(searchText)) return false;
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+  if(currentPage > totalPages) currentPage = totalPages;
+  if(currentPage < 1) currentPage = 1;
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  let totalProfit = 0, soldCount = 0, stockCount = 0, stockValue = 0;
+  filteredItems.forEach(({ item }) => {
+    const buy = item.buy_price || 0;
+    const sell = item.sell_price || 0;
+    const profit = sell - buy;
+    if(item.status === 'Verkauft'){ totalProfit += profit; soldCount++; }
+    if(item.status === 'Lager'){ stockCount++; stockValue += buy; }
+  });
+
+  pageItems.forEach(({ item }) => {
+    const buy = item.buy_price || 0;
+    const sell = item.sell_price || 0;
+    const profit = sell - buy;
+    body.innerHTML += `<tr>
+<td>${item.image ? `<img src="${item.image}">` : ''}</td>
+<td>${item.platform}</td>
+<td>${item.order_nr}</td>
+<td>${item.date}</td>
+<td>${buy.toFixed(2)}€</td>
+<td><span class="status-${item.status}">${item.status}</span></td>
+<td>${item.status === 'Gekauft' && item.tracking ? `<a href="${item.tracking}" target="_blank">📦</a>` : ''}</td>
+<td>${sell ? sell.toFixed(2) + '€' : '-'}</td>
+<td>${sell ? profit.toFixed(2) + '€' : '-'}</td>
+<td>
+<button onclick="editItem(${item.id})">✏️</button>
+<button onclick="deleteItem(${item.id})">🗑</button>
+</td>
+</tr>`;
+  });
+
+  pageInfoEl.innerText = `Seite ${currentPage} / ${totalPages}`;
+  prevPageBtnEl.disabled = currentPage === 1;
+  nextPageBtnEl.disabled = currentPage === totalPages;
+  prevPageBtnEl.style.visibility = currentPage === 1 ? 'hidden' : 'visible';
+  nextPageBtnEl.style.visibility = currentPage === totalPages ? 'hidden' : 'visible';
+
+  document.getElementById('totalProfit').innerText = totalProfit.toFixed(2) + '€';
+  document.getElementById('soldCount').innerText = soldCount;
+  document.getElementById('stockCount').innerText = stockCount;
+  document.getElementById('stockValue').innerText = stockValue.toFixed(2) + '€';
+}
+
+function renderCharts() {
+  // Charts render lazily when tab is shown
+}
+
+function renderChart(){
+  if(typeof Chart === 'undefined') { console.error('Chart.js not loaded'); return; }
+  const monthly = {};
+  items.forEach(i => {
+    if(i.status === 'Verkauft' && i.date){
+      const m = i.date.slice(0,7);
+      monthly[m] = (monthly[m] || 0) + ((i.sell_price || 0) - (i.buy_price || 0));
+    }
+  });
+  const labels = Object.keys(monthly);
+  const data = Object.values(monthly);
+  const ctx = document.getElementById('chart');
+  ctx.width = 400; ctx.height = 100;
+  if(window.chart && typeof window.chart.destroy === 'function') window.chart.destroy();
+  window.chart = new Chart(ctx, {type:'bar', data:{labels, datasets:[{label:'Profit €', data}]}});
+}
+
+function renderProfitChart(){
+  if(typeof Chart === 'undefined') { console.error('Chart.js not loaded'); return; }
+  const ctx = document.getElementById('profitChart');
+  ctx.width = 400; ctx.height = 100;
+  if(window.profitChart && typeof window.profitChart.destroy === 'function') window.profitChart.destroy();
+
+  let data = {};
+  items.forEach(item => {
+    if(item.status === 'Verkauft' && item.date){
+      const date = new Date(item.date);
+      const profit = (item.sell_price || 0) - (item.buy_price || 0);
+      let key;
+      if(chartPeriod === 'day'){
+        key = date.toISOString().split('T')[0];
+      } else if(chartPeriod === 'week'){
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        key = weekStart.toISOString().split('T')[0];
+      } else {
+        key = item.date.slice(0,7);
+      }
+      data[key] = (data[key] || 0) + profit;
+    }
+  });
+
+  const sortedKeys = Object.keys(data).sort();
+  const cumulative = [];
+  let sum = 0;
+  sortedKeys.forEach(key => { sum += data[key]; cumulative.push(sum); });
+
+  window.profitChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sortedKeys,
+      datasets:[{
+        label: 'Kumulierter Gesamtprofit €',
+        data: cumulative,
+        borderColor: 'green',
+        backgroundColor: 'rgba(0,128,0,0.1)',
+        fill: true,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+}
+
+async function exportBackup() {
+  window.location.href = '/api/items/export';
+}
+
+async function importBackup(file) {
+  if (!file) return;
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); } catch { alert('Ungültige JSON-Datei'); return; }
+  const res = await fetch('/api/items/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  alert(`Import: ${result.imported} importiert, ${result.skipped} übersprungen`);
+  await loadItems();
+}
+
+// Share panel
+async function toggleShare() {
+  const panel = document.getElementById('share-panel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    await loadSharePanel();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+async function loadSharePanel() {
+  const [inviteRes, membersRes] = await Promise.all([
+    fetch('/api/share/invite'),
+    fetch('/api/share/members'),
+  ]);
+  const { token } = await inviteRes.json();
+  const members = await membersRes.json();
+  document.getElementById('invite-link').value = `${location.origin}/api/share/join/${token}`;
+  renderMembers(members);
+}
+
+async function rotateToken() {
+  const res = await fetch('/api/share/invite', { method: 'POST' });
+  const { token } = await res.json();
+  document.getElementById('invite-link').value = `${location.origin}/api/share/join/${token}`;
+}
+
+function copyInviteLink() {
+  navigator.clipboard.writeText(document.getElementById('invite-link').value);
+}
+
+function renderMembers(members) {
+  const el = document.getElementById('members-list');
+  if (!members.length) { el.innerHTML = '<p style="color:#8b949e">Noch keine Mitglieder</p>'; return; }
+  el.innerHTML = members.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #30363d">
+      <span style="flex:1">${m.username}</span>
+      <select onchange="setRole(${m.id}, this.value)" style="background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:4px 8px;border-radius:6px">
+        <option value="read" ${m.role==='read'?'selected':''}>Lesen</option>
+        <option value="edit" ${m.role==='edit'?'selected':''}>Bearbeiten</option>
+      </select>
+      <button onclick="removeMember(${m.id})" style="background:#da3633;border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer">Entfernen</button>
+    </div>
+  `).join('');
+}
+
+async function setRole(userId, role) {
+  await fetch(`/api/share/members/${userId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role }),
+  });
+}
+
+async function removeMember(userId) {
+  await fetch(`/api/share/members/${userId}`, { method: 'DELETE' });
+  await loadSharePanel();
+}
+
+init();
+</script>
+</body>
+</html>
