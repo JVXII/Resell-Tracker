@@ -7,7 +7,6 @@ const fs = require('fs');
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
-const FileStore = require('session-file-store')(session);
 const { db } = require('./db');
 
 const app = express();
@@ -16,14 +15,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
 app.use(session({
-  store: new FileStore({ path: path.join(dataDir, 'sessions'), retries: 1 }),
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   cookie: {
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    secure: false,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
 }));
