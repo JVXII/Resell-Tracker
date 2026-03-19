@@ -1,0 +1,22 @@
+{
+  "name": "resell-tracker",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "session-file-store": "^1.5.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "sql.js": "^1.14.1",
+    "supertest": "^7.0.0"
+  }
+}
