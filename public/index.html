@@ -25,6 +25,8 @@
   }
   .topbar-logo { font-weight: 700; font-size: 15px; color: #e2e8f0; letter-spacing: -0.3px; }
   .topbar-logo span { color: #4ade80; }
+  .topbar-logo-icon { display: none; width: 36px; height: 36px; }
+  .bottom-nav { display: none; }
   .topbar-nav { display: flex; gap: 4px; }
   .nav-item {
     padding: 6px 14px;
@@ -349,6 +351,33 @@
     .action-bar { flex-direction: column; align-items: stretch; }
     .search-input { margin-left: 0; width: 100%; }
     .topbar-nav { display: none; }
+    .topbar-logo { display: none; }
+    .topbar-logo-icon { display: block; }
+    .main { padding-bottom: 68px; }
+    .bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #0c1520;
+      border-top: 1px solid #1e2d42;
+      z-index: 10;
+    }
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 10px 0;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+    .bottom-nav-item svg { width: 22px; height: 22px; }
+    .bottom-nav-item.active { color: #4ade80; }
   }
 </style>
 </head>
@@ -356,6 +385,7 @@
 
 <!-- Topbar -->
 <div class="topbar">
+  <img src="/resell_tracker_icon.svg" alt="Logo" class="topbar-logo-icon">
   <div class="topbar-logo">Resell<span>.</span>Tracker</div>
   <div class="topbar-nav">
     <div class="nav-item active" data-tab="overview" onclick="showTab('overview')">Übersicht</div>
@@ -453,6 +483,7 @@
         <span class="table-title">Artikel Übersicht</span>
         <span class="table-count" id="tableCount">0 Einträge</span>
       </div>
+      <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
       <table>
         <thead>
           <tr>
@@ -470,6 +501,7 @@
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
+      </div>
       <div class="pagination">
         <span class="page-info" id="pageInfo">Seite 1 / 1</span>
         <button class="btn btn-ghost" id="prevPageBtn" onclick="changePage(-1)" style="padding:5px 12px;font-size:12px">◀</button>
@@ -780,9 +812,9 @@ function setChartPeriod(p, btn) {
 
 function showTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
-  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+  document.querySelectorAll(`[data-tab="${tab}"]`).forEach(el => el.classList.add('active'));
   if (tab === 'charts') {
     renderProfitChart();
     renderChart();
@@ -1084,5 +1116,22 @@ async function removeMember(userId) {
 
 init();
 </script>
+
+<!-- Bottom navigation (mobile only) -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-item active" data-tab="overview" onclick="showTab('overview')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    Übersicht
+  </div>
+  <div class="bottom-nav-item" data-tab="charts" onclick="showTab('charts')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    Charts
+  </div>
+</nav>
 </body>
 </html>
