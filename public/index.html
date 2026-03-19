@@ -1115,6 +1115,13 @@ async function removeMember(userId) {
 }
 
 init();
+
+fetch('/api/version').then(r=>r.json()).then(v=>{
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:10px;right:14px;font-size:10px;color:#333;font-family:monospace;z-index:9999;user-select:none';
+  el.textContent=v.commit;
+  document.body.appendChild(el);
+});
 </script>
 
 <!-- Bottom navigation (mobile only) -->

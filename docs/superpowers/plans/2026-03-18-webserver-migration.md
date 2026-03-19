@@ -1655,6 +1655,41 @@ git commit -m "feat: complete webserver migration"
 
 ---
 
+---
+
+## Task 11: Versionsindikator
+
+**Ziel:** Dezenter Commit-Hash unten rechts im UI, damit man erkennt ob der Server die aktuelle GitHub-Version ausführt.
+
+- [x] **Step 11.1: Git-Commit lesen in server.js**
+
+```js
+const { execSync } = require('child_process');
+let GIT_COMMIT = 'unknown';
+try { GIT_COMMIT = execSync('git rev-parse --short HEAD').toString().trim(); } catch (_) {}
+```
+
+- [x] **Step 11.2: `/api/version` Endpoint**
+
+Vor den Static Files in `server.js`:
+```js
+app.get('/api/version', (req, res) => res.json({ commit: GIT_COMMIT }));
+```
+
+- [x] **Step 11.3: Badge im Frontend**
+
+Direkt vor `</script>` in `public/index.html`:
+```js
+fetch('/api/version').then(r=>r.json()).then(v=>{
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:10px;right:14px;font-size:10px;color:#333;font-family:monospace;z-index:9999;user-select:none';
+  el.textContent=v.commit;
+  document.body.appendChild(el);
+});
+```
+
+---
+
 ## Deployment Notes (VPS)
 
 1. Install Node.js 20+
