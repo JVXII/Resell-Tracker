@@ -452,7 +452,7 @@
           <option value="Lager">Lager</option>
           <option value="Verkauft">Verkauft</option>
         </select>
-        <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL" style="display:none">
+        <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
         <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
         <label class="file-upload-label" for="image">
           <span>📤</span>
@@ -770,7 +770,7 @@ function clearForm() {
   imageEl.value = '';
   updateFileName();
   trackingEl.value = '';
-  trackingEl.style.display = 'none';
+  trackingEl.style.display = 'block';
   editId = null;
 }
 
