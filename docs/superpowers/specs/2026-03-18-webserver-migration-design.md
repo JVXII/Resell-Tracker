@@ -208,6 +208,20 @@ Strukturelle Änderungen:
 
 ---
 
+## Versionsindikator
+
+Ein kleiner Commit-Hash wird unten rechts im Frontend angezeigt (fixed position, sehr dezent: `font-size: 10px`, dunkelgrau).
+
+**Server-Side:** `server.js` liest beim Start den aktuellen Git-Commit-Hash via `execSync('git rev-parse --short HEAD')`. Schlägt das fehl (z.B. kein `.git`-Verzeichnis), fällt es auf `'unknown'` zurück.
+
+**API:** `GET /api/version` → `{ commit: "abc1234" }`
+
+**Frontend:** `fetch('/api/version')` direkt beim Seitenload, fügt einen `<div>` mit dem Hash dynamisch in den `<body>` ein. Kein DOM-Element im HTML selbst nötig.
+
+**Wofür:** Man sieht sofort welcher Commit gerade auf dem Server läuft. Wenn der neueste GitHub-Commit nicht übereinstimmt → Server-Neustart nötig.
+
+---
+
 ## Umgebungsvariablen (`.env`)
 
 ```

@@ -3,11 +3,14 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
+
+let GIT_COMMIT = 'unknown';
+try { GIT_COMMIT = execSync('git rev-parse --short HEAD').toString().trim(); } catch (_) {}
 
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
-const FileStore = require('session-file-store')(session);
 const { db } = require('./db');
 
 const app = express();
@@ -16,13 +19,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
 app.use(session({
-  store: new FileStore({ path: path.join(dataDir, 'sessions'), retries: 1 }),
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   cookie: {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
@@ -36,6 +38,9 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/share', require('./routes/share'));
 app.use('/api/shared', require('./routes/shared'));
+
+// Version endpoint
+app.get('/api/version', (req, res) => res.json({ commit: GIT_COMMIT }));
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
