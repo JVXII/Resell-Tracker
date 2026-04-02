@@ -296,6 +296,8 @@
     justify-content: center;
   }
   .icon-btn:hover { background: #2d4060; }
+  .icon-btn.reimbursed { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+  .icon-btn.reimbursed:hover { background: #0a4a2a; }
   .tracking-link { color: #0ea5e9; text-decoration: none; font-size: 16px; }
   .pagination {
     display: flex;
@@ -496,6 +498,7 @@
             <th>Tracking</th>
             <th>Verkauf</th>
             <th>Profit</th>
+            <th title="Privates Geld zurückerhalten">Privat ↩</th>
             <th></th>
           </tr>
         </thead>
@@ -570,6 +573,13 @@ let items = [];
 let editId = null;
 let filter = 'all';
 let chartPeriod = 'month';
+let reimbursedItems = JSON.parse(localStorage.getItem('reimbursedItems') || '{}');
+
+function toggleReimbursed(id) {
+  reimbursedItems[id] = !reimbursedItems[id];
+  localStorage.setItem('reimbursedItems', JSON.stringify(reimbursedItems));
+  renderItems();
+}
 
 const platformEl = document.getElementById('platform');
 const orderEl = document.getElementById('order');
@@ -869,6 +879,7 @@ function renderItems() {
       <td>${item.status === 'Gekauft' && item.tracking ? `<a class="tracking-link" href="${item.tracking}" target="_blank">📦</a>` : '—'}</td>
       <td>${sell ? sell.toFixed(2) + '€' : '—'}</td>
       <td class="${profitClass}">${profitStr}</td>
+      <td><button class="icon-btn${reimbursedItems[item.id] ? ' reimbursed' : ''}" onclick="toggleReimbursed(${item.id})" title="${reimbursedItems[item.id] ? 'Privates Geld zurückerhalten ✓' : 'Privates Geld noch nicht zurückerhalten'}">✓</button></td>
       <td><div class="action-btns">
         <button class="icon-btn" onclick="editItem(${item.id})">✏️</button>
         <button class="icon-btn" onclick="deleteItem(${item.id})">🗑</button>
