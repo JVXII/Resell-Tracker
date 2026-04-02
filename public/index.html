@@ -442,10 +442,21 @@
     <details class="form-card" open>
       <summary>＋ Artikel hinzufügen / bearbeiten</summary>
       <div class="form-grid">
-        <select id="platform" class="form-input">
-          <option value="eBay">eBay</option>
-          <option value="Kleinanzeigen">Kleinanzeigen</option>
-        </select>
+        <div>
+          <div style="font-size:10px;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Kaufplattform</div>
+          <select id="platform" class="form-input">
+            <option value="eBay">eBay</option>
+            <option value="Kleinanzeigen">Kleinanzeigen</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Verkaufsplattform</div>
+          <select id="sell_platform" class="form-input">
+            <option value="">— noch nicht verkauft —</option>
+            <option value="eBay">eBay</option>
+            <option value="Kleinanzeigen">Kleinanzeigen</option>
+          </select>
+        </div>
         <input id="order" class="form-input" placeholder="Bestellnummer">
         <input id="date" type="date" class="form-input">
         <input id="buyPrice" type="number" class="form-input" placeholder="Einkaufspreis €">
@@ -490,7 +501,7 @@
         <thead>
           <tr>
             <th>Bild</th>
-            <th>Plattform</th>
+            <th>Plattform (Kauf → Verkauf)</th>
             <th>Bestellnummer</th>
             <th>Datum</th>
             <th>Einkauf</th>
@@ -575,6 +586,9 @@ let filter = 'all';
 let chartPeriod = 'month';
 let reimbursedItems = JSON.parse(localStorage.getItem('reimbursedItems') || '{}');
 
+const PLATFORM_SHORT = { 'eBay': 'eBay', 'Kleinanzeigen': 'KA' };
+function fmtPlatform(p) { return PLATFORM_SHORT[p] || p; }
+
 function toggleReimbursed(id) {
   reimbursedItems[id] = !reimbursedItems[id];
   localStorage.setItem('reimbursedItems', JSON.stringify(reimbursedItems));
@@ -582,6 +596,7 @@ function toggleReimbursed(id) {
 }
 
 const platformEl = document.getElementById('platform');
+const sellPlatformEl = document.getElementById('sell_platform');
 const orderEl = document.getElementById('order');
 const dateEl = document.getElementById('date');
 const buyPriceEl = document.getElementById('buyPrice');
@@ -734,6 +749,7 @@ async function saveItem() {
 
   const data = {
     platform: platformEl.value,
+    sell_platform: sellPlatformEl.value || null,
     order_nr: orderEl.value,
     date: dateEl.value,
     buy_price: parseFloat(buyPriceEl.value) || 0,
@@ -777,6 +793,7 @@ function clearForm() {
   buyPriceEl.value = '';
   statusEl.value = 'Gekauft';
   sellPriceEl.value = '';
+  sellPlatformEl.value = '';
   imageEl.value = '';
   updateFileName();
   trackingEl.value = '';
@@ -788,6 +805,7 @@ function editItem(id) {
   const item = items.find(i => i.id === id);
   if (!item) return;
   platformEl.value = item.platform;
+  sellPlatformEl.value = item.sell_platform || '';
   orderEl.value = item.order_nr;
   dateEl.value = item.date;
   dateEl.classList.toggle('has-value', !!item.date);
@@ -869,9 +887,13 @@ function renderItems() {
     const profitClass = sell ? (profit >= 0 ? 'profit-pos' : 'profit-neg') : '';
     const profitStr = sell ? (profit >= 0 ? '+' : '') + profit.toFixed(2) + '€' : '—';
 
+    const platformDisplay = item.sell_platform
+      ? `${fmtPlatform(item.platform)} <span style="color:#475569">→</span> ${fmtPlatform(item.sell_platform)}`
+      : fmtPlatform(item.platform);
+
     body.innerHTML += `<tr>
       <td class="img-cell">${item.image ? `<img src="${item.image}">` : '<span class="img-placeholder"></span>'}</td>
-      <td>${item.platform}</td>
+      <td>${platformDisplay}</td>
       <td class="order-nr">${item.order_nr}</td>
       <td>${formatDate(item.date)}</td>
       <td>${buy.toFixed(2)}€</td>
@@ -987,8 +1009,9 @@ function renderPlatformChart() {
   const profits = {};
   items.forEach(item => {
     if (item.status === 'Verkauft') {
-      counts[item.platform] = (counts[item.platform] || 0) + 1;
-      profits[item.platform] = (profits[item.platform] || 0) + ((item.sell_price || 0) - (item.buy_price || 0));
+      const p = item.sell_platform || item.platform;
+      counts[p] = (counts[p] || 0) + 1;
+      profits[p] = (profits[p] || 0) + ((item.sell_price || 0) - (item.buy_price || 0));
     }
   });
 

@@ -44,6 +44,10 @@ function applySchema(db) {
   `);
 }
 
+function applyMigrations(db) {
+  try { db.exec(`ALTER TABLE items ADD COLUMN sell_platform TEXT;`); } catch (_) {}
+}
+
 let db;
 
 if (process.env.NODE_ENV !== 'test') {
@@ -51,6 +55,7 @@ if (process.env.NODE_ENV !== 'test') {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
   db = new DatabaseSync(path.join(dataDir, 'resell.db'));
   applySchema(db);
+  applyMigrations(db);
 }
 
 module.exports = { applySchema, get db() { return db; } };
