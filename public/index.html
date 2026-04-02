@@ -487,6 +487,15 @@
         <button class="pill" onclick="setFilter('Verkauft', this)">Verkauft</button>
         <button class="pill" onclick="setFilter('Gekauft', this)">Gekauft</button>
       </div>
+      <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+        <option value="date-desc">📅 Datum: Neueste zuerst</option>
+        <option value="date-asc">📅 Datum: Älteste zuerst</option>
+        <option value="status-group">📦 Status: Verkauft → Lager → Gekauft</option>
+        <option value="profit-desc">💰 Profit: Höchster zuerst</option>
+        <option value="profit-asc">💰 Profit: Niedrigster zuerst</option>
+        <option value="buy-desc">🛒 Einkauf: Höchster zuerst</option>
+        <option value="buy-asc">🛒 Einkauf: Niedrigster zuerst</option>
+      </select>
       <input class="search-input" id="search" placeholder="🔎 Bestellnummer suchen...">
     </div>
 
@@ -585,6 +594,13 @@ let editId = null;
 let filter = 'all';
 let chartPeriod = 'month';
 let reimbursedItems = JSON.parse(localStorage.getItem('reimbursedItems') || '{}');
+let sortBy = 'date-desc';
+
+function setSort(value) {
+  sortBy = value;
+  currentPage = 1;
+  renderItems();
+}
 
 const PLATFORM_SHORT = { 'eBay': 'eBay', 'Kleinanzeigen': 'KA' };
 function fmtPlatform(p) { return PLATFORM_SHORT[p] || p; }
@@ -856,9 +872,24 @@ function renderItems() {
 
   const searchText = searchEl.value.toLowerCase();
 
+  const STATUS_ORDER = { 'Verkauft': 0, 'Lager': 1, 'Gekauft': 2 };
+
   const sorted = items
     .slice()
-    .sort((a, b) => new Date(b.date || '1970-01-01') - new Date(a.date || '1970-01-01'));
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'date-asc':  return new Date(a.date || '1970-01-01') - new Date(b.date || '1970-01-01');
+        case 'status-group': {
+          const sd = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+          return sd !== 0 ? sd : new Date(b.date || '1970-01-01') - new Date(a.date || '1970-01-01');
+        }
+        case 'profit-desc': return ((b.sell_price || 0) - (b.buy_price || 0)) - ((a.sell_price || 0) - (a.buy_price || 0));
+        case 'profit-asc':  return ((a.sell_price || 0) - (a.buy_price || 0)) - ((b.sell_price || 0) - (b.buy_price || 0));
+        case 'buy-desc': return (b.buy_price || 0) - (a.buy_price || 0);
+        case 'buy-asc':  return (a.buy_price || 0) - (b.buy_price || 0);
+        default: return new Date(b.date || '1970-01-01') - new Date(a.date || '1970-01-01');
+      }
+    });
 
   const filtered = sorted.filter(item => {
     if (filter !== 'all' && item.status !== filter) return false;
