@@ -137,25 +137,79 @@
   .btn-secondary { background: #1e2d42; color: #94a3b8; border: 1px solid #2d4060; }
   .btn-ghost { background: transparent; color: #64748b; border: 1px solid #1e2d42; }
 
-  /* Form card */
-  .form-card {
-    background: #0c1520;
-    border: 1px solid #1e2d42;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-  }
-  .form-card summary {
+  /* Add item button */
+  .btn-add-item {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    color: #052e16;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 13px;
-    color: #94a3b8;
-    font-weight: 600;
-    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 20px rgba(74,222,128,0.22);
+    transition: box-shadow 0.2s, transform 0.15s;
+    letter-spacing: -0.2px;
+  }
+  .btn-add-item:hover { box-shadow: 0 0 32px rgba(74,222,128,0.42); transform: translateY(-1px); }
+  .btn-add-item:active { transform: translateY(0); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(6,13,20,0.82);
+    backdrop-filter: blur(5px);
+    z-index: 200;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
   }
-  .form-card summary::-webkit-details-marker { display: none; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-card {
+    background: #0c1520;
+    border: 1px solid #1e2d42;
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(28px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.28s cubic-bezier(0.34,1.5,0.64,1), opacity 0.2s;
+  }
+  .modal-overlay.open .modal-card { transform: translateY(0) scale(1); opacity: 1; }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; color: #e2e8f0; }
+  .modal-close {
+    background: #1e2d42;
+    border: none;
+    color: #64748b;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .modal-close:hover { background: #2d4060; color: #e2e8f0; }
+
   .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -220,6 +274,60 @@
     background: transparent;
   }
   .pill.active { background: #1e2d42; color: #e2e8f0; border-color: #2d4060; }
+
+  /* Sort dropdown */
+  .sort-dropdown { position: relative; }
+  .sort-toggle {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #1e2d42;
+    color: #64748b;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .sort-toggle.active { background: #1e2d42; color: #4ade80; border-color: #2d4060; }
+  .sort-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #0c1520;
+    border: 1px solid #1e2d42;
+    border-radius: 12px;
+    padding: 6px;
+    z-index: 50;
+    min-width: 230px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transform-origin: top left;
+    transform: scaleY(0.85) translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.18s cubic-bezier(0.34,1.2,0.64,1), opacity 0.14s;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .sort-dropdown.open .sort-panel { transform: scaleY(1) translateY(0); opacity: 1; pointer-events: all; }
+  .sort-option {
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    text-align: left;
+    width: 100%;
+    transition: background 0.1s, color 0.1s;
+  }
+  .sort-option:hover { background: #1e2d42; color: #e2e8f0; }
+  .sort-option.active { background: #1a2d1a; color: #4ade80; font-weight: 600; }
+
   .search-input {
     margin-left: auto;
     background: #0c1520;
@@ -438,43 +546,8 @@
   <!-- Overview tab -->
   <div id="overview" class="tab-content active">
 
-    <!-- Form card -->
-    <details class="form-card" open>
-      <summary>＋ Artikel hinzufügen / bearbeiten</summary>
-      <div class="form-grid">
-        <div>
-          <div style="font-size:10px;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Kaufplattform</div>
-          <select id="platform" class="form-input">
-            <option value="eBay">eBay</option>
-            <option value="Kleinanzeigen">Kleinanzeigen</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:10px;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Verkaufsplattform</div>
-          <select id="sell_platform" class="form-input">
-            <option value="">— noch nicht verkauft —</option>
-            <option value="eBay">eBay</option>
-            <option value="Kleinanzeigen">Kleinanzeigen</option>
-          </select>
-        </div>
-        <input id="order" class="form-input" placeholder="Bestellnummer">
-        <input id="date" type="date" class="form-input">
-        <input id="buyPrice" type="number" class="form-input" placeholder="Einkaufspreis €">
-        <select id="status" class="form-input">
-          <option value="Gekauft">Gekauft</option>
-          <option value="Lager">Lager</option>
-          <option value="Verkauft">Verkauft</option>
-        </select>
-        <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
-        <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
-        <label class="file-upload-label" for="image">
-          <span>📤</span>
-          <span id="fileName">Bild hochladen</span>
-        </label>
-        <input id="image" type="file" accept="image/*" style="display:none" onchange="updateFileName()">
-        <button class="btn btn-primary" onclick="saveItem()" style="grid-column: span 2">Speichern</button>
-      </div>
-    </details>
+    <!-- Add item button -->
+    <button class="btn-add-item" onclick="openNewModal()">＋ Artikel hinzufügen</button>
 
     <!-- Action bar -->
     <div class="action-bar">
@@ -487,15 +560,18 @@
         <button class="pill" onclick="setFilter('Verkauft', this)">Verkauft</button>
         <button class="pill" onclick="setFilter('Gekauft', this)">Gekauft</button>
       </div>
-      <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
-        <option value="date-desc">📅 Datum: Neueste zuerst</option>
-        <option value="date-asc">📅 Datum: Älteste zuerst</option>
-        <option value="status-group">📦 Status: Verkauft → Lager → Gekauft</option>
-        <option value="profit-desc">💰 Profit: Höchster zuerst</option>
-        <option value="profit-asc">💰 Profit: Niedrigster zuerst</option>
-        <option value="buy-desc">🛒 Einkauf: Höchster zuerst</option>
-        <option value="buy-asc">🛒 Einkauf: Niedrigster zuerst</option>
-      </select>
+      <div class="sort-dropdown" id="sortDropdown">
+        <button class="sort-toggle" id="sortToggle" onclick="toggleSortDropdown()">↕ Neueste zuerst ▾</button>
+        <div class="sort-panel">
+          <button class="sort-option active" onclick="setSortOption('date-desc','Neueste zuerst',this)">📅 Datum: Neueste zuerst</button>
+          <button class="sort-option" onclick="setSortOption('date-asc','Älteste zuerst',this)">📅 Datum: Älteste zuerst</button>
+          <button class="sort-option" onclick="setSortOption('status-group','Status-Gruppen',this)">📦 Status: Verkauft → Lager → Gekauft</button>
+          <button class="sort-option" onclick="setSortOption('profit-desc','Profit ↓',this)">💰 Profit: Höchster zuerst</button>
+          <button class="sort-option" onclick="setSortOption('profit-asc','Profit ↑',this)">💰 Profit: Niedrigster zuerst</button>
+          <button class="sort-option" onclick="setSortOption('buy-desc','Einkauf ↓',this)">🛒 Einkauf: Höchster zuerst</button>
+          <button class="sort-option" onclick="setSortOption('buy-asc','Einkauf ↑',this)">🛒 Einkauf: Niedrigster zuerst</button>
+        </div>
+      </div>
       <input class="search-input" id="search" placeholder="🔎 Bestellnummer suchen...">
     </div>
 
@@ -586,6 +662,49 @@
 
 </div><!-- /main -->
 
+<!-- Item modal -->
+<div class="modal-overlay" id="item-modal" onclick="onModalOverlayClick(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Artikel hinzufügen</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div>
+        <div style="font-size:10px;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Kaufplattform</div>
+        <select id="platform" class="form-input">
+          <option value="eBay">eBay</option>
+          <option value="Kleinanzeigen">Kleinanzeigen</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Verkaufsplattform</div>
+        <select id="sell_platform" class="form-input">
+          <option value="">— noch nicht verkauft —</option>
+          <option value="eBay">eBay</option>
+          <option value="Kleinanzeigen">Kleinanzeigen</option>
+        </select>
+      </div>
+      <input id="order" class="form-input" placeholder="Bestellnummer">
+      <input id="date" type="date" class="form-input">
+      <input id="buyPrice" type="number" class="form-input" placeholder="Einkaufspreis €">
+      <select id="status" class="form-input">
+        <option value="Gekauft">Gekauft</option>
+        <option value="Lager">Lager</option>
+        <option value="Verkauft">Verkauft</option>
+      </select>
+      <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
+      <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
+      <label class="file-upload-label" for="image">
+        <span>📤</span>
+        <span id="fileName">Bild hochladen</span>
+      </label>
+      <input id="image" type="file" accept="image/*" style="display:none" onchange="updateFileName()">
+      <button class="btn btn-primary" onclick="saveItem()" style="grid-column: span 2">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 let currentUser = null;
@@ -601,6 +720,50 @@ function setSort(value) {
   currentPage = 1;
   renderItems();
 }
+
+function openModal(title) {
+  document.getElementById('modal-title').textContent = title || 'Artikel hinzufügen';
+  document.getElementById('item-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('item-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  clearForm();
+}
+
+function openNewModal() {
+  clearForm();
+  openModal('Artikel hinzufügen');
+}
+
+function onModalOverlayClick(e) {
+  if (e.target === document.getElementById('item-modal')) closeModal();
+}
+
+function toggleSortDropdown() {
+  document.getElementById('sortDropdown').classList.toggle('open');
+}
+
+function setSortOption(value, label, el) {
+  setSort(value);
+  document.querySelectorAll('.sort-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  const toggle = document.getElementById('sortToggle');
+  toggle.classList.add('active');
+  toggle.textContent = '↕ ' + label + ' ▾';
+  document.getElementById('sortDropdown').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  const dd = document.getElementById('sortDropdown');
+  if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
 
 const PLATFORM_SHORT = { 'eBay': 'eBay', 'Kleinanzeigen': 'KA' };
 function fmtPlatform(p) { return PLATFORM_SHORT[p] || p; }
@@ -792,7 +955,7 @@ async function saveItem() {
   }
 
   editId = null;
-  clearForm();
+  closeModal();
   await loadItems();
 }
 
@@ -831,7 +994,7 @@ function editItem(id) {
   trackingEl.value = item.tracking || '';
   trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
   editId = id;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  openModal('Artikel bearbeiten');
 }
 
 function setFilter(f, btn) {
