@@ -242,17 +242,7 @@
   input[type="date"].form-input.has-value::-webkit-datetime-edit-year-field { color: #e2e8f0; }
 
   .file-upload-label {
-    background: #0f1923;
-    border: 1px solid #1e2d42;
-    border-radius: 8px;
-    padding: 9px 12px;
-    color: #334155;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
+    display: none;
   }
 
   /* Action bar */
@@ -695,11 +685,7 @@
       </select>
       <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
       <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
-      <label class="file-upload-label" for="image">
-        <span>📤</span>
-        <span id="fileName">Bild hochladen</span>
-      </label>
-      <input id="image" type="file" accept="image/*" style="display:none" onchange="updateFileName()">
+      <input id="imageUrl" class="form-input" placeholder="Bild-URL (z.B. https://i.ebayimg.com/..." style="grid-column: span 2">
       <button class="btn btn-primary" onclick="saveItem()" style="grid-column: span 2">Speichern</button>
     </div>
   </div>
@@ -782,8 +768,7 @@ const buyPriceEl = document.getElementById('buyPrice');
 const statusEl = document.getElementById('status');
 const trackingEl = document.getElementById('tracking');
 const sellPriceEl = document.getElementById('sellPrice');
-const imageEl = document.getElementById('image');
-const fileNameEl = document.getElementById('fileName');
+const imageUrlEl = document.getElementById('imageUrl');
 const searchEl = document.getElementById('search');
 const tableBodyEl = document.getElementById('tableBody');
 const pageInfoEl = document.getElementById('pageInfo');
@@ -859,12 +844,6 @@ async function loadSharedItems(ownerId) {
   renderItems();
 }
 
-function updateFileName() {
-  fileNameEl.textContent = imageEl.files[0]?.name || 'Bild hochladen';
-}
-
-imageEl.addEventListener('change', updateFileName);
-
 searchEl.addEventListener('input', () => {
   currentPage = 1;
   renderItems();
@@ -885,46 +864,8 @@ function formatDate(dateStr) {
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 }
 
-function optimizeImage(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const maxWidth = 900, maxHeight = 900;
-        let { width, height } = img;
-        const scale = Math.min(1, maxWidth / width, maxHeight / height);
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
-      };
-      img.onerror = () => resolve(reader.result || '');
-      img.src = reader.result;
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
 async function saveItem() {
-  const file = imageEl.files[0];
-  let imageData = null;
-
-  if (file) {
-    try {
-      imageData = await optimizeImage(file);
-    } catch (_) {
-      alert('Bild konnte nicht verarbeitet werden. Bitte erneut versuchen.');
-      return;
-    }
-  } else if (editId) {
-    const existing = items.find(i => i.id === editId);
-    imageData = existing?.image || null;
-  }
+  const imageData = imageUrlEl.value.trim() || (editId ? (items.find(i => i.id === editId)?.image || null) : null);
 
   const data = {
     platform: platformEl.value,
@@ -973,8 +914,7 @@ function clearForm() {
   statusEl.value = 'Gekauft';
   sellPriceEl.value = '';
   sellPlatformEl.value = '';
-  imageEl.value = '';
-  updateFileName();
+  imageUrlEl.value = '';
   trackingEl.value = '';
   trackingEl.style.display = 'block';
   editId = null;
@@ -991,6 +931,7 @@ function editItem(id) {
   buyPriceEl.value = item.buy_price;
   statusEl.value = item.status;
   sellPriceEl.value = item.sell_price || '';
+  imageUrlEl.value = item.image && !item.image.startsWith('data:') ? item.image : '';
   trackingEl.value = item.tracking || '';
   trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
   editId = id;
