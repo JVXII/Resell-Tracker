@@ -1,11 +1,12 @@
 const express = require('express');
 const session = require('express-session');
 const { DatabaseSync } = require('node:sqlite');
-const { applySchema } = require('../db');
+const { applySchema, applyMigrations } = require('../db');
 
 function createTestDb() {
   const db = new DatabaseSync(':memory:');
   applySchema(db);
+  applyMigrations(db); // mirror production schema (adds items.sell_platform)
   return db;
 }
 

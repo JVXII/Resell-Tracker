@@ -58,4 +58,4 @@ if (process.env.NODE_ENV !== 'test') {
   applyMigrations(db);
 }
 
-module.exports = { applySchema, get db() { return db; } };
+module.exports = { applySchema, applyMigrations, get db() { return db; } };
