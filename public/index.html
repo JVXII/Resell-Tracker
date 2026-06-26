@@ -24,8 +24,8 @@
   .sidebar::-webkit-scrollbar{display:none;}
   .brand{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 16px;}
   .brand-left{display:flex;align-items:center;gap:10px;}
-  .brand-logo{width:34px;height:34px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center;}
-  .brand-logo svg{width:20px;height:20px;color:#000;}
+  .brand-logo{width:38px;height:38px;display:flex;align-items:center;justify-content:center;}
+  .brand-logo img{width:38px;height:38px;display:block;}
   .brand-name{font-size:17px;font-weight:900;letter-spacing:-0.02em;}
   .nav-section{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:14px 10px 6px;}
   .nav-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:var(--dim);font-size:14px;font-weight:600;cursor:pointer;transition:background .16s,color .16s;}
@@ -266,6 +266,9 @@
     .mh-side{display:flex;align-items:center;gap:8px;flex:1;}
     .mh-side.right{justify-content:flex-end;}
     .mh-title{font-size:17px;font-weight:800;letter-spacing:-0.02em;}
+    .mh-brand{display:flex;align-items:center;gap:8px;}
+    .mh-mark{width:26px;height:26px;display:block;}
+    .mh-word{font-size:16px;font-weight:900;letter-spacing:-0.02em;}
     .mh-avatar{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--hairline-strong);cursor:pointer;}
     .mh-btn{width:38px;height:38px;border-radius:50%;background:transparent;border:none;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;}
     .mh-btn svg{width:20px;height:20px;}
@@ -309,8 +312,8 @@
 <aside class="sidebar">
   <div class="brand">
     <div class="brand-left">
-      <div class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
-      <div class="brand-name">Resell<span style="color:var(--green)">.</span></div>
+      <div class="brand-logo"><img src="/resell_tracker_icon.svg" alt="Resell.Tracker"></div>
+      <div class="brand-name">Resell<span style="color:var(--green)">.</span>Tracker</div>
     </div>
   </div>
 
@@ -386,7 +389,10 @@
   <!-- Mobile header -->
   <div class="mobile-header">
     <div class="mh-side"><img id="mh-avatar" class="mh-avatar" alt="" onclick="logout()" title="Logout"></div>
-    <div class="mh-title" id="mh-title">Übersicht</div>
+    <div class="mh-brand">
+      <img class="mh-mark" src="/resell_tracker_icon.svg" alt="">
+      <span class="mh-word">Resell<span style="color:var(--green)">.</span>Tracker</span>
+    </div>
     <div class="mh-side right">
       <button class="mh-btn" onclick="toggleMobileSearch()" aria-label="Suche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
       <button class="mh-btn" onclick="toggleShare()" aria-label="Teilen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
