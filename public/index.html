@@ -15,6 +15,9 @@
     --hairline:rgba(255,255,255,0.07);--hairline-strong:rgba(255,255,255,0.12);
     --text:#f6f6f7;--dim:#8e8e93;--faint:#5b5b60;
     --green:#32d74b;--green-soft:rgba(50,215,75,0.12);--red:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;--purple:#7d5cff;--pink:#ff4d8d;
+    --ease-out:cubic-bezier(0.23,1,0.32,1);
+    --ease-in-out:cubic-bezier(0.77,0,0.175,1);
+    --ease-drawer:cubic-bezier(0.32,0.72,0,1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);font-family:'Satoshi',-apple-system,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;}
@@ -212,10 +215,12 @@
   .page-btn svg{width:16px;height:16px;}
 
   /* ===== Modal ===== */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;}
-  .modal-overlay.open{opacity:1;pointer-events:all;}
-  .modal-card{background:var(--surface-2);border:1px solid var(--hairline);border-radius:24px;padding:26px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;transform:translateY(28px) scale(0.96);opacity:0;transition:transform .3s cubic-bezier(0.34,1.5,0.64,1),opacity .22s;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(0px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .26s var(--ease-out),backdrop-filter .26s var(--ease-out);}
+  .modal-overlay.open{opacity:1;pointer-events:all;backdrop-filter:blur(8px);}
+  .modal-card{background:var(--surface-2);border:1px solid var(--hairline);border-radius:24px;padding:26px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;transform:translateY(18px) scale(0.95);opacity:0;transition:transform .3s var(--ease-out),opacity .2s var(--ease-out);box-shadow:0 30px 80px rgba(0,0,0,0.55);}
   .modal-overlay.open .modal-card{transform:translateY(0) scale(1);opacity:1;}
+  .modal-overlay.closing{opacity:0;backdrop-filter:blur(0px);transition-duration:170ms;}
+  .modal-overlay.closing .modal-card{transform:scale(0.97);opacity:0;transition-duration:150ms;}
   .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
   .modal-title{font-size:18px;font-weight:900;letter-spacing:-0.02em;}
   .modal-close{background:var(--icon-bg);border:none;color:var(--dim);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
@@ -382,6 +387,29 @@
   @media (max-width:900px){
     .lbl-layout{grid-template-columns:1fr;}
     .lbl-controls{position:static;}
+  }
+
+  /* ===== Motion polish (cleane Transitions, Luma/Emil-Stil) ===== */
+  .btn,.btn-add,.lbl-go,.uc-btn,.pill,.page-btn,.icon-btn,.mh-btn,.share-btn,.sort-toggle,.lbl-preset,.period-btn,.modal-close,.logout-btn,.reimb-toggle,.dropdown{
+    transition:transform 150ms var(--ease-out),background .18s ease,color .16s ease,border-color .16s ease,box-shadow .2s var(--ease-out),opacity .18s ease;
+  }
+  .btn:active,.btn-add:active,.lbl-go:active,.uc-btn:active,.pill:active,.page-btn:active,.icon-btn:active,.mh-btn:active,.share-btn:active,.sort-toggle:active,.lbl-preset:active,.period-btn:active,.modal-close:active,.logout-btn:active,.reimb-toggle:active,.dropdown:active{transform:scale(0.96);}
+  .lbl-go:disabled:active{transform:none;}
+  .bottom-nav-item:active,.bottom-nav .fab:active{transform:scale(0.92);}
+  .item-row,.mv-row{transition:background .16s ease,transform 130ms var(--ease-out);}
+  .nav-link:active,.item-row:active,.mv-row:active,.sale-row:active,.stat-item.clickable:active,.metric.clickable:active{transform:scale(0.99);}
+
+  .sort-panel{transition:transform .2s var(--ease-out),opacity .16s var(--ease-out);}
+  .toast{transition:opacity .3s var(--ease-out),transform .42s var(--ease-drawer);}
+
+  /* Dashboard-Karten gestaffelt beim (Wieder-)Öffnen */
+  .desktop-only>*{animation:cardRise .5s var(--ease-out) both;}
+  .desktop-only>*:nth-child(2){animation-delay:.05s;}
+  .desktop-only>*:nth-child(3){animation-delay:.1s;}
+  @keyframes cardRise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   }
 </style>
 </head>
@@ -781,8 +809,8 @@ let sortBy = 'date-desc';
 let accountBalance = 0;
 
 function setSort(value){ sortBy=value; currentPage=1; renderItems(); }
-function openModal(title){ document.getElementById('modal-title').textContent=title||'Artikel hinzufügen'; document.getElementById('item-modal').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(){ document.getElementById('item-modal').classList.remove('open'); document.body.style.overflow=''; clearForm(); }
+function openModal(title){ document.getElementById('modal-title').textContent=title||'Artikel hinzufügen'; const o=document.getElementById('item-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(){ const o=document.getElementById('item-modal'); if(!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>{ o.classList.remove('closing'); clearForm(); },180); }
 function openNewModal(){ clearForm(); document.getElementById('editExtra').style.display='none'; openModal('Artikel hinzufügen'); }
 function onModalOverlayClick(e){ if(e.target===document.getElementById('item-modal')) closeModal(); }
 function toggleSortDropdown(){ document.getElementById('sortDropdown').classList.toggle('open'); }
@@ -881,11 +909,11 @@ async function saveItem(){
   if(editId) data.id=editId;
   const method=editId?'PUT':'POST'; const url=editId?`/api/items/${editId}`:'/api/items';
   const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  if(!res.ok){ const err=await res.json(); alert('Fehler: '+(err.errors?.join(', ')||err.error)); return; }
-  editId=null; closeModal(); await loadItems();
+  if(!res.ok){ const err=await res.json(); toast('Fehler: '+(err.errors?.join(', ')||err.error)); return; }
+  const wasEdit=!!editId; editId=null; closeModal(); await loadItems(); toast(wasEdit?'Gespeichert ✓':'Artikel hinzugefügt ✓');
 }
 
-async function deleteItem(id){ if(!confirm('Produkt löschen?')) return; await fetch(`/api/items/${id}`,{method:'DELETE'}); await loadItems(); }
+async function deleteItem(id){ if(!confirm('Produkt löschen?')) return; await fetch(`/api/items/${id}`,{method:'DELETE'}); await loadItems(); toast('Gelöscht'); }
 
 function clearForm(){ orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; trackingEl.value=''; trackingEl.style.display='block'; editId=null; }
 
@@ -1154,14 +1182,14 @@ function renderPlatformChart(){
 }
 
 /* ===== Balance ===== */
-function openBalanceModal(){ document.getElementById('balanceInput').value=accountBalance||''; document.getElementById('balance-modal').classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('balanceInput').focus(),120); }
-function closeBalanceModal(){ document.getElementById('balance-modal').classList.remove('open'); document.body.style.overflow=''; }
+function openBalanceModal(){ document.getElementById('balanceInput').value=accountBalance||''; const o=document.getElementById('balance-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('balanceInput').focus(),120); }
+function closeBalanceModal(){ const o=document.getElementById('balance-modal'); if(!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>o.classList.remove('closing'),180); }
 function onBalanceOverlay(e){ if(e.target===document.getElementById('balance-modal')) closeBalanceModal(); }
-async function saveBalance(){ const v=parseFloat(document.getElementById('balanceInput').value)||0; const r=await fetch('/api/profile/balance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({balance:v})}); if(r.ok){ accountBalance=v; closeBalanceModal(); renderDashboard(); renderMobile(); } else { alert('Kontostand konnte nicht gespeichert werden.'); } }
+async function saveBalance(){ const v=parseFloat(document.getElementById('balanceInput').value)||0; const r=await fetch('/api/profile/balance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({balance:v})}); if(r.ok){ accountBalance=v; closeBalanceModal(); renderDashboard(); renderMobile(); toast('Kontostand gespeichert ✓'); } else { toast('Kontostand konnte nicht gespeichert werden.'); } }
 
 /* ===== Import / Export / Share ===== */
 async function exportBackup(){ window.location.href='/api/items/export'; }
-async function importBackup(file){ if(!file) return; const text=await file.text(); let data; try{ data=JSON.parse(text); }catch{ alert('Ungültige JSON-Datei'); return; } const res=await fetch('/api/items/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); const result=await res.json(); alert(`Import: ${result.imported} importiert, ${result.skipped} übersprungen`); await loadItems(); }
+async function importBackup(file){ if(!file) return; const text=await file.text(); let data; try{ data=JSON.parse(text); }catch{ toast('Ungültige JSON-Datei'); return; } const res=await fetch('/api/items/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); const result=await res.json(); await loadItems(); toast(`Import: ${result.imported} importiert, ${result.skipped} übersprungen`); }
 
 async function toggleShare(){ const panel=document.getElementById('share-panel'); if(panel.style.display==='none'){ panel.style.display='block'; showTab('overview'); window.scrollTo({top:0,behavior:'smooth'}); await loadSharePanel(); } else { panel.style.display='none'; } }
 async function loadSharePanel(){ const [inviteRes,membersRes]=await Promise.all([fetch('/api/share/invite'),fetch('/api/share/members')]); const {token}=await inviteRes.json(); const members=await membersRes.json(); document.getElementById('invite-link').value=`${location.origin}/api/share/join/${token}`; renderMembers(members); }

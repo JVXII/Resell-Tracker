@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resell Tracker — Animations-Demo</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000;--surface:#0c0c0d;--surface-2:#111113;--surface-hover:#161618;--icon-bg:#1a1a1c;
+    --hairline:rgba(255,255,255,0.07);--hairline-strong:rgba(255,255,255,0.12);
+    --text:#f6f6f7;--dim:#8e8e93;--faint:#5b5b60;
+    --green:#32d74b;--green-soft:rgba(50,215,75,0.12);--red:#ff453a;
+
+    /* Emil-style strong easing curves */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#070708;font-family:'Satoshi',-apple-system,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;padding:48px 20px 120px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  .intro{text-align:center;margin-bottom:40px;}
+  .intro .tag{display:inline-block;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hairline);padding:5px 12px;border-radius:100px;margin-bottom:14px;}
+  .intro h1{font-size:26px;font-weight:900;letter-spacing:-0.03em;}
+  .intro p{font-size:14px;color:var(--dim);margin-top:8px;font-weight:500;line-height:1.6;}
+
+  .section{background:var(--surface);border:1px solid var(--hairline);border-radius:22px;padding:24px;margin-bottom:18px;}
+  .section h2{font-size:16px;font-weight:800;letter-spacing:-0.01em;margin-bottom:5px;}
+  .section .desc{font-size:13px;color:var(--dim);font-weight:500;margin-bottom:18px;line-height:1.5;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+  /* ---------- Buttons: press feedback ---------- */
+  .btn{padding:11px 18px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;
+       transition:transform 150ms var(--ease-out), background 180ms ease, box-shadow 200ms var(--ease-out);}
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{background:var(--green);color:#000;}
+  .btn-primary:hover{box-shadow:0 8px 22px rgba(50,215,75,0.28);}
+  .btn-ghost{background:var(--bg);color:var(--text);border:1px solid var(--hairline);}
+  .btn-ghost:hover{background:var(--surface-hover);}
+
+  /* like-button with blur content swap */
+  .like{position:relative;overflow:hidden;}
+  .like .lbl{display:inline-flex;align-items:center;gap:7px;transition:filter 200ms ease, opacity 200ms ease, transform 220ms var(--ease-out);}
+  .like.busy .lbl{filter:blur(3px);opacity:0;transform:scale(0.9);}
+  .like .lbl2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;opacity:0;filter:blur(3px);transform:scale(1.1);transition:filter 200ms ease, opacity 200ms ease, transform 220ms var(--ease-out);color:var(--green);}
+  .like.busy .lbl2{opacity:1;filter:blur(0);transform:scale(1);}
+  .btn svg{width:16px;height:16px;}
+
+  /* ---------- Modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(0px);
+           display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;
+           opacity:0;pointer-events:none;transition:opacity 260ms var(--ease-out), backdrop-filter 260ms var(--ease-out);}
+  .overlay.open{opacity:1;pointer-events:auto;backdrop-filter:blur(8px);}
+  .modal{background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:22px;padding:26px;width:100%;max-width:420px;
+         transform-origin:center;transform:scale(0.94) translateY(8px);opacity:0;
+         transition:transform 300ms var(--ease-out), opacity 200ms var(--ease-out);box-shadow:0 30px 80px rgba(0,0,0,0.6);}
+  .overlay.open .modal{transform:scale(1) translateY(0);opacity:1;}
+  .overlay.closing{opacity:0;backdrop-filter:blur(0px);transition-duration:180ms;}
+  .overlay.closing .modal{transform:scale(0.97);opacity:0;transition-duration:160ms;}
+  .modal h3{font-size:18px;font-weight:900;letter-spacing:-0.02em;margin-bottom:8px;}
+  .modal p{font-size:14px;color:var(--dim);line-height:1.55;margin-bottom:20px;font-weight:500;}
+  .modal .row{justify-content:flex-end;}
+
+  /* ---------- Dropdown (origin-aware) ---------- */
+  .dd{position:relative;display:inline-block;}
+  .dd-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:190px;background:var(--surface-2);border:1px solid var(--hairline);
+           border-radius:14px;padding:6px;z-index:50;box-shadow:0 18px 50px rgba(0,0,0,0.5);
+           transform-origin:top left;transform:scale(0.92) translateY(-6px);opacity:0;pointer-events:none;
+           transition:transform 200ms var(--ease-out), opacity 160ms var(--ease-out);}
+  .dd.open .dd-menu{transform:scale(1) translateY(0);opacity:1;pointer-events:auto;}
+  .dd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:14px;font-weight:600;color:var(--dim);cursor:pointer;transition:background 120ms ease, color 120ms ease;}
+  .dd-item:hover{background:var(--surface-hover);color:var(--text);}
+
+  /* ---------- Accordion (clean height) ---------- */
+  .acc{border:1px solid var(--hairline);border-radius:14px;overflow:hidden;background:var(--bg);}
+  .acc-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;cursor:pointer;font-size:15px;font-weight:700;user-select:none;}
+  .acc-head svg{width:18px;height:18px;color:var(--dim);transition:transform 280ms var(--ease-out);}
+  .acc.open .acc-head svg{transform:rotate(180deg);}
+  .acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms var(--ease-drawer);}
+  .acc.open .acc-body{grid-template-rows:1fr;}
+  .acc-inner{overflow:hidden;}
+  .acc-inner p{padding:0 18px 16px;font-size:14px;color:var(--dim);line-height:1.6;font-weight:500;}
+
+  /* ---------- Tabs (clip-path color transition) ---------- */
+  .tabs{position:relative;display:inline-flex;background:var(--bg);border:1px solid var(--hairline);border-radius:100px;padding:4px;}
+  .tabs .seg{position:relative;padding:9px 20px;font-size:13px;font-weight:700;color:var(--dim);cursor:pointer;z-index:2;transition:color 240ms var(--ease-out);}
+  .tab-pill{position:absolute;top:4px;bottom:4px;border-radius:100px;background:var(--text);z-index:1;
+            transition:transform 360ms var(--ease-out), width 360ms var(--ease-out);}
+  .tabs .seg.active{color:#000;}
+
+  /* ---------- Toast ---------- */
+  .toast-area{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:10px;z-index:200;align-items:center;}
+  .toast{display:flex;align-items:center;gap:11px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:14px;padding:13px 18px;font-size:14px;font-weight:700;box-shadow:0 16px 40px rgba(0,0,0,0.5);
+         transform:translateY(120%) scale(0.95);opacity:0;transition:transform 420ms var(--ease-drawer), opacity 300ms var(--ease-out);}
+  .toast.show{transform:translateY(0) scale(1);opacity:1;}
+  .toast .ico{width:22px;height:22px;border-radius:50%;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;}
+  .toast .ico svg{width:13px;height:13px;}
+
+  /* ---------- Stagger list ---------- */
+  .stack{display:flex;flex-direction:column;gap:8px;}
+  .stack-item{background:var(--bg);border:1px solid var(--hairline);border-radius:12px;padding:13px 16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:12px;
+              opacity:0;transform:translateY(10px);}
+  .stack.run .stack-item{animation:rise 420ms var(--ease-out) forwards;}
+  .stack.run .stack-item:nth-child(1){animation-delay:0ms;}
+  .stack.run .stack-item:nth-child(2){animation-delay:55ms;}
+  .stack.run .stack-item:nth-child(3){animation-delay:110ms;}
+  .stack.run .stack-item:nth-child(4){animation-delay:165ms;}
+  @keyframes rise{to{opacity:1;transform:translateY(0);}}
+  .dot{width:34px;height:34px;border-radius:9px;background:var(--icon-bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--green);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition-duration:0.01ms !important;animation-duration:0.01ms !important;}
+    .overlay,.overlay .modal{transition-property:opacity !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <div class="tag">Animations-Demo</div>
+    <h1>Cleane Transitions</h1>
+    <p>Spielfeld für saubere Micro-Interactions (Klick-Feedback, Öffnen/Schließen) — im Stil von Luma. Nur CSS, GPU-beschleunigt, mit starken Easing-Kurven. Klick alles durch.</p>
+  </div>
+
+  <!-- Buttons -->
+  <div class="section">
+    <h2>1 · Button-Feedback</h2>
+    <div class="desc">Druck = <code>scale(0.96)</code>. Der „Gefällt mir"-Button tauscht den Inhalt mit Blur-Crossfade.</div>
+    <div class="row">
+      <button class="btn btn-primary">Primär</button>
+      <button class="btn btn-ghost">Sekundär</button>
+      <button class="btn btn-ghost like" id="likeBtn">
+        <span class="lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Gefällt mir</span>
+        <span class="lbl2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Gemerkt</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="section">
+    <h2>2 · Modal öffnen</h2>
+    <div class="desc">Scale 0.94 + Opacity, Backdrop blurt sanft ein. Schließen ist schneller als Öffnen. (Esc / Klick außerhalb schließt.)</div>
+    <button class="btn btn-primary" id="openModal">Dialog öffnen</button>
+  </div>
+
+  <!-- Dropdown -->
+  <div class="section">
+    <h2>3 · Dropdown (origin-aware)</h2>
+    <div class="desc">Skaliert aus der Ecke des Triggers heraus, nicht aus der Mitte.</div>
+    <div class="dd" id="dd">
+      <button class="btn btn-ghost" id="ddBtn">Optionen ▾</button>
+      <div class="dd-menu">
+        <div class="dd-item">Bearbeiten</div>
+        <div class="dd-item">Duplizieren</div>
+        <div class="dd-item">Teilen</div>
+        <div class="dd-item" style="color:var(--red)">Löschen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accordion -->
+  <div class="section">
+    <h2>4 · Aufklappen (Höhe)</h2>
+    <div class="desc">Sanfte Höhen-Animation über <code>grid-template-rows: 0fr → 1fr</code> — ohne feste Höhen.</div>
+    <div class="acc" id="acc">
+      <div class="acc-head" id="accHead">Was ist drin? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="acc-body"><div class="acc-inner"><p>Diese Zeile klappt mit einer ruhigen Drawer-Kurve auf und zu. Keine <code>max-height</code>-Tricks, kein Springen — die Höhe wird echt animiert.</p></div></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="section">
+    <h2>5 · Tabs (gleitende Pille)</h2>
+    <div class="desc">Die aktive Pille gleitet weich zur gewählten Position, Textfarbe wechselt synchron.</div>
+    <div class="tabs" id="tabs">
+      <div class="tab-pill" id="pill"></div>
+      <div class="seg active">Übersicht</div>
+      <div class="seg">Analytics</div>
+      <div class="seg">Labels</div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="section">
+    <h2>6 · Toast</h2>
+    <div class="desc">Kommt von unten rein (gleiche Richtung wie er geht — räumlich konsistent).</div>
+    <button class="btn btn-primary" id="toastBtn">Toast zeigen</button>
+  </div>
+
+  <!-- Stagger -->
+  <div class="section">
+    <h2>7 · Liste gestaffelt</h2>
+    <div class="desc">Einträge erscheinen nacheinander (55 ms Versatz) statt alle auf einmal.</div>
+    <button class="btn btn-ghost" id="staggerBtn" style="margin-bottom:14px">Neu abspielen</button>
+    <div class="stack run" id="stack">
+      <div class="stack-item"><span class="dot">N</span> Nike Air Max 90 · +45,00 €</div>
+      <div class="stack-item"><span class="dot">A</span> AirPods Pro 2 · +62,90 €</div>
+      <div class="stack-item"><span class="dot">S</span> Sony WH-1000XM4 · 128,00 €</div>
+      <div class="stack-item"><span class="dot">L</span> LEGO Star Wars · −8,00 €</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal markup -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Artikel löschen?</h3>
+    <p>Das kann nicht rückgängig gemacht werden. Der Eintrag wird dauerhaft entfernt.</p>
+    <div class="row">
+      <button class="btn btn-ghost" data-close>Abbrechen</button>
+      <button class="btn btn-primary" data-close>Löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-area" id="toastArea"></div>
+
+<script>
+  // Like button — blur content swap
+  const like = document.getElementById('likeBtn');
+  like.addEventListener('click', () => like.classList.toggle('busy'));
+
+  // Modal — open/close with faster exit
+  const overlay = document.getElementById('overlay');
+  const openModal = () => { overlay.classList.remove('closing'); overlay.classList.add('open'); };
+  const closeModal = () => {
+    overlay.classList.add('closing'); overlay.classList.remove('open');
+    setTimeout(() => overlay.classList.remove('closing'), 200);
+  };
+  document.getElementById('openModal').addEventListener('click', openModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay || e.target.hasAttribute('data-close')) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // Dropdown
+  const dd = document.getElementById('dd');
+  document.getElementById('ddBtn').addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('open'); });
+  document.addEventListener('click', () => dd.classList.remove('open'));
+
+  // Accordion
+  const acc = document.getElementById('acc');
+  document.getElementById('accHead').addEventListener('click', () => acc.classList.toggle('open'));
+
+  // Tabs sliding pill
+  const tabs = document.getElementById('tabs');
+  const pill = document.getElementById('pill');
+  const segs = [...tabs.querySelectorAll('.seg')];
+  function movePill(el) {
+    pill.style.width = el.offsetWidth + 'px';
+    pill.style.transform = `translateX(${el.offsetLeft - 4}px)`;
+  }
+  segs.forEach((s) => s.addEventListener('click', () => {
+    segs.forEach((x) => x.classList.remove('active')); s.classList.add('active'); movePill(s);
+  }));
+  requestAnimationFrame(() => movePill(segs[0]));
+
+  // Toast
+  let toastN = 0;
+  document.getElementById('toastBtn').addEventListener('click', () => {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Gespeichert · #' + (++toastN);
+    document.getElementById('toastArea').appendChild(t);
+    requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 450); }, 2600);
+  });
+
+  // Stagger replay
+  const stack = document.getElementById('stack');
+  document.getElementById('staggerBtn').addEventListener('click', () => {
+    stack.classList.remove('run'); void stack.offsetWidth; stack.classList.add('run');
+  });
+</script>
+</body>
+</html>
