@@ -49,6 +49,7 @@ app.use((req, res, next) => { req.db = db; next(); });
 // Routes
 app.use('/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
+app.use('/api/profile', require('./routes/profile'));
 app.use('/api/share', require('./routes/share'));
 app.use('/api/shared', require('./routes/shared'));
 

@@ -11,7 +11,8 @@ function applySchema(db) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       discord_id TEXT UNIQUE NOT NULL,
       username TEXT NOT NULL,
-      avatar TEXT
+      avatar TEXT,
+      balance REAL NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS items (
@@ -46,6 +47,7 @@ function applySchema(db) {
 
 function applyMigrations(db) {
   try { db.exec(`ALTER TABLE items ADD COLUMN sell_platform TEXT;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0;`); } catch (_) {}
 }
 
 let db;
