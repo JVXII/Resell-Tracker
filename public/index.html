@@ -304,6 +304,45 @@
     .bottom-nav .fab svg{width:25px;height:25px;}
   }
   @media (max-width:420px){ .metrics{grid-template-columns:1fr;} }
+
+  /* ===== Desktop/Mobile view switch ===== */
+  .desktop-only{display:block;}
+  .mobile-only{display:none;}
+  /* mobile app view (preview-redesign direction) */
+  .mv-hero{padding:6px 2px 16px;}
+  .mv-hlabel{font-size:13px;color:var(--dim);font-weight:600;margin-bottom:9px;}
+  .mv-hval{font-size:clamp(38px,12vw,46px);font-weight:900;letter-spacing:-0.03em;line-height:1;color:var(--green);}
+  .mv-delta{margin-top:13px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--green);background:var(--green-soft);padding:6px 12px;border-radius:100px;}
+  .mv-delta.neg{color:var(--red);background:rgba(255,69,58,0.12);}
+  .mv-delta svg{width:13px;height:13px;}
+  .mv-strip{display:flex;gap:9px;padding:0 0 20px;}
+  .mv-stat{flex:1;background:var(--surface);border:1px solid var(--hairline);border-radius:16px;padding:13px 12px;}
+  .mv-stat.clickable{cursor:pointer;}
+  .mv-stat .l{font-size:11px;color:var(--dim);font-weight:600;margin-bottom:6px;}
+  .mv-stat .v{font-size:18px;font-weight:800;letter-spacing:-0.02em;}
+  .mv-search{width:100%;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:11px 16px;color:var(--text);font-size:14px;font-family:inherit;margin-bottom:14px;}
+  .mv-search::placeholder{color:var(--faint);}
+  .mv-search:focus{outline:none;border-color:var(--hairline-strong);}
+  .mv-pills{display:flex;gap:7px;overflow-x:auto;padding-bottom:16px;scrollbar-width:none;}
+  .mv-pills::-webkit-scrollbar{display:none;}
+  .mv-sec{font-size:13px;color:var(--dim);font-weight:600;padding:8px 4px 10px;}
+  .mv-list{display:flex;flex-direction:column;margin-bottom:6px;}
+  .mv-row{display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:14px;cursor:pointer;}
+  .mv-row:active{background:var(--surface-hover);}
+  .mv-thumb{width:46px;height:46px;border-radius:13px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;background:var(--icon-bg);}
+  .mv-thumb img{width:100%;height:100%;object-fit:cover;}
+  .mv-thumb.b-ebay{background:#0c3a8c;}.mv-thumb.b-ka{background:#16683b;}
+  .mv-main{flex:1;min-width:0;}
+  .mv-title{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px;}
+  .mv-sub{font-size:13px;color:var(--dim);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mv-sub .ar{color:var(--faint);margin:0 2px;}
+  .reimb-dot{color:var(--green);font-size:9px;}
+  .mv-right{text-align:right;flex-shrink:0;}
+  .mv-amt{font-size:16px;font-weight:800;color:var(--text);}
+  .mv-amt.pos{color:var(--green);}.mv-amt.neg{color:var(--red);}
+  .mv-chev{color:var(--faint);flex-shrink:0;display:flex;}
+  .mv-chev svg{width:18px;height:18px;}
+  @media (max-width:900px){ .desktop-only{display:none;} .mobile-only{display:block;} }
 </style>
 </head>
 <body>
@@ -414,6 +453,31 @@
 
     <!-- ===== Overview / Dashboard ===== -->
     <div id="overview" class="tab-content active">
+
+      <!-- ===== Mobile app view (Handy — preview-redesign Richtung) ===== -->
+      <div class="mobile-only" id="mobileOverview">
+        <div class="mv-hero">
+          <div class="mv-hlabel">Gesamtprofit</div>
+          <div class="mv-hval" id="mvProfit">0€</div>
+          <div class="mv-delta" id="mvDelta" style="display:none"></div>
+        </div>
+        <div class="mv-strip">
+          <div class="mv-stat"><div class="l">Verkauft</div><div class="v" id="mvSold">0</div></div>
+          <div class="mv-stat"><div class="l">Im Lager</div><div class="v" id="mvStock">0</div></div>
+          <div class="mv-stat clickable" onclick="openBalanceModal()"><div class="l">Kapital</div><div class="v" id="mvKap">0€</div></div>
+        </div>
+        <input class="mv-search" id="mSearch" placeholder="🔎 Bestellnummer suchen..." style="display:none">
+        <div class="mv-pills">
+          <button class="pill active" onclick="setFilter('all', this)">Alle</button>
+          <button class="pill" onclick="setFilter('Lager', this)">Lager</button>
+          <button class="pill" onclick="setFilter('Verkauft', this)">Verkauft</button>
+          <button class="pill" onclick="setFilter('Gekauft', this)">Gekauft</button>
+        </div>
+        <div id="mGroups"></div>
+      </div>
+
+      <!-- ===== Desktop dashboard ===== -->
+      <div class="desktop-only">
 
       <!-- Row 1: metrics + goal -->
       <div class="row two-one">
@@ -551,6 +615,7 @@
         </div>
       </div>
 
+      </div><!-- /desktop-only -->
     </div><!-- /overview -->
 
     <!-- ===== Analytics / Charts ===== -->
@@ -674,6 +739,7 @@ const sellPriceEl=document.getElementById('sellPrice');
 const imageUrlEl=document.getElementById('imageUrl');
 const searchEl=document.getElementById('search');
 const searchTopEl=document.getElementById('searchTop');
+const mSearchEl=document.getElementById('mSearch');
 const tableBodyEl=document.getElementById('tableBody');
 const pageInfoEl=document.getElementById('pageInfo');
 const prevPageBtnEl=document.getElementById('prevPageBtn');
@@ -723,9 +789,11 @@ async function loadSharedItems(ownerId){
   renderItems(); renderDashboard();
 }
 
-searchEl.addEventListener('input', ()=>{ currentPage=1; if(searchTopEl) searchTopEl.value=searchEl.value; renderItems(); });
-if(searchTopEl) searchTopEl.addEventListener('input', ()=>{ searchEl.value=searchTopEl.value; currentPage=1; renderItems(); });
-function toggleMobileSearch(){ searchEl.classList.toggle('show'); if(searchEl.classList.contains('show')){ searchEl.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>searchEl.focus(),200);} }
+function syncSearch(val){ searchEl.value=val; if(searchTopEl) searchTopEl.value=val; if(mSearchEl) mSearchEl.value=val; currentPage=1; renderItems(); }
+searchEl.addEventListener('input', ()=>{ syncSearch(searchEl.value); });
+if(searchTopEl) searchTopEl.addEventListener('input', ()=>{ syncSearch(searchTopEl.value); });
+if(mSearchEl) mSearchEl.addEventListener('input', ()=>{ syncSearch(mSearchEl.value); });
+function toggleMobileSearch(){ if(!mSearchEl) return; const show=mSearchEl.style.display==='none'||!mSearchEl.style.display; mSearchEl.style.display=show?'block':'none'; if(show){ mSearchEl.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>mSearchEl.focus(),200);} }
 
 statusEl.addEventListener('change', ()=>{ trackingEl.style.display=statusEl.value==='Gekauft'?'block':'none'; });
 dateEl.addEventListener('change', ()=>{ dateEl.classList.toggle('has-value',!!dateEl.value); });
@@ -772,7 +840,6 @@ function showTab(tab){
   document.querySelectorAll(`.nav-link[data-tab="${tab}"], .bottom-nav-item[data-tab="${tab}"]`).forEach(el=>el.classList.add('active'));
   const title=tab==='charts'?'Analytics':'Übersicht';
   const h1=document.getElementById('page-h1'); if(h1) h1.textContent=title;
-  const mt=document.getElementById('mh-title'); if(mt) mt.textContent=title;
   if(tab==='charts'){ renderProfitChart(); renderChart(); renderPlatformChart(); }
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -831,6 +898,54 @@ function renderItems(){
   pageInfoEl.textContent=`Seite ${currentPage} / ${totalPages}`;
   prevPageBtnEl.style.visibility=currentPage===1?'hidden':'visible';
   nextPageBtnEl.style.visibility=currentPage===totalPages?'hidden':'visible';
+  renderMobile();
+}
+
+/* ===== Mobile app view (Handy) ===== */
+function arrowSvg(up){ return up
+  ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
+  : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>'; }
+
+function mobileRow(item){
+  const buy=item.buy_price||0, sell=item.sell_price||0, profit=sell-buy;
+  const cls=sell?(profit>=0?'pos':'neg'):'';
+  const valStr=sell?euroSigned(profit):buy.toFixed(2)+'€';
+  const pd=item.sell_platform?`${fmtPlatform(item.platform)} <span class="ar">→</span> ${fmtPlatform(item.sell_platform)}`:fmtPlatform(item.platform);
+  const initial=(item.order_nr||'?').trim().charAt(0).toUpperCase()||'?';
+  const inner=item.image?`<img src="${item.image}">`:initial;
+  const reimbDot=reimbursedItems[item.id]?`<span class="reimb-dot" title="Privates Geld erstattet">●</span>`:'';
+  return `<div class="mv-row" onclick="editItem(${item.id})">
+    <div class="mv-thumb ${thumbClass(item.platform)}">${inner}</div>
+    <div class="mv-main"><div class="mv-title">${item.order_nr||'—'}${reimbDot}</div><div class="mv-sub">${pd} · ${formatDate(item.date)}</div></div>
+    <div class="mv-right"><div class="mv-amt ${cls}">${valStr}</div><span class="badge status-${item.status}">${item.status}</span></div>
+    <div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+  </div>`;
+}
+
+function renderMobile(){
+  const cont=document.getElementById('mGroups'); if(!cont) return;
+  // stats from ALL items
+  let totalProfit=0, sold=0, stock=0, stockValue=0, monthProfit=0;
+  const nowYm=new Date().toISOString().slice(0,7);
+  items.forEach(i=>{ const b=i.buy_price||0,s=i.sell_price||0;
+    if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; if((i.date||'').slice(0,7)===nowYm) monthProfit+=s-b; }
+    if(i.status==='Lager'){ stock++; stockValue+=b; } });
+  const kap=accountBalance+stockValue;
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('mvProfit', euroSigned(totalProfit)); set('mvSold', sold); set('mvStock', stock); set('mvKap', kap.toFixed(2)+'€');
+  const dl=document.getElementById('mvDelta');
+  if(dl){ if(monthProfit!==0){ const up=monthProfit>=0; dl.style.display='inline-flex'; dl.className='mv-delta'+(up?'':' neg'); dl.innerHTML=`${arrowSvg(up)} ${up?'+':'−'}${Math.abs(monthProfit).toFixed(2)}€ diesen Monat`; } else dl.style.display='none'; }
+  // grouped, filtered list
+  const search=searchEl.value.toLowerCase();
+  const filt=items.filter(i=>{ if(filter!=='all' && i.status!==filter) return false; if(search && !String(i.order_nr||'').toLowerCase().includes(search)) return false; return true; });
+  const groups=[['Verkauft','Zuletzt verkauft'],['Lager','Im Lager'],['Gekauft','Gekauft']];
+  cont.innerHTML=''; let any=false;
+  groups.forEach(([st,label])=>{
+    const arr=filt.filter(i=>i.status===st).sort((a,b)=> new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01'));
+    if(arr.length===0) return; any=true;
+    cont.innerHTML+=`<div class="mv-sec">${label}</div><div class="mv-list">${arr.map(mobileRow).join('')}</div>`;
+  });
+  if(!any) cont.innerHTML=`<div class="empty-state"><div class="es-emoji">📦</div><div class="es-text">Keine Artikel gefunden</div></div>`;
 }
 
 /* ===== Dashboard widgets (use ALL items) ===== */
@@ -968,7 +1083,7 @@ function renderPlatformChart(){
 function openBalanceModal(){ document.getElementById('balanceInput').value=accountBalance||''; document.getElementById('balance-modal').classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('balanceInput').focus(),120); }
 function closeBalanceModal(){ document.getElementById('balance-modal').classList.remove('open'); document.body.style.overflow=''; }
 function onBalanceOverlay(e){ if(e.target===document.getElementById('balance-modal')) closeBalanceModal(); }
-async function saveBalance(){ const v=parseFloat(document.getElementById('balanceInput').value)||0; const r=await fetch('/api/profile/balance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({balance:v})}); if(r.ok){ accountBalance=v; closeBalanceModal(); renderDashboard(); } else { alert('Kontostand konnte nicht gespeichert werden.'); } }
+async function saveBalance(){ const v=parseFloat(document.getElementById('balanceInput').value)||0; const r=await fetch('/api/profile/balance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({balance:v})}); if(r.ok){ accountBalance=v; closeBalanceModal(); renderDashboard(); renderMobile(); } else { alert('Kontostand konnte nicht gespeichert werden.'); } }
 
 /* ===== Import / Export / Share ===== */
 async function exportBackup(){ window.location.href='/api/items/export'; }

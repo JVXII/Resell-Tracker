@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resell Tracker — Demo PC + Handy</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#000;--surface:#0c0c0d;--surface-2:#111113;--surface-hover:#161618;--icon-bg:#1a1a1c;
+    --hairline:rgba(255,255,255,0.07);--hairline-strong:rgba(255,255,255,0.12);
+    --text:#f6f6f7;--dim:#8e8e93;--faint:#5b5b60;
+    --green:#32d74b;--green-soft:rgba(50,215,75,0.12);--red:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;--purple:#7d5cff;--pink:#ff4d8d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#070708;font-family:'Satoshi',-apple-system,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;padding:40px 20px 80px;}
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:1240px;margin:0 auto;}
+  .demo-intro{text-align:center;margin-bottom:34px;}
+  .demo-intro .tag{display:inline-block;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hairline);padding:5px 12px;border-radius:100px;margin-bottom:14px;}
+  .demo-intro h1{font-size:24px;font-weight:900;letter-spacing:-0.02em;}
+  .demo-intro p{font-size:14px;color:var(--dim);margin-top:8px;font-weight:500;}
+  .section-label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin:38px 0 16px;}
+  .section-label::after{content:"";flex:1;height:1px;background:var(--hairline);}
+
+  /* ===== browser chrome ===== */
+  .browser{background:var(--bg);border:1px solid var(--hairline-strong);border-radius:18px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.7);}
+  .browser-bar{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#0a0a0b;border-bottom:1px solid var(--hairline);}
+  .dots{display:flex;gap:7px;}
+  .dots i{width:11px;height:11px;border-radius:50%;display:block;}
+  .dots i:nth-child(1){background:#ff5f57;}.dots i:nth-child(2){background:#febc2e;}.dots i:nth-child(3){background:#28c840;}
+  .urlbar{flex:1;background:var(--surface);border:1px solid var(--hairline);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--dim);font-weight:600;}
+
+  /* ===== Dashboard (PC) ===== */
+  .app{display:flex;min-height:660px;}
+  .sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--hairline);display:flex;flex-direction:column;padding:18px 14px;gap:3px;}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;}
+  .brand img{width:36px;height:36px;}
+  .brand-name{font-size:17px;font-weight:900;letter-spacing:-0.02em;}
+  .nav-section{font-size:10px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:14px 10px 6px;}
+  .nav-link{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;color:var(--dim);font-size:13px;font-weight:600;}
+  .nav-link svg{width:18px;height:18px;}
+  .nav-link.active{background:var(--text);color:#000;}
+  .nav-link .soon{margin-left:auto;font-size:9px;font-weight:700;color:var(--faint);background:var(--bg);border:1px solid var(--hairline);padding:2px 7px;border-radius:100px;}
+  .upgrade{margin-top:auto;background:linear-gradient(160deg,rgba(50,215,75,0.16),rgba(50,215,75,0.04));border:1px solid rgba(50,215,75,0.22);border-radius:16px;padding:16px;}
+  .upgrade h4{font-size:14px;font-weight:900;margin-bottom:5px;}
+  .upgrade p{font-size:11px;color:var(--dim);margin-bottom:12px;font-weight:500;line-height:1.5;}
+  .upgrade button{background:var(--green);color:#000;border:none;border-radius:9px;padding:9px;font-size:12px;font-weight:800;width:100%;font-family:inherit;}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{display:flex;align-items:center;gap:18px;padding:16px 22px;border-bottom:1px solid var(--hairline);}
+  .pt h1{font-size:18px;font-weight:900;letter-spacing:-0.02em;}
+  .pt p{font-size:12px;color:var(--dim);margin-top:2px;font-weight:500;}
+  .tsearch{flex:1;max-width:360px;margin:0 auto;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--hairline);border-radius:11px;padding:9px 14px;color:var(--faint);font-size:13px;font-weight:500;}
+  .tsearch svg{width:16px;height:16px;}
+  .tright{display:flex;align-items:center;gap:11px;}
+  .tprofile{display:flex;align-items:center;gap:9px;}
+  .tprofile img{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--hairline-strong);}
+  .tprofile .nm{font-size:13px;font-weight:700;}
+  .tprofile .ml{font-size:11px;color:var(--dim);}
+
+  .content{padding:18px 22px;display:flex;flex-direction:column;gap:16px;}
+  .grid21{display:grid;grid-template-columns:1.9fr 1fr;gap:16px;}
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:20px;padding:20px;}
+  .chead{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .ctitle{font-size:16px;font-weight:800;letter-spacing:-0.01em;}
+  .soonchip{font-size:11px;font-weight:700;color:var(--orange);background:rgba(255,159,10,0.13);padding:4px 11px;border-radius:100px;}
+  .drop{font-size:12px;font-weight:600;color:var(--dim);background:var(--bg);border:1px solid var(--hairline);border-radius:9px;padding:7px 12px;}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .metric{background:var(--bg);border:1px solid var(--hairline);border-radius:16px;padding:16px;}
+  .mtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .mico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+  .mico svg{width:20px;height:20px;color:#fff;}
+  .m-green{background:linear-gradient(145deg,#32d74b,#1a9c33);}.m-purple{background:linear-gradient(145deg,#7d5cff,#5a3fd6);}.m-pink{background:linear-gradient(145deg,#ff4d8d,#d62b6b);}.m-blue{background:linear-gradient(145deg,#0a84ff,#0860c4);}
+  .mchg{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px;}
+  .mchg.up{color:var(--green);}.mchg.down{color:var(--red);}
+  .mchg svg{width:12px;height:12px;}
+  .mval{font-size:24px;font-weight:900;letter-spacing:-0.03em;}
+  .mlabel{font-size:12px;color:var(--dim);font-weight:500;margin-top:4px;}
+  .msub{font-size:11px;color:var(--faint);font-weight:600;margin-top:5px;}
+
+  .gauge{position:relative;width:210px;height:138px;margin:6px auto 0;}
+  .gauge svg{width:100%;height:100%;overflow:visible;}
+  .gctr{position:absolute;left:0;right:0;top:46%;transform:translateY(-50%);text-align:center;}
+  .gpct{font-size:31px;font-weight:900;letter-spacing:-0.03em;}
+  .gsub{font-size:12px;color:var(--dim);font-weight:600;}
+  .gfoot{text-align:center;margin-top:10px;font-size:12px;color:var(--dim);font-weight:600;}
+  .gfoot b{color:var(--text);}
+
+  .legend{display:flex;gap:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);font-weight:600;}
+  .legend i{width:8px;height:8px;border-radius:50%;display:block;}
+  .chart-wrap{position:relative;height:230px;}
+
+  .sale{display:flex;align-items:center;gap:12px;padding:11px 0;}
+  .sale+.sale{border-top:1px solid var(--hairline);}
+  .sthumb{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;}
+  .b-ebay{background:#0c3a8c;}.b-ka{background:#16683b;}.b-pp{background:#7d5cff;}.b-pk{background:#d62b6b;}
+  .smain{flex:1;min-width:0;}
+  .sname{font-size:14px;font-weight:700;}
+  .stime{font-size:12px;color:var(--dim);margin-top:2px;}
+  .sprice{font-size:14px;font-weight:800;color:var(--green);}
+
+  .txhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .btn-add{background:var(--green);color:#000;border:none;padding:9px 15px;border-radius:11px;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:7px;font-family:inherit;}
+  .btn-add svg{width:15px;height:15px;}
+  .pills{display:flex;gap:7px;margin-bottom:14px;}
+  .pill{padding:7px 15px;border-radius:100px;font-size:12px;font-weight:600;border:1px solid var(--hairline);color:var(--dim);background:var(--bg);}
+  .pill.active{background:var(--text);color:#000;border-color:var(--text);}
+  .colhead{display:grid;grid-template-columns:48px minmax(0,1fr) 80px 80px 116px 18px;gap:12px;padding:0 12px 8px;}
+  .colhead .ch{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;text-align:right;}
+  .trow{display:grid;grid-template-columns:48px minmax(0,1fr) 80px 80px 116px 18px;gap:12px;align-items:center;padding:11px 12px;border-radius:14px;}
+  .trow:hover{background:var(--surface-hover);}
+  .trow+.trow{border-top:1px solid var(--hairline);}
+  .tthumb{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;}
+  .tt{font-size:15px;font-weight:700;}
+  .tsub{font-size:12px;color:var(--dim);margin-top:2px;}
+  .tsub .ar{color:var(--faint);}
+  .num{font-size:13px;font-weight:600;text-align:right;}
+  .num.muted{color:var(--faint);}
+  .pr{text-align:right;}
+  .amt{font-size:15px;font-weight:800;}
+  .amt.pos{color:var(--green);}.amt.neg{color:var(--red);}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;margin-top:4px;}
+  .s-verk{background:var(--green-soft);color:var(--green);}
+  .s-lag{background:rgba(255,159,10,0.13);color:var(--orange);}
+  .s-gek{background:rgba(125,155,255,0.15);color:#7d9bff;}
+  .chev{color:var(--faint);display:flex;justify-content:flex-end;}
+  .chev svg{width:17px;height:17px;}
+
+  /* ===== Phone (Handy) — preview-redesign direction ===== */
+  .phone-stage{display:flex;justify-content:center;}
+  .phone{width:390px;max-width:100%;background:var(--bg);border-radius:46px;border:1px solid #1c1c1e;box-shadow:0 0 0 10px #050505,0 40px 120px rgba(0,0,0,0.9),inset 0 0 0 1px rgba(255,255,255,0.03);overflow:hidden;position:relative;}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:118px;height:30px;background:#000;border-radius:100px;z-index:30;}
+  .screen{height:790px;overflow:hidden;position:relative;}
+  .ph-header{display:flex;align-items:center;justify-content:space-between;padding:54px 20px 10px;}
+  .ph-brand{display:flex;align-items:center;gap:8px;}
+  .ph-brand img{width:26px;height:26px;}
+  .ph-brand span{font-size:16px;font-weight:900;letter-spacing:-0.02em;}
+  .ph-acts{display:flex;gap:2px;}
+  .ph-ibtn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text);}
+  .ph-ibtn svg{width:20px;height:20px;}
+  .ph-body{padding:0 6px;}
+  .ph-hero{padding:14px 18px 18px;}
+  .ph-hlabel{font-size:13px;color:var(--dim);font-weight:600;margin-bottom:9px;}
+  .ph-hval{font-size:44px;font-weight:900;letter-spacing:-0.03em;line-height:1;color:var(--green);display:flex;align-items:baseline;gap:6px;}
+  .ph-hval .cur{font-size:24px;color:var(--dim);font-weight:700;}
+  .ph-delta{margin-top:13px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--green);background:var(--green-soft);padding:6px 12px;border-radius:100px;}
+  .ph-delta svg{width:13px;height:13px;}
+  .ph-strip{display:flex;gap:9px;padding:0 18px 26px;}
+  .ph-stat{flex:1;background:var(--surface);border:1px solid var(--hairline);border-radius:16px;padding:13px 12px;}
+  .ph-stat .l{font-size:11px;color:var(--dim);font-weight:600;margin-bottom:6px;}
+  .ph-stat .v{font-size:18px;font-weight:800;letter-spacing:-0.02em;}
+  .ph-sec{font-size:13px;color:var(--dim);font-weight:600;padding:4px 20px 10px;}
+  .ph-list{padding:0 12px;}
+  .ph-row{display:flex;align-items:center;gap:13px;padding:12px;border-radius:16px;}
+  .ph-thumb{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;}
+  .ph-main{flex:1;min-width:0;}
+  .ph-title{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin-bottom:3px;}
+  .ph-sub{font-size:13px;color:var(--dim);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ph-sub .ar{color:var(--faint);margin:0 2px;}
+  .ph-right{text-align:right;flex-shrink:0;}
+  .ph-amt{font-size:16px;font-weight:800;}
+  .ph-amt.pos{color:var(--green);}.ph-amt.neg{color:var(--red);}
+  .ph-chev{color:var(--faint);flex-shrink:0;}
+  .ph-chev svg{width:18px;height:18px;display:block;}
+  .ph-nav{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(28,28,30,0.82);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:100px;padding:7px;z-index:25;}
+  .ph-nav .it{width:50px;height:46px;border-radius:100px;display:flex;align-items:center;justify-content:center;color:var(--faint);}
+  .ph-nav .it svg{width:22px;height:22px;}
+  .ph-nav .it.active{color:var(--text);background:rgba(255,255,255,0.08);}
+  .ph-nav .fab{width:50px;height:46px;border-radius:100px;margin-left:4px;background:var(--text);color:#000;display:flex;align-items:center;justify-content:center;}
+  .ph-nav .fab svg{width:24px;height:24px;}
+
+  @media (max-width:1024px){ .app{flex-direction:column;min-height:0;} .sidebar{display:none;} .metrics{grid-template-columns:repeat(2,1fr);} .grid21{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="demo-intro">
+    <div class="tag">Demo · PC + Handy</div>
+    <h1>Resell Tracker — eine Linie, zwei Geräte</h1>
+    <p>PC: Dashboard-Layout · Handy: App-Stil (Richtung preview-redesign). Beispieldaten, neues Logo.</p>
+  </div>
+
+  <!-- ============ PC ============ -->
+  <div class="section-label">PC-Version</div>
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">sales.cc-8.de</div>
+    </div>
+    <div class="app">
+      <!-- sidebar -->
+      <aside class="sidebar">
+        <div class="brand"><img src="/resell_tracker_icon.svg" alt=""><div class="brand-name">Resell<span style="color:var(--green)">.</span>Tracker</div></div>
+        <div class="nav-section">Dashboard</div>
+        <div class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>Übersicht</div>
+        <div class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Artikel</div>
+        <div class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Analytics</div>
+        <div class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Benachrichtigungen<span class="soon">bald</span></div>
+        <div class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Teilen</div>
+        <div class="nav-section">Erweitert</div>
+        <div class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Einstellungen<span class="soon">bald</span></div>
+        <div class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Konto<span class="soon">bald</span></div>
+        <div class="upgrade"><h4>Pro freischalten</h4><p>Teams & mehr — bald.</p><button>Mehr erfahren</button></div>
+      </aside>
+      <!-- main -->
+      <div class="main">
+        <div class="topbar">
+          <div class="pt"><h1>Übersicht</h1><p>Behalte deine Verkäufe im Blick</p></div>
+          <div class="tsearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Bestellnummer suchen...</div>
+          <div class="tright"><div class="tprofile"><img src="https://cdn.discordapp.com/embed/avatars/0.png" alt=""><div><div class="nm">Jan-Erik</div><div class="ml">Resell Tracker</div></div></div></div>
+        </div>
+        <div class="content">
+          <div class="grid21">
+            <div class="card">
+              <div class="chead"><div class="ctitle">Kennzahlen</div><div class="drop">Gesamt ▾</div></div>
+              <div class="metrics">
+                <div class="metric"><div class="mtop"><div class="mico m-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span class="mchg up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>12%</span></div><div class="mval">+1.284€</div><div class="mlabel">Gesamtprofit</div></div>
+                <div class="metric"><div class="mtop"><div class="mico m-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12l8.73-5.04M12 22V12"/></svg></div><span class="mchg up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>9%</span></div><div class="mval">37</div><div class="mlabel">Verkaufte Artikel</div></div>
+                <div class="metric"><div class="mtop"><div class="mico m-pink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><span class="mchg up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>5%</span></div><div class="mval">2.450€</div><div class="mlabel">Umsatz</div></div>
+                <div class="metric"><div class="mtop"><div class="mico m-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><span class="mchg" style="color:var(--faint)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span></div><div class="mval">1.506€</div><div class="mlabel">Kapital</div><div class="msub">Konto 1.486€ · Lager 20€</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="chead"><div class="ctitle">Dein Ziel</div><span class="soonchip">Kommt später</span></div>
+              <div class="gauge">
+                <svg viewBox="0 0 210 138"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1a9c33"/><stop offset="0.6" stop-color="#32d74b"/><stop offset="1" stop-color="#a6ff5e"/></linearGradient></defs>
+                  <path d="M 22 128 A 83 83 0 1 1 188 128" fill="none" stroke="#1a1a1c" stroke-width="17" stroke-linecap="round"/>
+                  <path id="gArc" d="M 22 128 A 83 83 0 1 1 188 128" fill="none" stroke="url(#gg)" stroke-width="17" stroke-linecap="round"/>
+                </svg>
+                <div class="gctr"><div class="gpct">72%</div><div class="gsub">erreicht</div></div>
+              </div>
+              <div class="gfoot">Eigenes Ziel — <b>bald verfügbar</b></div>
+            </div>
+          </div>
+
+          <div class="grid21">
+            <div class="card">
+              <div class="chead"><div class="ctitle">Umsatz-Analyse</div><div class="legend"><span><i style="background:#ff4d8d"></i>Letzte Woche</span><span><i style="background:#32d74b"></i>Diese Woche</span></div></div>
+              <div class="chart-wrap"><canvas id="rev"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="chead"><div class="ctitle">Letzte Verkäufe</div></div>
+              <div class="sale"><div class="sthumb b-ebay">N</div><div class="smain"><div class="sname">Nike Air Max</div><div class="stime">eBay · gerade eben</div></div><div class="sprice">+45€</div></div>
+              <div class="sale"><div class="sthumb b-ka">A</div><div class="smain"><div class="sname">AirPods Pro 2</div><div class="stime">KA · vor 5 Min</div></div><div class="sprice">+63€</div></div>
+              <div class="sale"><div class="sthumb b-pp">S</div><div class="smain"><div class="sname">Sony XM4</div><div class="stime">eBay · vor 1 Std</div></div><div class="sprice">+38€</div></div>
+              <div class="sale"><div class="sthumb b-pk">L</div><div class="smain"><div class="sname">LEGO Set</div><div class="stime">eBay · gestern</div></div><div class="sprice">−8€</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="txhead"><div class="ctitle">Transaktionsverlauf</div><button class="btn-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Artikel hinzufügen</button></div>
+            <div class="pills"><span class="pill active">Alle</span><span class="pill">Lager</span><span class="pill">Verkauft</span><span class="pill">Gekauft</span></div>
+            <div class="colhead"><div></div><div></div><div class="ch">Einkauf</div><div class="ch">Verkauf</div><div class="ch">Profit</div><div></div></div>
+            <div class="trow"><div class="tthumb b-ebay">N</div><div><div class="tt">Nike Air Max 90</div><div class="tsub">eBay <span class="ar">→</span> KA · 12.06.2026</div></div><div class="num muted">95€</div><div class="num">140€</div><div class="pr"><div class="amt pos">+45,00€</div><span class="badge s-verk">Verkauft</span></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+            <div class="trow"><div class="tthumb b-ka">S</div><div><div class="tt">Sony WH-1000XM4</div><div class="tsub">KA · gekauft 02.06.2026</div></div><div class="num muted">128€</div><div class="num">—</div><div class="pr"><div class="amt">—</div><span class="badge s-lag">Lager</span></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+            <div class="trow"><div class="tthumb b-ebay">I</div><div><div class="tt">iPhone 12 64GB</div><div class="tsub">eBay · gekauft 28.05.2026</div></div><div class="num muted">240€</div><div class="num">—</div><div class="pr"><div class="amt">—</div><span class="badge s-gek">Gekauft</span></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HANDY ============ -->
+  <div class="section-label">Handy-Version (App-Stil)</div>
+  <div class="phone-stage">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="ph-header">
+          <div class="ph-brand"><img src="/resell_tracker_icon.svg" alt=""><span>Resell<span style="color:var(--green)">.</span></span></div>
+          <div class="ph-acts">
+            <div class="ph-ibtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0 0 20.5 15"/></svg></div>
+            <div class="ph-ibtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+          </div>
+        </div>
+        <div class="ph-body">
+          <div class="ph-hero">
+            <div class="ph-hlabel">Gesamtprofit</div>
+            <div class="ph-hval">+1.284<span class="cur">,50&nbsp;€</span></div>
+            <div class="ph-delta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>+18,4 % diesen Monat</div>
+          </div>
+          <div class="ph-strip">
+            <div class="ph-stat"><div class="l">Verkauft</div><div class="v">37</div></div>
+            <div class="ph-stat"><div class="l">Im Lager</div><div class="v">12</div></div>
+            <div class="ph-stat"><div class="l">Kapital</div><div class="v">1.506€</div></div>
+          </div>
+          <div class="ph-sec">Zuletzt verkauft</div>
+          <div class="ph-list">
+            <div class="ph-row"><div class="ph-thumb b-ebay">N</div><div class="ph-main"><div class="ph-title">Nike Air Max 90</div><div class="ph-sub">eBay <span class="ar">→</span> Kleinanzeigen · 12. Juni</div></div><div class="ph-right"><div class="ph-amt pos">+45,00&nbsp;€</div><span class="badge s-verk">Verkauft</span></div><div class="ph-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+            <div class="ph-row"><div class="ph-thumb b-ka">A</div><div class="ph-main"><div class="ph-title">AirPods Pro 2</div><div class="ph-sub">Kleinanzeigen <span class="ar">→</span> eBay · 9. Juni</div></div><div class="ph-right"><div class="ph-amt pos">+62,90&nbsp;€</div><span class="badge s-verk">Verkauft</span></div><div class="ph-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+            <div class="ph-row"><div class="ph-thumb b-pk">L</div><div class="ph-main"><div class="ph-title">LEGO Star Wars</div><div class="ph-sub">eBay <span class="ar">→</span> eBay · 5. Juni</div></div><div class="ph-right"><div class="ph-amt neg">−8,00&nbsp;€</div><span class="badge s-verk">Verkauft</span></div><div class="ph-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          </div>
+          <div class="ph-sec">Im Lager</div>
+          <div class="ph-list">
+            <div class="ph-row"><div class="ph-thumb b-ka">S</div><div class="ph-main"><div class="ph-title">Sony WH-1000XM4</div><div class="ph-sub">gekauft 2. Juni</div></div><div class="ph-right"><div class="ph-amt">128,00&nbsp;€</div><span class="badge s-lag">Lager</span></div><div class="ph-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          </div>
+        </div>
+        <div class="ph-nav">
+          <div class="it active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+          <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const arc=document.getElementById('gArc'); const len=arc.getTotalLength(); arc.style.strokeDasharray=len; arc.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{ arc.style.transition='stroke-dashoffset 1.4s cubic-bezier(.2,.7,.3,1)'; arc.style.strokeDashoffset=len*(1-0.72); });
+  new Chart(document.getElementById('rev'),{ type:'line',
+    data:{ labels:['Mo','Di','Mi','Do','Fr','Sa','So'], datasets:[
+      { label:'Diese Woche', data:[2.2,2.9,3.4,3.8,3.1,3.6,3.0], borderColor:'#32d74b', backgroundColor:(c)=>{const g=c.chart.ctx.createLinearGradient(0,0,0,230);g.addColorStop(0,'rgba(50,215,75,0.26)');g.addColorStop(1,'rgba(50,215,75,0)');return g;}, fill:true, tension:0.45, borderWidth:2.5, pointRadius:0 },
+      { label:'Letzte Woche', data:[2.6,2.3,2.8,2.6,3.0,2.5,3.2], borderColor:'#ff4d8d', borderDash:[6,6], borderWidth:2, fill:false, tension:0.45, pointRadius:0 } ] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8e8e93',font:{size:12,weight:600}},border:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#5b5b60',font:{size:11},callback:(v)=>v+'k'},border:{display:false},min:0,max:5} } } });
+</script>
+</body>
+</html>
