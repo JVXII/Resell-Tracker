@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resell Tracker — Handy-Ansicht (aktuell)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000;--surface:#0c0c0d;--surface-hover:#161618;--icon-bg:#1a1a1c;
+    --hairline:rgba(255,255,255,0.07);--hairline-strong:rgba(255,255,255,0.12);
+    --text:#f6f6f7;--dim:#8e8e93;--faint:#5b5b60;
+    --green:#32d74b;--green-soft:rgba(50,215,75,0.12);--red:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#070708;font-family:'Satoshi',-apple-system,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 16px 70px;}
+  .intro{text-align:center;max-width:420px;margin-bottom:30px;}
+  .intro .tag{display:inline-block;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hairline);padding:5px 12px;border-radius:100px;margin-bottom:14px;}
+  .intro h1{font-size:22px;font-weight:900;letter-spacing:-0.02em;}
+  .intro p{font-size:13px;color:var(--dim);margin-top:8px;font-weight:500;}
+
+  .phone{width:390px;max-width:100%;background:var(--bg);border-radius:46px;border:1px solid #1c1c1e;box-shadow:0 0 0 10px #050505,0 40px 120px rgba(0,0,0,0.9),inset 0 0 0 1px rgba(255,255,255,0.03);overflow:hidden;position:relative;}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:118px;height:30px;background:#000;border-radius:100px;z-index:30;}
+  .screen{height:800px;overflow-y:auto;overflow-x:hidden;padding-bottom:110px;scrollbar-width:none;position:relative;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* mobile header (wie in der App) */
+  .mobile-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:46px 18px 12px;position:sticky;top:0;z-index:20;background:rgba(0,0,0,0.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--hairline);}
+  .mh-side{display:flex;align-items:center;gap:8px;flex:1;}
+  .mh-side.right{justify-content:flex-end;}
+  .mh-avatar{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--hairline-strong);}
+  .mh-brand{display:flex;align-items:center;gap:8px;}
+  .mh-mark{width:26px;height:26px;}
+  .mh-word{font-size:16px;font-weight:900;letter-spacing:-0.02em;}
+  .mh-btn{width:38px;height:38px;border-radius:50%;background:transparent;border:none;color:var(--text);display:flex;align-items:center;justify-content:center;}
+  .mh-btn svg{width:20px;height:20px;}
+
+  .content{padding:18px 16px 0;}
+  .mv-hero{padding:6px 2px 16px;}
+  .mv-hlabel{font-size:13px;color:var(--dim);font-weight:600;margin-bottom:9px;}
+  .mv-hval{font-size:46px;font-weight:900;letter-spacing:-0.03em;line-height:1;color:var(--green);}
+  .mv-delta{margin-top:13px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--green);background:var(--green-soft);padding:6px 12px;border-radius:100px;}
+  .mv-delta svg{width:13px;height:13px;}
+  .mv-strip{display:flex;gap:9px;padding:0 0 20px;}
+  .mv-stat{flex:1;background:var(--surface);border:1px solid var(--hairline);border-radius:16px;padding:13px 12px;}
+  .mv-stat .l{font-size:11px;color:var(--dim);font-weight:600;margin-bottom:6px;}
+  .mv-stat .v{font-size:18px;font-weight:800;letter-spacing:-0.02em;}
+  .mv-pills{display:flex;gap:7px;overflow-x:auto;padding-bottom:16px;scrollbar-width:none;}
+  .mv-pills::-webkit-scrollbar{display:none;}
+  .pill{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;border:1px solid var(--hairline);color:var(--dim);background:var(--surface);white-space:nowrap;}
+  .pill.active{background:var(--text);color:#000;border-color:var(--text);}
+  .mv-sec{font-size:13px;color:var(--dim);font-weight:600;padding:8px 4px 10px;}
+  .mv-list{display:flex;flex-direction:column;margin-bottom:6px;}
+  .mv-row{display:flex;align-items:center;gap:13px;padding:11px 8px;border-radius:14px;}
+  .mv-thumb{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;background:var(--icon-bg);}
+  .b-ebay{background:#0c3a8c;}.b-ka{background:#16683b;}
+  .mv-main{flex:1;min-width:0;}
+  .mv-title{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mv-sub{font-size:13px;color:var(--dim);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mv-sub .ar{color:var(--faint);margin:0 2px;}
+  .mv-right{text-align:right;flex-shrink:0;}
+  .mv-amt{font-size:16px;font-weight:800;color:var(--text);}
+  .mv-amt.pos{color:var(--green);}.mv-amt.neg{color:var(--red);}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-top:5px;white-space:nowrap;}
+  .s-verk{background:var(--green-soft);color:var(--green);}
+  .s-lag{background:rgba(255,159,10,0.13);color:var(--orange);}
+  .s-gek{background:rgba(125,155,255,0.15);color:#7d9bff;}
+  .mv-chev{color:var(--faint);flex-shrink:0;display:flex;}
+  .mv-chev svg{width:18px;height:18px;}
+
+  .bottom-nav{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(26,26,28,0.85);backdrop-filter:blur(24px);border:1px solid var(--hairline-strong);border-radius:100px;padding:7px;z-index:25;box-shadow:0 16px 40px rgba(0,0,0,0.5);}
+  .bn-it{width:58px;height:48px;border-radius:100px;display:flex;align-items:center;justify-content:center;color:var(--faint);}
+  .bn-it svg{width:23px;height:23px;}
+  .bn-it.active{color:var(--text);background:rgba(255,255,255,0.08);}
+  .bn-fab{width:54px;height:48px;border-radius:100px;margin-left:2px;background:var(--text);color:#000;display:flex;align-items:center;justify-content:center;}
+  .bn-fab svg{width:25px;height:25px;}
+</style>
+</head>
+<body>
+  <div class="intro">
+    <div class="tag">Aktuelle Handy-Ansicht</div>
+    <h1>So sieht das Handy jetzt aus</h1>
+    <p>Genau wie live auf sales.cc-8.de — mit Beispieldaten.</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+
+      <!-- Header -->
+      <div class="mobile-header">
+        <div class="mh-side"><img class="mh-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt=""></div>
+        <div class="mh-brand"><img class="mh-mark" src="/resell_tracker_icon.svg" alt=""><span class="mh-word">Resell<span style="color:var(--green)">.</span>Tracker</span></div>
+        <div class="mh-side right">
+          <button class="mh-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+          <button class="mh-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Hero -->
+        <div class="mv-hero">
+          <div class="mv-hlabel">Gesamtprofit</div>
+          <div class="mv-hval">+1.284,50€</div>
+          <div class="mv-delta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>+142,90€ diesen Monat</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="mv-strip">
+          <div class="mv-stat"><div class="l">Verkauft</div><div class="v">37</div></div>
+          <div class="mv-stat"><div class="l">Im Lager</div><div class="v">12</div></div>
+          <div class="mv-stat"><div class="l">Kapital</div><div class="v">1.506€</div></div>
+        </div>
+
+        <!-- Pills -->
+        <div class="mv-pills">
+          <span class="pill active">Alle</span><span class="pill">Lager</span><span class="pill">Verkauft</span><span class="pill">Gekauft</span>
+        </div>
+
+        <!-- Zuletzt verkauft -->
+        <div class="mv-sec">Zuletzt verkauft</div>
+        <div class="mv-list">
+          <div class="mv-row"><div class="mv-thumb b-ebay">N</div><div class="mv-main"><div class="mv-title">Nike Air Max 90</div><div class="mv-sub">eBay <span class="ar">→</span> Kleinanzeigen · 12.06.2026</div></div><div class="mv-right"><div class="mv-amt pos">+45,00€</div><span class="badge s-verk">Verkauft</span></div><div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          <div class="mv-row"><div class="mv-thumb b-ka">A</div><div class="mv-main"><div class="mv-title">AirPods Pro 2</div><div class="mv-sub">Kleinanzeigen <span class="ar">→</span> eBay · 09.06.2026</div></div><div class="mv-right"><div class="mv-amt pos">+62,90€</div><span class="badge s-verk">Verkauft</span></div><div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          <div class="mv-row"><div class="mv-thumb b-ebay">L</div><div class="mv-main"><div class="mv-title">LEGO Star Wars Set</div><div class="mv-sub">eBay <span class="ar">→</span> eBay · 05.06.2026</div></div><div class="mv-right"><div class="mv-amt neg">−8,00€</div><span class="badge s-verk">Verkauft</span></div><div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+        </div>
+
+        <!-- Im Lager -->
+        <div class="mv-sec">Im Lager</div>
+        <div class="mv-list">
+          <div class="mv-row"><div class="mv-thumb b-ka">S</div><div class="mv-main"><div class="mv-title">Sony WH-1000XM4</div><div class="mv-sub">Kleinanzeigen · 02.06.2026</div></div><div class="mv-right"><div class="mv-amt">128,00€</div><span class="badge s-lag">Lager</span></div><div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          <div class="mv-row"><div class="mv-thumb b-ebay">M</div><div class="mv-main"><div class="mv-title">Marshall Speaker</div><div class="mv-sub">eBay · 30.05.2026</div></div><div class="mv-right"><div class="mv-amt">74,00€</div><span class="badge s-lag">Lager</span></div><div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+        </div>
+
+        <!-- Gekauft -->
+        <div class="mv-sec">Gekauft</div>
+        <div class="mv-list">
+          <div class="mv-row"><div class="mv-thumb b-ebay">I</div><div class="mv-main"><div class="mv-title">iPhone 12 64GB</div><div class="mv-sub">eBay · 28.05.2026</div></div><div class="mv-right"><div class="mv-amt">240,00€</div><span class="badge s-gek">Gekauft</span></div><div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+        </div>
+      </div>
+
+      <!-- Bottom nav -->
+      <div class="bottom-nav">
+        <div class="bn-it active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+        <div class="bn-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+        <div class="bn-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <div class="bn-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
