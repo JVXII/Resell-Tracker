@@ -74,6 +74,16 @@
     el.className = 'lbl-status' + (kind ? ' ' + kind : '');
   }
 
+  function reset() {
+    fileBytes = null; fileName = '';
+    const input = $('lblFile'); if (input) input.value = '';
+    $('lblDrop').classList.remove('has-file');
+    $('lblDropText').textContent = 'Label-PDF hierher ziehen';
+    $('lblProcess').disabled = true;
+    $('lblResults').innerHTML = '';
+    status('Ziehe ein DHL-Label-PDF hier rein.');
+  }
+
   // ----- detect label area (Paket) -----
   function detectCrop(page) {
     const { width, height } = page.getSize();
@@ -212,15 +222,21 @@
   async function renderResults(outputs) {
     const wrap = $('lblResults');
     wrap.innerHTML = '';
+    const bar = document.createElement('div');
+    bar.className = 'lbl-allbar';
+    let barHtml = '';
     if (outputs.length > 1) {
-      const bar = document.createElement('div');
-      bar.className = 'lbl-allbar';
-      bar.innerHTML = `<button class="btn-add" id="lblPrintAll">Alle drucken</button>
-                       <button class="btn btn-secondary" id="lblDlAll">Alle herunterladen</button>`;
-      wrap.appendChild(bar);
+      barHtml += `<button class="btn-add" id="lblPrintAll">Alle drucken</button>
+                  <button class="btn btn-secondary" id="lblDlAll">Alle herunterladen</button>`;
+    }
+    barHtml += `<button class="btn btn-secondary lbl-reset" id="lblReset">↺ Zurücksetzen</button>`;
+    bar.innerHTML = barHtml;
+    wrap.appendChild(bar);
+    if (outputs.length > 1) {
       bar.querySelector('#lblPrintAll').addEventListener('click', () => printAll(outputs));
       bar.querySelector('#lblDlAll').addEventListener('click', () => outputs.forEach((o) => download(o)));
     }
+    bar.querySelector('#lblReset').addEventListener('click', reset);
     const grid = document.createElement('div');
     grid.className = 'lbl-grid';
     wrap.appendChild(grid);
