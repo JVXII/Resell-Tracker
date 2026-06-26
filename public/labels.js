@@ -274,8 +274,27 @@
     setTimeout(() => { iframe.remove(); URL.revokeObjectURL(url); }, 60000);
   }
 
+  async function mergePdfs(outputs) {
+    const { PDFDocument } = PDFLib;
+    const merged = await PDFDocument.create();
+    for (const o of outputs) {
+      const d = await PDFDocument.load(o.bytes);
+      const pages = await merged.copyPages(d, d.getPageIndices());
+      pages.forEach((p) => merged.addPage(p));
+    }
+    return await merged.save();
+  }
+
+  // Alle Etiketten in EIN mehrseitiges PDF zusammenführen und in einem Job drucken
+  // (mehrere getrennte Druckdialoge blockieren sich gegenseitig → nur der erste käme).
   async function printAll(outputs) {
-    for (const o of outputs) { printPdf(o.bytes); await new Promise((r) => setTimeout(r, 1200)); }
+    try {
+      const bytes = await mergePdfs(outputs);
+      printPdf(bytes);
+    } catch (e) {
+      console.error(e);
+      printPdf(outputs[0].bytes);
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
