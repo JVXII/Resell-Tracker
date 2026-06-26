@@ -35,133 +35,106 @@
   }
   ::selection{background:rgba(50,215,75,0.25);}
 
-  /* ===== Header ===== */
+  /* ===== Desktop header ===== */
   .topbar{
-    background:rgba(0,0,0,0.72);
+    background:rgba(0,0,0,0.7);
     backdrop-filter:blur(20px);
     border-bottom:1px solid var(--hairline);
-    padding:0 24px;
-    height:60px;
+    padding:0 26px;height:62px;
     display:flex;align-items:center;justify-content:space-between;gap:16px;
     position:sticky;top:0;z-index:40;
   }
-  .topbar-logo{font-weight:900;font-size:18px;letter-spacing:-0.03em;color:var(--text);}
+  .topbar-logo{font-weight:900;font-size:18px;letter-spacing:-0.03em;flex:1;}
   .topbar-logo span{color:var(--green);}
-  .topbar-logo-icon{display:none;width:30px;height:30px;}
   .topbar-nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--hairline);border-radius:100px;padding:4px;}
-  .nav-item{
-    padding:7px 18px;border-radius:100px;font-size:13px;font-weight:600;
-    cursor:pointer;color:var(--dim);transition:color .18s,background .18s;user-select:none;
-  }
+  .nav-item{padding:8px 20px;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;color:var(--dim);transition:color .18s,background .18s;user-select:none;}
   .nav-item.active{background:var(--text);color:#000;}
-  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .topbar-right{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:12px;}
   .share-btn{
     background:var(--surface);border:1px solid var(--hairline);color:var(--text);
-    padding:8px 14px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;
+    padding:8px 14px;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;
     display:inline-flex;align-items:center;gap:7px;transition:background .18s;font-family:inherit;
   }
   .share-btn:hover{background:var(--surface-hover);}
   .share-btn svg{width:15px;height:15px;}
   .user-badge{display:flex;align-items:center;gap:10px;}
   .user-badge img{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--hairline-strong);}
-  .username{font-size:13px;color:var(--text);font-weight:600;}
+  .username{font-size:13px;font-weight:700;}
   .logout-btn{
     background:transparent;border:1px solid var(--hairline);color:var(--dim);
-    padding:6px 12px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;
+    padding:7px 13px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;
     transition:color .18s,border-color .18s;font-family:inherit;
   }
   .logout-btn:hover{color:var(--text);border-color:var(--hairline-strong);}
 
-  /* ===== Main ===== */
-  .main{max-width:920px;margin:0 auto;padding:26px 22px 60px;}
+  /* ===== Mobile header ===== */
+  .mobile-header{display:none;}
 
-  /* Banners / share */
+  /* ===== Main ===== */
+  .main{max-width:780px;margin:0 auto;padding:28px 22px 60px;}
+
   .shared-banner{
     background:var(--green-soft);border:1px solid rgba(50,215,75,0.25);
-    border-radius:14px;padding:12px 16px;margin-bottom:18px;color:var(--green);
-    font-size:13px;font-weight:600;
+    border-radius:14px;padding:12px 16px;margin-bottom:18px;color:var(--green);font-size:13px;font-weight:600;
   }
-  .share-panel-card{
-    background:var(--surface);border:1px solid var(--hairline);
-    border-radius:20px;padding:22px;margin-bottom:18px;
-  }
+  .share-panel-card{background:var(--surface);border:1px solid var(--hairline);border-radius:20px;padding:22px;margin-bottom:18px;}
   .share-panel-card h3{font-size:15px;font-weight:800;margin-bottom:16px;letter-spacing:-0.01em;}
   .invite-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
-  .invite-input{
-    flex:1;min-width:0;background:var(--bg);border:1px solid var(--hairline);
-    border-radius:12px;padding:11px 14px;color:var(--text);font-size:13px;font-family:inherit;
-  }
+  .invite-input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--hairline);border-radius:12px;padding:11px 14px;color:var(--text);font-size:13px;font-family:inherit;}
 
   /* ===== Hero ===== */
-  .hero{padding:8px 4px 22px;}
+  .hero{padding:6px 2px 22px;}
   .hero-label{font-size:14px;color:var(--dim);font-weight:600;margin-bottom:10px;}
-  .hero-value{font-size:clamp(38px,9vw,54px);font-weight:900;letter-spacing:-0.035em;line-height:1;}
+  .hero-value{font-size:clamp(40px,8vw,56px);font-weight:900;letter-spacing:-0.035em;line-height:1;color:var(--text);}
   .hero-value.accent{color:var(--green);}
+  .hero-delta{
+    margin-top:14px;display:inline-flex;align-items:center;gap:7px;
+    font-size:13px;font-weight:700;color:var(--green);background:var(--green-soft);
+    padding:7px 13px;border-radius:100px;
+  }
+  .hero-delta.neg{color:var(--red);background:rgba(255,69,58,0.12);}
+  .hero-delta svg{width:14px;height:14px;}
 
-  /* Stat strip */
+  /* ===== Stat strip ===== */
   .stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px;}
   .stat-item{background:var(--surface);border:1px solid var(--hairline);border-radius:18px;padding:16px 18px;}
   .stat-label{color:var(--dim);font-size:12px;font-weight:600;margin-bottom:8px;}
-  .stat-value{font-size:24px;font-weight:800;letter-spacing:-0.02em;color:var(--text);}
-  .stat-value.accent{color:var(--green);}
+  .stat-value{font-size:24px;font-weight:800;letter-spacing:-0.02em;}
 
   .tab-content{display:none;}
   .tab-content.active{display:block;animation:fade .35s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
   /* ===== Buttons ===== */
-  .btn{
-    padding:10px 16px;border-radius:12px;font-size:13px;cursor:pointer;border:none;
-    font-weight:700;display:inline-flex;align-items:center;gap:7px;font-family:inherit;
-    transition:transform .14s,background .18s,opacity .18s;
-  }
+  .btn{padding:10px 16px;border-radius:12px;font-size:13px;cursor:pointer;border:none;font-weight:700;display:inline-flex;align-items:center;gap:7px;font-family:inherit;transition:transform .14s,background .18s,opacity .18s;}
   .btn:active{transform:scale(0.97);}
   .btn-primary{background:var(--text);color:#000;}
   .btn-primary:hover{opacity:0.88;}
   .btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--hairline);}
   .btn-secondary:hover{background:var(--surface-hover);}
-  .btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--hairline);}
-  .btn-ghost:hover{color:var(--text);}
+  .btn-danger{background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.28);}
+  .btn-danger:hover{background:rgba(255,69,58,0.2);}
 
   .btn-add-item{
-    background:var(--text);color:#000;border:none;
-    padding:11px 20px;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;
-    display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;
-    transition:transform .14s,box-shadow .2s;letter-spacing:-0.01em;font-family:inherit;
+    background:var(--text);color:#000;border:none;padding:11px 20px;border-radius:14px;
+    font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    margin-bottom:18px;transition:transform .14s,box-shadow .2s;letter-spacing:-0.01em;font-family:inherit;
   }
   .btn-add-item:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(255,255,255,0.12);}
-  .btn-add-item:active{transform:translateY(0);}
   .btn-add-item svg{width:18px;height:18px;}
 
   /* ===== Modal ===== */
-  .modal-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);
-    z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
-    opacity:0;pointer-events:none;transition:opacity .22s;
-  }
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;}
   .modal-overlay.open{opacity:1;pointer-events:all;}
-  .modal-card{
-    background:var(--surface-2);border:1px solid var(--hairline);border-radius:24px;
-    padding:26px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;
-    transform:translateY(28px) scale(0.96);opacity:0;
-    transition:transform .3s cubic-bezier(0.34,1.5,0.64,1),opacity .22s;
-  }
+  .modal-card{background:var(--surface-2);border:1px solid var(--hairline);border-radius:24px;padding:26px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;transform:translateY(28px) scale(0.96);opacity:0;transition:transform .3s cubic-bezier(0.34,1.5,0.64,1),opacity .22s;}
   .modal-overlay.open .modal-card{transform:translateY(0) scale(1);opacity:1;}
   .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
   .modal-title{font-size:18px;font-weight:900;letter-spacing:-0.02em;}
-  .modal-close{
-    background:var(--icon-bg);border:none;color:var(--dim);width:34px;height:34px;
-    border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;
-    transition:background .15s,color .15s;
-  }
+  .modal-close{background:var(--icon-bg);border:none;color:var(--dim);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
   .modal-close:hover{background:var(--surface-hover);color:var(--text);}
   .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:18px;}
   .field-label{font-size:11px;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;}
-  .form-input{
-    background:var(--bg);border:1px solid var(--hairline);border-radius:12px;
-    padding:12px 14px;color:var(--text);font-size:14px;width:100%;font-family:inherit;
-    transition:border-color .15s;
-  }
+  .form-input{background:var(--bg);border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;color:var(--text);font-size:14px;width:100%;font-family:inherit;transition:border-color .15s;}
   .form-input::placeholder{color:var(--faint);}
   .form-input:focus{outline:none;border-color:var(--hairline-strong);}
   select.form-input option{background:var(--surface-2);}
@@ -176,117 +149,78 @@
   input[type="date"].form-input.has-value::-webkit-datetime-edit-day-field,
   input[type="date"].form-input.has-value::-webkit-datetime-edit-year-field{color:var(--text);}
   input[type="date"].form-input::-webkit-calendar-picker-indicator{filter:invert(0.6);}
+  .edit-extra{display:none;margin-top:14px;padding-top:16px;border-top:1px solid var(--hairline);align-items:center;gap:10px;}
+  .reimb-toggle{background:var(--surface);border:1px solid var(--hairline);color:var(--dim);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s,color .15s;}
+  .reimb-toggle.on{background:var(--green-soft);color:var(--green);border-color:rgba(50,215,75,0.3);}
 
   /* ===== Action bar ===== */
   .action-bar{display:flex;gap:10px;margin-bottom:18px;align-items:center;flex-wrap:wrap;}
   .filter-pills{display:flex;gap:7px;flex-wrap:wrap;}
-  .pill{
-    padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;
-    border:1px solid var(--hairline);color:var(--dim);background:var(--surface);
-    transition:color .15s,background .15s,border-color .15s;font-family:inherit;
-  }
+  .pill{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--hairline);color:var(--dim);background:var(--surface);transition:color .15s,background .15s,border-color .15s;font-family:inherit;white-space:nowrap;}
   .pill:hover{color:var(--text);}
   .pill.active{background:var(--text);color:#000;border-color:var(--text);}
 
   .sort-dropdown{position:relative;}
-  .sort-toggle{
-    padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;
-    border:1px solid var(--hairline);color:var(--dim);background:var(--surface);
-    display:flex;align-items:center;gap:6px;white-space:nowrap;transition:color .15s,background .15s;font-family:inherit;
-  }
+  .sort-toggle{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--hairline);color:var(--dim);background:var(--surface);display:flex;align-items:center;gap:6px;white-space:nowrap;transition:color .15s,background .15s;font-family:inherit;}
   .sort-toggle:hover{color:var(--text);}
   .sort-toggle.active{color:var(--green);border-color:rgba(50,215,75,0.3);}
-  .sort-panel{
-    position:absolute;top:calc(100% + 8px);left:0;background:var(--surface-2);
-    border:1px solid var(--hairline);border-radius:16px;padding:7px;z-index:50;min-width:250px;
-    display:flex;flex-direction:column;gap:2px;transform-origin:top left;
-    transform:scaleY(0.85) translateY(-8px);opacity:0;pointer-events:none;
-    transition:transform .18s cubic-bezier(0.34,1.2,0.64,1),opacity .14s;
-    box-shadow:0 20px 50px rgba(0,0,0,0.6);
-  }
+  .sort-panel{position:absolute;top:calc(100% + 8px);left:0;background:var(--surface-2);border:1px solid var(--hairline);border-radius:16px;padding:7px;z-index:50;min-width:250px;display:flex;flex-direction:column;gap:2px;transform-origin:top left;transform:scaleY(0.85) translateY(-8px);opacity:0;pointer-events:none;transition:transform .18s cubic-bezier(0.34,1.2,0.64,1),opacity .14s;box-shadow:0 20px 50px rgba(0,0,0,0.6);}
   .sort-dropdown.open .sort-panel{transform:scaleY(1) translateY(0);opacity:1;pointer-events:all;}
-  .sort-option{
-    padding:9px 13px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;
-    background:transparent;color:var(--dim);text-align:left;width:100%;transition:background .1s,color .1s;font-family:inherit;
-  }
+  .sort-option{padding:9px 13px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--dim);text-align:left;width:100%;transition:background .1s,color .1s;font-family:inherit;}
   .sort-option:hover{background:var(--surface-hover);color:var(--text);}
   .sort-option.active{background:var(--green-soft);color:var(--green);}
 
-  .search-input{
-    margin-left:auto;background:var(--surface);border:1px solid var(--hairline);
-    border-radius:12px;padding:10px 16px;color:var(--text);font-size:14px;width:230px;font-family:inherit;
-    transition:border-color .15s;
-  }
+  .search-input{margin-left:auto;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:10px 16px;color:var(--text);font-size:14px;width:230px;font-family:inherit;transition:border-color .15s;}
   .search-input::placeholder{color:var(--faint);}
   .search-input:focus{outline:none;border-color:var(--hairline-strong);}
 
-  /* ===== Item list (replaces table) ===== */
-  .list-card{background:transparent;}
-  .list-head{display:flex;justify-content:space-between;align-items:baseline;padding:4px 6px 10px;}
+  /* ===== Item list (aligned ledger) ===== */
+  .list-head{display:flex;justify-content:space-between;align-items:baseline;padding:4px 6px 8px;}
   .list-title{font-size:15px;font-weight:800;letter-spacing:-0.01em;}
   .list-count{color:var(--faint);font-size:13px;font-weight:600;}
 
-  .item-row{
-    display:flex;align-items:center;gap:14px;padding:13px 14px;border-radius:18px;
-    transition:background .16s;
-  }
-  .item-row:hover{background:var(--surface-hover);}
-  .item-row:hover .item-actions{opacity:1;pointer-events:all;}
+  .grid-row{display:grid;grid-template-columns:52px minmax(0,1fr) 84px 84px 122px 18px;align-items:center;gap:14px;}
+  .col-header{padding:0 14px 8px;}
+  .col-header .ch{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.07em;text-align:right;}
 
-  .thumb{
-    width:48px;height:48px;border-radius:14px;flex-shrink:0;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;
-    background:var(--icon-bg);
-  }
+  .item-row{padding:12px 14px;border-radius:16px;cursor:pointer;transition:background .16s;}
+  .item-row:hover{background:var(--surface-hover);}
+  .item-row:hover .row-chev{color:var(--dim);}
+
+  .thumb{width:48px;height:48px;border-radius:14px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;background:var(--icon-bg);}
   .thumb img{width:100%;height:100%;object-fit:cover;}
   .thumb.b-ebay{background:#0c3a8c;}
   .thumb.b-ka{background:#16683b;}
 
-  .item-main{flex:1;min-width:0;}
-  .item-title{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item-main{min-width:0;}
+  .item-title{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px;}
   .item-sub{font-size:13px;color:var(--dim);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .item-sub .arrow{color:var(--faint);margin:0 3px;}
+  .reimb-dot{color:var(--green);font-size:9px;flex-shrink:0;}
+  .track-inline{color:var(--blue);display:inline-flex;flex-shrink:0;}
+  .track-inline svg{width:13px;height:13px;}
 
-  .item-figures{display:flex;gap:26px;flex-shrink:0;}
-  .fig{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:58px;}
-  .fig-l{font-size:11px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
-  .fig-v{font-size:14px;font-weight:600;color:var(--text);}
-
-  .item-right{text-align:right;flex-shrink:0;min-width:84px;}
+  .col-num{font-size:14px;font-weight:600;color:var(--text);text-align:right;white-space:nowrap;}
+  .col-num.muted{color:var(--faint);}
+  .col-profit{text-align:right;}
   .amount{font-size:16px;font-weight:800;letter-spacing:-0.01em;color:var(--text);}
   .amount.pos{color:var(--green);}
   .amount.neg{color:var(--red);}
-
   .badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-top:5px;white-space:nowrap;}
   .badge.status-Verkauft{background:var(--green-soft);color:var(--green);}
   .badge.status-Lager{background:rgba(255,159,10,0.13);color:var(--orange);}
   .badge.status-Gekauft{background:rgba(125,155,255,0.15);color:#7d9bff;}
-
-  .item-actions{display:flex;gap:6px;flex-shrink:0;opacity:0;pointer-events:none;transition:opacity .16s;}
-  .icon-btn{
-    background:var(--surface);border:1px solid var(--hairline);color:var(--dim);
-    width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:13px;
-    display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;
-    text-decoration:none;
-  }
-  .icon-btn:hover{background:var(--surface-hover);color:var(--text);}
-  .icon-btn svg{width:15px;height:15px;}
-  .icon-btn.reimbursed{background:var(--green-soft);color:var(--green);border-color:rgba(50,215,75,0.3);}
-  .icon-btn.danger:hover{background:rgba(255,69,58,0.14);color:var(--red);border-color:rgba(255,69,58,0.3);}
+  .row-chev{color:var(--faint);display:flex;justify-content:flex-end;transition:color .16s;}
+  .row-chev svg{width:18px;height:18px;}
 
   .row-divider{height:1px;background:var(--hairline);margin:0 14px;}
-
   .empty-state{text-align:center;padding:60px 20px;color:var(--faint);}
   .empty-state .es-emoji{font-size:34px;margin-bottom:12px;}
   .empty-state .es-text{font-size:14px;font-weight:600;}
 
   .pagination{display:flex;justify-content:center;align-items:center;gap:14px;padding:22px 0 4px;}
   .page-info{color:var(--dim);font-size:13px;font-weight:600;}
-  .page-btn{
-    background:var(--surface);border:1px solid var(--hairline);color:var(--text);
-    width:38px;height:38px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:background .15s;
-  }
+  .page-btn{background:var(--surface);border:1px solid var(--hairline);color:var(--text);width:38px;height:38px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
   .page-btn:hover{background:var(--surface-hover);}
   .page-btn svg{width:16px;height:16px;}
 
@@ -301,10 +235,7 @@
   .chart-title{font-size:16px;font-weight:800;letter-spacing:-0.01em;}
   .chart-subtitle{font-size:12px;color:var(--dim);margin-top:3px;font-weight:500;}
   .period-btns{display:flex;gap:4px;background:var(--bg);border:1px solid var(--hairline);border-radius:100px;padding:3px;}
-  .period-btn{
-    padding:6px 13px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;
-    border:none;color:var(--dim);background:transparent;transition:color .15s,background .15s;font-family:inherit;
-  }
+  .period-btn{padding:6px 13px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:none;color:var(--dim);background:transparent;transition:color .15s,background .15s;font-family:inherit;}
   .period-btn.active{background:var(--text);color:#000;}
   .profit-chart-wrap{position:relative;min-height:320px;}
   .summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;}
@@ -314,55 +245,67 @@
 
   /* ===== Bottom nav (mobile) ===== */
   .bottom-nav{display:none;}
-  .fab-mobile{display:none;}
 
-  @media (max-width:900px){
+  /* ===================== MOBILE ===================== */
+  @media (max-width:820px){
+    .topbar{display:none;}
+
+    .mobile-header{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 18px;position:sticky;top:0;z-index:40;
+      background:rgba(0,0,0,0.78);backdrop-filter:blur(20px);border-bottom:1px solid var(--hairline);
+    }
+    .mh-side{display:flex;align-items:center;gap:8px;flex:1;}
+    .mh-side.right{justify-content:flex-end;}
+    .mh-title{font-size:17px;font-weight:800;letter-spacing:-0.02em;}
+    .mh-avatar{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--hairline-strong);cursor:pointer;}
+    .mh-btn{width:38px;height:38px;border-radius:50%;background:transparent;border:none;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s;}
+    .mh-btn:hover{background:var(--surface-hover);}
+    .mh-btn svg{width:20px;height:20px;}
+
+    .main{max-width:560px;padding:18px 16px 110px;}
+    .hero{padding:8px 4px 20px;}
+    .stats-bar{gap:9px;margin-bottom:22px;}
+    .stat-item{padding:13px 13px;border-radius:16px;}
+    .stat-label{font-size:11px;margin-bottom:6px;}
+    .stat-value{font-size:19px;}
+
+    /* hide desktop-only controls */
+    .btn-add-item{display:none;}
+    .action-bar .btn-secondary{display:none;}
+    .search-input{display:none;}
+    .search-input.show{display:block;width:100%;margin-left:0;order:-1;}
+    .action-bar{gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .action-bar::-webkit-scrollbar{display:none;}
+
+    /* ledger -> app rows */
+    .col-header{display:none;}
+    .grid-row{grid-template-columns:46px minmax(0,1fr) auto;gap:12px;}
+    .col-ek,.col-vk,.row-chev{display:none;}
+    .item-row{padding:11px 8px;}
+    .thumb{width:46px;height:46px;}
+
     .charts-grid{grid-template-columns:1fr;}
     .chart-card.full{grid-column:span 1;}
-    .item-figures{display:none;}
-    .item-actions{opacity:1;pointer-events:all;}
-    .topbar-nav{display:none;}
-    .topbar-logo{display:none;}
-    .topbar-logo-icon{display:block;}
-    .share-btn span{display:none;}
-    .username{display:none;}
-    .main{padding-bottom:96px;}
-    .search-input{width:100%;}
     .summary-row{grid-template-columns:1fr;}
 
     .bottom-nav{
-      display:flex;align-items:center;gap:4px;
-      position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
-      background:rgba(26,26,28,0.82);backdrop-filter:blur(24px);
-      border:1px solid var(--hairline-strong);border-radius:100px;padding:7px;z-index:50;
+      display:flex;align-items:center;gap:4px;position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+      background:rgba(26,26,28,0.85);backdrop-filter:blur(24px);border:1px solid var(--hairline-strong);
+      border-radius:100px;padding:7px;z-index:50;box-shadow:0 16px 40px rgba(0,0,0,0.5);
     }
-    .bottom-nav-item{
-      width:64px;height:48px;border-radius:100px;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;gap:3px;color:var(--faint);font-size:10px;font-weight:600;
-      cursor:pointer;user-select:none;transition:color .18s,background .18s;
-    }
-    .bottom-nav-item svg{width:21px;height:21px;}
+    .bottom-nav-item{width:58px;height:48px;border-radius:100px;display:flex;align-items:center;justify-content:center;color:var(--faint);cursor:pointer;user-select:none;transition:color .18s,background .18s;}
+    .bottom-nav-item svg{width:23px;height:23px;}
     .bottom-nav-item.active{color:var(--text);background:rgba(255,255,255,0.08);}
-    .bottom-nav .fab{
-      width:52px;height:48px;border-radius:100px;margin-left:2px;background:var(--text);color:#000;
-      display:flex;align-items:center;justify-content:center;cursor:pointer;
-    }
-    .bottom-nav .fab svg{width:24px;height:24px;}
-    .btn-add-item{display:none;}
-  }
-
-  @media (max-width:560px){
-    .stats-bar{grid-template-columns:1fr;}
-    .action-bar{gap:8px;}
-    .main{padding-left:14px;padding-right:14px;}
+    .bottom-nav .fab{width:54px;height:48px;border-radius:100px;margin-left:2px;background:var(--text);color:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .bottom-nav .fab svg{width:25px;height:25px;}
   }
 </style>
 </head>
 <body>
 
-<!-- Topbar -->
+<!-- Desktop header -->
 <div class="topbar">
-  <img src="/resell_tracker_icon.svg" alt="Logo" class="topbar-logo-icon">
   <div class="topbar-logo">Resell<span>.</span>Tracker</div>
   <div class="topbar-nav">
     <div class="nav-item active" data-tab="overview" onclick="showTab('overview')">Übersicht</div>
@@ -377,12 +320,26 @@
   </div>
 </div>
 
+<!-- Mobile header -->
+<div class="mobile-header">
+  <div class="mh-side">
+    <img id="mh-avatar" class="mh-avatar" alt="" onclick="logout()" title="Logout">
+  </div>
+  <div class="mh-title" id="mh-title">Übersicht</div>
+  <div class="mh-side right">
+    <button class="mh-btn" onclick="toggleMobileSearch()" aria-label="Suche">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+    <button class="mh-btn" onclick="toggleShare()" aria-label="Teilen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>
+  </div>
+</div>
+
 <div class="main">
 
-  <!-- Shared banner -->
   <div id="shared-banner" style="display:none" class="shared-banner"></div>
 
-  <!-- Share panel -->
   <div id="share-panel" style="display:none" class="share-panel-card">
     <h3>Ansicht teilen</h3>
     <div class="invite-row">
@@ -397,22 +354,14 @@
   <div class="hero">
     <div class="hero-label">Gesamtprofit</div>
     <div class="hero-value accent" id="totalProfit">0.00€</div>
+    <div class="hero-delta" id="heroDelta" style="display:none"></div>
   </div>
 
   <!-- Stat strip -->
   <div class="stats-bar">
-    <div class="stat-item">
-      <div class="stat-label">Verkaufte Artikel</div>
-      <div class="stat-value" id="soldCount">0</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">Artikel im Lager</div>
-      <div class="stat-value" id="stockCount">0</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">Kapital im Lager</div>
-      <div class="stat-value" id="stockValue">0.00€</div>
-    </div>
+    <div class="stat-item"><div class="stat-label">Verkauft</div><div class="stat-value" id="soldCount">0</div></div>
+    <div class="stat-item"><div class="stat-label">Im Lager</div><div class="stat-value" id="stockCount">0</div></div>
+    <div class="stat-item"><div class="stat-label">Kapital</div><div class="stat-value" id="stockValue">0.00€</div></div>
   </div>
 
   <!-- Overview tab -->
@@ -423,7 +372,6 @@
       Artikel hinzufügen
     </button>
 
-    <!-- Action bar -->
     <div class="action-bar">
       <button class="btn btn-secondary" onclick="exportBackup()">⬇ Export</button>
       <button class="btn btn-secondary" onclick="document.getElementById('backupFile').click()">⬆ Import</button>
@@ -449,11 +397,17 @@
       <input class="search-input" id="search" placeholder="🔎 Bestellnummer suchen...">
     </div>
 
-    <!-- Item list -->
     <div class="list-card">
       <div class="list-head">
         <span class="list-title">Artikel</span>
         <span class="list-count" id="tableCount">0 Einträge</span>
+      </div>
+      <div class="col-header grid-row">
+        <div></div><div></div>
+        <div class="ch">Einkauf</div>
+        <div class="ch">Verkauf</div>
+        <div class="ch">Profit</div>
+        <div></div>
       </div>
       <div id="tableBody"></div>
       <div class="pagination">
@@ -472,7 +426,6 @@
   <!-- Charts tab -->
   <div id="charts" class="tab-content">
     <div class="charts-grid">
-
       <div class="chart-card full">
         <div class="chart-header">
           <div>
@@ -485,11 +438,8 @@
             <button class="period-btn active" onclick="setChartPeriod('month', this)">Monat</button>
           </div>
         </div>
-        <div class="profit-chart-wrap">
-          <canvas id="profitChart"></canvas>
-        </div>
+        <div class="profit-chart-wrap"><canvas id="profitChart"></canvas></div>
       </div>
-
       <div class="chart-card">
         <div class="chart-header">
           <div>
@@ -499,7 +449,6 @@
         </div>
         <canvas id="chart" height="140"></canvas>
       </div>
-
       <div class="chart-card platform">
         <div class="chart-header">
           <div>
@@ -507,12 +456,9 @@
             <div class="chart-subtitle">Verkäufe nach Plattform</div>
           </div>
         </div>
-        <div class="platform-chart-wrap">
-          <canvas id="platformChart"></canvas>
-        </div>
+        <div class="platform-chart-wrap"><canvas id="platformChart"></canvas></div>
         <div class="summary-row" id="platformSummary"></div>
       </div>
-
     </div>
   </div><!-- /charts -->
 
@@ -554,18 +500,23 @@
       <input id="imageUrl" class="form-input" placeholder="Bild-URL (z.B. https://i.ebayimg.com/..." style="grid-column: span 2">
       <button class="btn btn-primary" onclick="saveItem()" style="grid-column: span 2; justify-content:center; padding:13px;">Speichern</button>
     </div>
+    <div class="edit-extra" id="editExtra">
+      <button class="reimb-toggle" id="reimbToggle" onclick="toggleReimbursedModal()">Privates Geld erstattet</button>
+      <button class="btn btn-danger" onclick="deleteFromModal()" style="padding:12px 18px;">Löschen</button>
+    </div>
   </div>
 </div>
 
 <!-- Bottom navigation (mobile only) -->
 <nav class="bottom-nav">
-  <div class="bottom-nav-item active" data-tab="overview" onclick="showTab('overview')">
+  <div class="bottom-nav-item active" data-tab="overview" onclick="showTab('overview')" aria-label="Übersicht">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-    Übersicht
   </div>
-  <div class="bottom-nav-item" data-tab="charts" onclick="showTab('charts')">
+  <div class="bottom-nav-item" data-tab="charts" onclick="showTab('charts')" aria-label="Charts">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-    Charts
+  </div>
+  <div class="bottom-nav-item" onclick="toggleMobileSearch()" aria-label="Suche">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
   </div>
   <div class="fab" onclick="openNewModal()" aria-label="Artikel hinzufügen">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -602,6 +553,7 @@ function closeModal() {
 
 function openNewModal() {
   clearForm();
+  document.getElementById('editExtra').style.display = 'none';
   openModal('Artikel hinzufügen');
 }
 
@@ -697,6 +649,8 @@ function renderUserBadge() {
     <span class="username">${currentUser.username}</span>
     <button class="logout-btn" onclick="logout()">Logout</button>
   `;
+  const mh = document.getElementById('mh-avatar');
+  if (mh) mh.src = avatarUrl;
 }
 
 async function logout() {
@@ -730,6 +684,14 @@ searchEl.addEventListener('input', () => {
   currentPage = 1;
   renderItems();
 });
+
+function toggleMobileSearch() {
+  searchEl.classList.toggle('show');
+  if (searchEl.classList.contains('show')) {
+    searchEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => searchEl.focus(), 200);
+  }
+}
 
 statusEl.addEventListener('change', () => {
   trackingEl.style.display = statusEl.value === 'Gekauft' ? 'block' : 'none';
@@ -817,7 +779,31 @@ function editItem(id) {
   trackingEl.value = item.tracking || '';
   trackingEl.style.display = item.status === 'Gekauft' ? 'block' : 'none';
   editId = id;
+  document.getElementById('editExtra').style.display = 'flex';
+  updateReimbBtn();
   openModal('Artikel bearbeiten');
+}
+
+function updateReimbBtn() {
+  const b = document.getElementById('reimbToggle');
+  const on = !!reimbursedItems[editId];
+  b.classList.toggle('on', on);
+  b.textContent = on ? '✓ Privates Geld erstattet' : 'Privates Geld erstattet';
+}
+
+function toggleReimbursedModal() {
+  if (!editId) return;
+  reimbursedItems[editId] = !reimbursedItems[editId];
+  localStorage.setItem('reimbursedItems', JSON.stringify(reimbursedItems));
+  updateReimbBtn();
+  renderItems();
+}
+
+function deleteFromModal() {
+  if (!editId) return;
+  const id = editId;
+  closeModal();
+  deleteItem(id);
 }
 
 function setFilter(f, btn) {
@@ -845,6 +831,8 @@ function showTab(tab) {
   document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
   document.querySelectorAll(`[data-tab="${tab}"]`).forEach(el => el.classList.add('active'));
+  const mhTitle = document.getElementById('mh-title');
+  if (mhTitle) mhTitle.textContent = tab === 'charts' ? 'Charts' : 'Übersicht';
   if (tab === 'charts') {
     renderProfitChart();
     renderChart();
@@ -863,7 +851,6 @@ function renderItems() {
   body.innerHTML = '';
 
   const searchText = searchEl.value.toLowerCase();
-
   const STATUS_ORDER = { 'Verkauft': 0, 'Lager': 1, 'Gekauft': 2 };
 
   const sorted = items
@@ -895,11 +882,15 @@ function renderItems() {
 
   const pageItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  let totalProfit = 0, soldCount = 0, stockCount = 0, stockValue = 0;
+  const nowYm = new Date().toISOString().slice(0, 7);
+  let totalProfit = 0, soldCount = 0, stockCount = 0, stockValue = 0, monthProfit = 0;
   filtered.forEach(item => {
     const buy = item.buy_price || 0;
     const sell = item.sell_price || 0;
-    if (item.status === 'Verkauft') { totalProfit += sell - buy; soldCount++; }
+    if (item.status === 'Verkauft') {
+      totalProfit += sell - buy; soldCount++;
+      if ((item.date || '').slice(0, 7) === nowYm) monthProfit += sell - buy;
+    }
     if (item.status === 'Lager') { stockCount++; stockValue += buy; }
   });
 
@@ -918,40 +909,27 @@ function renderItems() {
         : fmtPlatform(item.platform);
 
       const initial = (item.order_nr || '?').trim().charAt(0).toUpperCase() || '?';
-      const thumbInner = item.image
-        ? `<img src="${item.image}">`
-        : initial;
+      const thumbInner = item.image ? `<img src="${item.image}">` : initial;
 
-      const trackingBtn = (item.status === 'Gekauft' && item.tracking)
-        ? `<a class="icon-btn" href="${item.tracking}" target="_blank" title="Sendung verfolgen" onclick="event.stopPropagation()">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg>
-           </a>`
+      const trackInline = (item.status === 'Gekauft' && item.tracking)
+        ? `<a class="track-inline" href="${item.tracking}" target="_blank" title="Sendung verfolgen" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg></a>`
         : '';
 
-      body.innerHTML += `<div class="item-row">
+      const reimbDot = reimbursedItems[item.id] ? `<span class="reimb-dot" title="Privates Geld erstattet">●</span>` : '';
+
+      body.innerHTML += `<div class="item-row grid-row" onclick="editItem(${item.id})">
         <div class="thumb ${thumbClass(item.platform)}">${thumbInner}</div>
         <div class="item-main">
-          <div class="item-title">${item.order_nr || '—'}</div>
+          <div class="item-title">${item.order_nr || '—'}${reimbDot}${trackInline}</div>
           <div class="item-sub">${platformDisplay} · ${formatDate(item.date)}</div>
         </div>
-        <div class="item-figures">
-          <div class="fig"><span class="fig-l">Einkauf</span><span class="fig-v">${buy.toFixed(2)}€</span></div>
-          <div class="fig"><span class="fig-l">Verkauf</span><span class="fig-v">${sell ? sell.toFixed(2) + '€' : '—'}</span></div>
-        </div>
-        <div class="item-right">
+        <div class="col-num col-ek muted">${buy.toFixed(2)}€</div>
+        <div class="col-num col-vk">${sell ? sell.toFixed(2) + '€' : '—'}</div>
+        <div class="col-profit">
           <div class="amount ${profitClass}">${profitStr}</div>
           <span class="badge status-${item.status}">${item.status}</span>
         </div>
-        <div class="item-actions">
-          ${trackingBtn}
-          <button class="icon-btn${reimbursedItems[item.id] ? ' reimbursed' : ''}" onclick="toggleReimbursed(${item.id})" title="${reimbursedItems[item.id] ? 'Privates Geld zurückerhalten ✓' : 'Privates Geld noch nicht zurückerhalten'}">✓</button>
-          <button class="icon-btn" onclick="editItem(${item.id})" title="Bearbeiten">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-          </button>
-          <button class="icon-btn danger" onclick="deleteItem(${item.id})" title="Löschen">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-          </button>
-        </div>
+        <div class="row-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
       </div>${idx < pageItems.length - 1 ? '<div class="row-divider"></div>' : ''}`;
     });
   }
@@ -965,6 +943,19 @@ function renderItems() {
   document.getElementById('soldCount').textContent = soldCount;
   document.getElementById('stockCount').textContent = stockCount;
   document.getElementById('stockValue').textContent = stockValue.toFixed(2) + '€';
+
+  const delta = document.getElementById('heroDelta');
+  if (monthProfit !== 0) {
+    const up = monthProfit >= 0;
+    delta.style.display = 'inline-flex';
+    delta.classList.toggle('neg', !up);
+    const arrow = up
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
+    delta.innerHTML = `${arrow} ${up ? '+' : '−'}${Math.abs(monthProfit).toFixed(2)}€ diesen Monat`;
+  } else {
+    delta.style.display = 'none';
+  }
 }
 
 function renderChart() {
@@ -1042,10 +1033,7 @@ function renderProfitChart() {
         borderWidth: 2,
       }],
     },
-    options: {
-      ...chartDefaults,
-      maintainAspectRatio: false,
-    },
+    options: { ...chartDefaults, maintainAspectRatio: false },
   });
 }
 
@@ -1088,9 +1076,7 @@ function renderPlatformChart() {
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { labels: { color: textColor, font: { size: 11 } } },
-      },
+      plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
       cutout: '65%',
     },
   });
