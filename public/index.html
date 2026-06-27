@@ -1033,8 +1033,10 @@ function renderMobile(){
     if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; if((i.date||'').slice(0,7)===nowYm) monthProfit+=s-b; }
     if(i.status==='Lager'){ stock++; stockValue+=b; } });
   const kap=accountBalance+stockValue;
-  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
-  set('mvProfit', euroSigned(totalProfit)); set('mvSold', sold); set('mvStock', stock); set('mvKap', kap.toFixed(2)+'€');
+  countUp('mvProfit', totalProfit, v=>euroSigned(v));
+  countUp('mvSold', sold, v=>String(Math.round(v)));
+  countUp('mvStock', stock, v=>String(Math.round(v)));
+  countUp('mvKap', kap, v=>v.toFixed(2)+'€');
   const dl=document.getElementById('mvDelta');
   if(dl){ if(monthProfit!==0){ const up=monthProfit>=0; dl.style.display='inline-flex'; dl.className='mv-delta'+(up?'':' neg'); dl.innerHTML=`${arrowSvg(up)} ${up?'+':'−'}${Math.abs(monthProfit).toFixed(2)}€ diesen Monat`; } else dl.style.display='none'; }
   // grouped, filtered list
@@ -1051,6 +1053,21 @@ function renderMobile(){
 }
 
 /* ===== Dashboard widgets (use ALL items) ===== */
+const _countState={};
+const _reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUp(id, value, fmt){
+  const el=document.getElementById(id); if(!el) return;
+  const from = (id in _countState) ? _countState[id] : (value===0 ? 0 : 0);
+  _countState[id]=value;
+  if(_reduceMotion || from===value){ el.textContent=fmt(value); return; }
+  const dur=650, start=performance.now(), ease=t=>1-Math.pow(1-t,3);
+  if(el._raf) cancelAnimationFrame(el._raf);
+  (function step(now){
+    const t=Math.min(1,(now-start)/dur);
+    el.textContent=fmt(from+(value-from)*ease(t));
+    if(t<1) el._raf=requestAnimationFrame(step); else el.textContent=fmt(value);
+  })(start);
+}
 function ym(d){ return d.toISOString().slice(0,7); }
 function renderDashboard(){
   let totalProfit=0, revenue=0, soldCount=0, stockCount=0, stockValue=0;
@@ -1068,10 +1085,10 @@ function renderDashboard(){
     if(i.status==='Lager'){ stockCount++; stockValue+=b; }
   });
   const kapital=accountBalance+stockValue;
-  document.getElementById('mProfit').textContent=euroSigned(totalProfit);
-  document.getElementById('mSold').textContent=soldCount;
-  document.getElementById('mRevenue').textContent=revenue.toFixed(2)+'€';
-  document.getElementById('mKapital').textContent=kapital.toFixed(2)+'€';
+  countUp('mProfit', totalProfit, v=>euroSigned(v));
+  countUp('mSold', soldCount, v=>String(Math.round(v)));
+  countUp('mRevenue', revenue, v=>v.toFixed(2)+'€');
+  countUp('mKapital', kapital, v=>v.toFixed(2)+'€');
   document.getElementById('mKapitalSub').textContent=`Konto ${accountBalance.toFixed(2)}€ · Lager ${stockValue.toFixed(2)}€`;
   setChange('mProfitChg', curP, prevP);
   setChange('mRevenueChg', curR, prevR);
