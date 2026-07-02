@@ -42,6 +42,16 @@ function applySchema(db) {
       role TEXT NOT NULL CHECK(role IN ('read','edit')),
       UNIQUE(view_id, user_id)
     );
+
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL REFERENCES users(id),
+      date TEXT NOT NULL,
+      amount REAL NOT NULL DEFAULT 0,
+      category TEXT NOT NULL DEFAULT 'Sonstiges',
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 

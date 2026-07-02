@@ -408,6 +408,24 @@
   .desktop-only>*:nth-child(3){animation-delay:.1s;}
   @keyframes cardRise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
+  /* ===== Finanzen ===== */
+  .fin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:4px;}
+  .fin-pills{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+  .exp-row{display:flex;align-items:center;gap:13px;padding:12px;border-radius:14px;cursor:pointer;transition:background .16s ease,transform 130ms var(--ease-out);}
+  .exp-row:hover{background:var(--surface-hover);}
+  .exp-row:active{transform:scale(0.99);}
+  .exp-row+.exp-row{border-top:1px solid var(--hairline);}
+  .exp-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;}
+  .exp-main{flex:1;min-width:0;}
+  .exp-title{font-size:15px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .exp-sub{font-size:12px;color:var(--dim);font-weight:500;margin-top:2px;display:flex;align-items:center;gap:7px;}
+  .cat-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:100px;background:var(--surface-hover);color:var(--dim);}
+  .exp-amount{font-size:16px;font-weight:800;color:var(--red);white-space:nowrap;}
+  .balance-diff{font-size:12.5px;font-weight:600;margin-top:12px;text-align:center;color:var(--dim);line-height:1.5;}
+  .balance-diff.warn{color:var(--orange);}
+  .balance-diff.ok{color:var(--green);}
+  @media (max-width:900px){ .fin-stats{grid-template-columns:1fr;} }
+
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   }
@@ -436,6 +454,10 @@
   <div class="nav-link" data-tab="charts" onclick="showTab('charts')">
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
     Analytics
+  </div>
+  <div class="nav-link" data-tab="finance" onclick="showTab('finance')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+    Finanzen
   </div>
   <div class="nav-link" data-tab="labels" onclick="showTab('labels')">
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
@@ -505,6 +527,7 @@
       <span class="mh-word">Resell<span style="color:var(--green)">.</span>Tracker</span>
     </div>
     <div class="mh-side right">
+      <button class="mh-btn" onclick="showTab('finance')" aria-label="Finanzen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg></button>
       <button class="mh-btn" onclick="showTab('labels')" aria-label="DHL Labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button>
       <button class="mh-btn" onclick="toggleMobileSearch()" aria-label="Suche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
       <button class="mh-btn" onclick="toggleShare()" aria-label="Teilen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
@@ -745,6 +768,39 @@
       </div>
     </div><!-- /labels -->
 
+    <!-- ===== Finanzen ===== -->
+    <div id="finance" class="tab-content">
+      <div class="fin-stats">
+        <div class="stat-item"><div class="stat-label">Ausgaben gesamt</div><div class="stat-value" id="fExpTotal" style="color:var(--red)">0.00€</div></div>
+        <div class="stat-item"><div class="stat-label">Netto-Profit <span style="color:var(--faint);font-weight:500">(Profit − Ausgaben)</span></div><div class="stat-value" id="fNet">0.00€</div></div>
+        <div class="stat-item"><div class="stat-label">Ausgaben diesen Monat</div><div class="stat-value" id="fExpMonth" style="color:var(--red)">0.00€</div></div>
+      </div>
+
+      <div class="card" style="margin-top:4px">
+        <div class="card-head">
+          <div class="card-title">Ausgaben <span class="list-count" id="fCount">0 Einträge</span></div>
+          <button class="btn-add" onclick="openExpenseModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Ausgabe hinzufügen
+          </button>
+        </div>
+        <div class="fin-pills" id="finPills"></div>
+        <div id="fList"></div>
+      </div>
+
+      <div class="row two-one" style="margin-top:4px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Ausgaben pro Monat</div></div>
+          <div style="position:relative;height:240px"><canvas id="expMonthChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Nach Kategorie</div></div>
+          <div style="position:relative;height:200px"><canvas id="expCatChart"></canvas></div>
+          <div class="summary-row" id="expCatSummary"></div>
+        </div>
+      </div>
+    </div><!-- /finance -->
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -784,8 +840,29 @@
     <div class="modal-header"><span class="modal-title">Bargeld / Konto</span><button class="modal-close" onclick="closeBalanceModal()">✕</button></div>
     <p style="color:var(--dim);font-size:13px;margin:8px 0 0;font-weight:500;line-height:1.5">Dein aktuelles <b style="color:var(--text)">Bargeld</b> (Konto). Einkäufe erfasster Artikel werden automatisch abgezogen, Verkäufe wieder addiert. <br><b style="color:var(--text)">Kapital = Bargeld + Lagerwert</b> — ein Kauf verschiebt nur Geld ins Lager, ändert das Kapital also nicht.</p>
     <div class="field-label" style="margin-top:18px">Aktuelles Bargeld €</div>
-    <input id="balanceInput" type="number" step="0.01" class="form-input" placeholder="z.B. 1500.00">
+    <input id="balanceInput" type="number" step="0.01" class="form-input" placeholder="z.B. 1500.00" oninput="updateBalanceDiff()">
     <button class="btn btn-primary" onclick="saveBalance()" style="width:100%;justify-content:center;padding:13px;margin-top:14px">Speichern</button>
+    <div id="balanceDiff" class="balance-diff"></div>
+  </div>
+</div>
+
+<!-- Expense modal -->
+<div class="modal-overlay" id="expense-modal" onclick="onExpenseOverlay(event)">
+  <div class="modal-card" style="max-width:480px">
+    <div class="modal-header"><span class="modal-title" id="expense-title">Ausgabe hinzufügen</span><button class="modal-close" onclick="closeExpenseModal()">✕</button></div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div><div class="field-label">Betrag €</div><input id="expAmount" type="number" step="0.01" class="form-input" placeholder="z.B. 12.90"></div>
+      <div><div class="field-label">Datum</div><input id="expDate" type="date" class="form-input"></div>
+      <div style="grid-column:span 2"><div class="field-label">Kategorie</div>
+        <input id="expCategory" class="form-input" list="expCatList" placeholder="Verpackung, Abo, …">
+        <datalist id="expCatList"></datalist>
+      </div>
+      <div style="grid-column:span 2"><div class="field-label">Bezeichnung (optional)</div><input id="expNote" class="form-input" placeholder="z.B. Kartons 30×20, ChatGPT Plus"></div>
+      <button class="btn btn-primary" onclick="saveExpense()" style="grid-column:span 2;justify-content:center;padding:13px">Speichern</button>
+    </div>
+    <div class="edit-extra" id="expEditExtra">
+      <button class="btn btn-danger" onclick="deleteExpenseFromModal()" style="padding:12px 18px;width:100%;justify-content:center">Löschen</button>
+    </div>
   </div>
 </div>
 
@@ -807,6 +884,13 @@ let chartPeriod = 'month';
 let reimbursedItems = JSON.parse(localStorage.getItem('reimbursedItems') || '{}');
 let sortBy = 'date-desc';
 let accountBalance = 0;
+let expenses = [];
+let editExpenseId = null;
+let expFilter = 'all';
+const EXP_CATS = ['Verpackung','Abo','Versand','Gebühren','Sonstiges'];
+const CAT_COLORS = { 'Verpackung':'#0a84ff','Abo':'#7d5cff','Versand':'#ff9f0a','Gebühren':'#ff4d8d','Sonstiges':'#8e8e93' };
+function catColor(c){ if(CAT_COLORS[c]) return CAT_COLORS[c]; let h=0; for(const ch of String(c)) h=(h*31+ch.charCodeAt(0))>>>0; return `hsl(${h%360} 60% 55%)`; }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function setSort(value){ sortBy=value; currentPage=1; renderItems(); }
 function openModal(title){ document.getElementById('modal-title').textContent=title||'Artikel hinzufügen'; const o=document.getElementById('item-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
@@ -816,7 +900,7 @@ function onModalOverlayClick(e){ if(e.target===document.getElementById('item-mod
 function toggleSortDropdown(){ document.getElementById('sortDropdown').classList.toggle('open'); }
 function setSortOption(value,label,el){ setSort(value); document.querySelectorAll('.sort-option').forEach(o=>o.classList.remove('active')); el.classList.add('active'); const t=document.getElementById('sortToggle'); t.classList.add('active'); t.textContent='↕ '+label+' ▾'; document.getElementById('sortDropdown').classList.remove('open'); }
 document.addEventListener('click', e=>{ const dd=document.getElementById('sortDropdown'); if(dd && !dd.contains(e.target)) dd.classList.remove('open'); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeBalanceModal(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeBalanceModal(); closeExpenseModal(); } });
 
 function soon(name){ toast((name||'Dieses Feature')+' kommt später'); }
 function toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t);} t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2200); }
@@ -861,7 +945,7 @@ async function init(){
   const params=new URLSearchParams(location.search);
   const sharedOwnerId=params.get('sharedView');
   if(sharedOwnerId){ await loadSharedItems(parseInt(sharedOwnerId,10)); }
-  else{ await loadBalance(); await loadItems(); }
+  else{ await loadBalance(); await loadExpenses(); await loadItems(); }
 }
 
 function renderUserBadge(){
@@ -939,10 +1023,11 @@ function showTab(tab){
   document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
   document.querySelectorAll(`.nav-link[data-tab="${tab}"], .bottom-nav-item[data-tab="${tab}"]`).forEach(el=>el.classList.add('active'));
-  const titles={overview:'Übersicht',charts:'Analytics',labels:'DHL Labels'};
+  const titles={overview:'Übersicht',charts:'Analytics',labels:'DHL Labels',finance:'Finanzen'};
   const title=titles[tab]||'Übersicht';
   const h1=document.getElementById('page-h1'); if(h1) h1.textContent=title;
   if(tab==='charts'){ renderProfitChart(); renderChart(); renderPlatformChart(); }
+  if(tab==='finance'){ renderFinance(); renderExpenseCharts(); }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1032,7 +1117,8 @@ function renderMobile(){
   items.forEach(i=>{ const b=i.buy_price||0,s=i.sell_price||0; spentAll+=b;
     if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; recvSold+=s; if((i.date||'').slice(0,7)===nowYm) monthProfit+=s-b; }
     else { stock++; stockValue+=b; } });
-  const cash=accountBalance - spentAll + recvSold;
+  let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
+  const cash=accountBalance - spentAll + recvSold - expTotal;
   const kap=cash + stockValue;
   countUp('mvProfit', totalProfit, v=>euroSigned(v));
   countUp('mvSold', sold, v=>String(Math.round(v)));
@@ -1070,8 +1156,8 @@ function countUp(id, value, fmt){
   })(start);
 }
 function ym(d){ return d.toISOString().slice(0,7); }
-function cashFlows(){ let spent=0,recv=0; items.forEach(i=>{ spent+=(i.buy_price||0); if(i.status==='Verkauft') recv+=(i.sell_price||0); }); return {spent,recv}; }
-function currentCash(){ const {spent,recv}=cashFlows(); return accountBalance - spent + recv; }
+function cashFlows(){ let spent=0,recv=0,exp=0; items.forEach(i=>{ spent+=(i.buy_price||0); if(i.status==='Verkauft') recv+=(i.sell_price||0); }); expenses.forEach(e=>{ exp+=(e.amount||0); }); return {spent,recv,exp}; }
+function currentCash(){ const {spent,recv,exp}=cashFlows(); return accountBalance - spent + recv - exp; }
 function renderDashboard(){
   let totalProfit=0, revenue=0, soldCount=0, stockCount=0, stockValue=0, spentAll=0, recvSold=0;
   const now=new Date(); const curYm=ym(now);
@@ -1087,8 +1173,9 @@ function renderDashboard(){
       else if(m===prevYm){ prevP+=s-b; prevR+=s; prevC++; }
     } else { stockCount++; stockValue+=b; }   // unverkauft (Gekauft+Lager) = Geld im Lager
   });
-  const cash=accountBalance - spentAll + recvSold;   // aktuelles Bargeld
-  const kapital=cash + stockValue;                    // = Basis + Gesamtprofit
+  let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
+  const cash=accountBalance - spentAll + recvSold - expTotal;   // aktuelles Bargeld
+  const kapital=cash + stockValue;                    // = Basis + Gesamtprofit − Ausgaben
   countUp('mProfit', totalProfit, v=>euroSigned(v));
   countUp('mSold', soldCount, v=>String(Math.round(v)));
   countUp('mRevenue', revenue, v=>v.toFixed(2)+'€');
@@ -1099,6 +1186,7 @@ function renderDashboard(){
   setChange('mSoldChg', curC, prevC);
   renderRecentSales();
   renderRevenueChart();
+  renderFinance();
 }
 
 function setChange(id, cur, prev){
@@ -1203,10 +1291,97 @@ function renderPlatformChart(){
 }
 
 /* ===== Balance ===== */
-function openBalanceModal(){ document.getElementById('balanceInput').value=currentCash().toFixed(2); const o=document.getElementById('balance-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('balanceInput').focus(),120); }
+function openBalanceModal(){ document.getElementById('balanceInput').value=currentCash().toFixed(2); updateBalanceDiff(); const o=document.getElementById('balance-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('balanceInput').focus(),120); }
 function closeBalanceModal(){ const o=document.getElementById('balance-modal'); if(!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>o.classList.remove('closing'),180); }
 function onBalanceOverlay(e){ if(e.target===document.getElementById('balance-modal')) closeBalanceModal(); }
-async function saveBalance(){ const enteredCash=parseFloat(document.getElementById('balanceInput').value)||0; const {spent,recv}=cashFlows(); const baseline=enteredCash+spent-recv; const r=await fetch('/api/profile/balance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({balance:baseline})}); if(r.ok){ accountBalance=baseline; closeBalanceModal(); renderDashboard(); renderMobile(); toast('Bargeld gespeichert ✓'); } else { toast('Bargeld konnte nicht gespeichert werden.'); } }
+async function saveBalance(){ const enteredCash=parseFloat(document.getElementById('balanceInput').value)||0; const {spent,recv,exp}=cashFlows(); const baseline=enteredCash+spent-recv+exp; const r=await fetch('/api/profile/balance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({balance:baseline})}); if(r.ok){ accountBalance=baseline; closeBalanceModal(); renderDashboard(); renderMobile(); toast('Bargeld gespeichert ✓'); } else { toast('Bargeld konnte nicht gespeichert werden.'); } }
+
+function updateBalanceDiff(){
+  const el=document.getElementById('balanceDiff'); if(!el) return;
+  const computed=currentCash();
+  const entered=parseFloat(document.getElementById('balanceInput').value);
+  if(!isFinite(entered)){ el.textContent=''; el.className='balance-diff'; return; }
+  const diff=entered-computed;
+  if(Math.abs(diff)<0.005){ el.textContent='✓ Stimmt mit dem berechneten Bargeld überein.'; el.className='balance-diff ok'; }
+  else { el.innerHTML=`Weicht <b>${(diff>=0?'+':'−')+Math.abs(diff).toFixed(2)}€</b> vom berechneten Bargeld (${computed.toFixed(2)}€) ab — evtl. fehlt eine Ausgabe/Buchung.`; el.className='balance-diff warn'; }
+}
+
+/* ===== Finanzen / Ausgaben ===== */
+async function loadExpenses(){ try{ const r=await fetch('/api/expenses'); if(r.ok) expenses=await r.json(); }catch(_){} renderDashboard(); renderMobile(); renderFinance(); }
+
+function renderFinance(){
+  const listEl=document.getElementById('fList'); if(!listEl) return;
+  const nowM=new Date().toISOString().slice(0,7);
+  let total=0, monthTotal=0;
+  expenses.forEach(e=>{ total+=(e.amount||0); if((e.date||'').slice(0,7)===nowM) monthTotal+=(e.amount||0); });
+  let profit=0; items.forEach(i=>{ if(i.status==='Verkauft') profit+=((i.sell_price||0)-(i.buy_price||0)); });
+  const netto=profit-total;
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('fExpTotal', total.toFixed(2)+'€');
+  set('fExpMonth', monthTotal.toFixed(2)+'€');
+  const netEl=document.getElementById('fNet'); if(netEl){ netEl.textContent=(netto>=0?'+':'−')+Math.abs(netto).toFixed(2)+'€'; netEl.style.color=netto>=0?'var(--green)':'var(--red)'; }
+
+  const cats=[...new Set(expenses.map(e=>e.category))];
+  const pillEl=document.getElementById('finPills');
+  if(pillEl){
+    pillEl.innerHTML=`<button class="pill${expFilter==='all'?' active':''}" data-cat="all" onclick="setExpFilter(this.dataset.cat)">Alle</button>`+
+      cats.map(c=>`<button class="pill${expFilter===c?' active':''}" data-cat="${escapeHtml(c)}" onclick="setExpFilter(this.dataset.cat)">${escapeHtml(c)}</button>`).join('');
+  }
+  const filtered=expenses.filter(e=>expFilter==='all'||e.category===expFilter);
+  set('fCount', `${filtered.length} Einträge`);
+  if(filtered.length===0){ listEl.innerHTML=`<div class="empty-state"><div class="es-emoji">🧾</div><div class="es-text">Noch keine Ausgaben</div></div>`; }
+  else listEl.innerHTML=filtered.map(expenseRow).join('');
+}
+function expenseRow(e){
+  const col=catColor(e.category);
+  const initial=(String(e.category||'?').trim().charAt(0)||'?').toUpperCase();
+  return `<div class="exp-row" onclick="editExpense(${e.id})">
+    <div class="exp-ico" style="background:${col}">${initial}</div>
+    <div class="exp-main"><div class="exp-title">${escapeHtml(e.note||e.category)}</div><div class="exp-sub"><span class="cat-badge">${escapeHtml(e.category)}</span> · ${formatDate(e.date)}</div></div>
+    <div class="exp-amount">−${(e.amount||0).toFixed(2)}€</div>
+  </div>`;
+}
+function setExpFilter(c){ expFilter=c; renderFinance(); }
+
+function openOverlay(id){ const o=document.getElementById(id); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeOverlay(id){ const o=document.getElementById(id); if(!o||!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>o.classList.remove('closing'),180); }
+
+function populateCatList(){ const dl=document.getElementById('expCatList'); if(!dl) return; const all=[...new Set([...EXP_CATS,...expenses.map(e=>e.category)])]; dl.innerHTML=all.map(c=>`<option value="${escapeHtml(c)}">`).join(''); }
+function clearExpenseForm(){ editExpenseId=null; ['expAmount','expDate','expCategory','expNote'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); document.getElementById('expDate').classList.remove('has-value'); }
+function openExpenseModal(){ clearExpenseForm(); document.getElementById('expEditExtra').style.display='none'; document.getElementById('expense-title').textContent='Ausgabe hinzufügen'; const d=document.getElementById('expDate'); d.value=new Date().toISOString().slice(0,10); d.classList.add('has-value'); populateCatList(); openOverlay('expense-modal'); setTimeout(()=>document.getElementById('expAmount').focus(),120); }
+function editExpense(id){ const e=expenses.find(x=>x.id===id); if(!e) return; editExpenseId=id; document.getElementById('expAmount').value=e.amount; const d=document.getElementById('expDate'); d.value=e.date; d.classList.add('has-value'); document.getElementById('expCategory').value=e.category; document.getElementById('expNote').value=e.note||''; document.getElementById('expEditExtra').style.display='flex'; document.getElementById('expense-title').textContent='Ausgabe bearbeiten'; populateCatList(); openOverlay('expense-modal'); }
+function closeExpenseModal(){ closeOverlay('expense-modal'); }
+function onExpenseOverlay(e){ if(e.target===document.getElementById('expense-modal')) closeExpenseModal(); }
+async function saveExpense(){
+  const amount=parseFloat(document.getElementById('expAmount').value);
+  const date=document.getElementById('expDate').value;
+  const category=(document.getElementById('expCategory').value||'').trim()||'Sonstiges';
+  const note=(document.getElementById('expNote').value||'').trim()||null;
+  if(!(amount>=0) || !date){ toast('Bitte Betrag und Datum angeben.'); return; }
+  const url=editExpenseId?`/api/expenses/${editExpenseId}`:'/api/expenses';
+  const method=editExpenseId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify({amount,date,category,note})});
+  if(!r.ok){ const err=await r.json().catch(()=>({})); toast('Fehler: '+(err.errors?.join(', ')||err.error||'Speichern fehlgeschlagen')); return; }
+  const wasEdit=!!editExpenseId; closeExpenseModal(); await loadExpenses(); toast(wasEdit?'Gespeichert ✓':'Ausgabe hinzugefügt ✓');
+}
+async function deleteExpense(id){ if(!confirm('Ausgabe löschen?')) return; await fetch(`/api/expenses/${id}`,{method:'DELETE'}); await loadExpenses(); toast('Gelöscht'); }
+function deleteExpenseFromModal(){ if(!editExpenseId) return; const id=editExpenseId; closeExpenseModal(); deleteExpense(id); }
+
+function renderExpenseCharts(){
+  if(typeof Chart==='undefined') return;
+  const monthly={}; expenses.forEach(e=>{ const m=(e.date||'').slice(0,7); if(m) monthly[m]=(monthly[m]||0)+(e.amount||0); });
+  const mk=Object.keys(monthly).sort();
+  const ctxM=document.getElementById('expMonthChart');
+  if(ctxM){ if(window.expMonthInst && window.expMonthInst.destroy) window.expMonthInst.destroy();
+    window.expMonthInst=new Chart(ctxM,{ type:'bar', data:{ labels:mk, datasets:[{ label:'Ausgaben €', data:mk.map(k=>monthly[k]), backgroundColor:'rgba(255,77,141,0.18)', borderColor:'#ff4d8d', borderWidth:1, borderRadius:8 }] }, options:{ ...chartDefaults, maintainAspectRatio:false } }); }
+  const cat={}; expenses.forEach(e=>{ cat[e.category]=(cat[e.category]||0)+(e.amount||0); });
+  const cats=Object.keys(cat);
+  const ctxC=document.getElementById('expCatChart');
+  if(ctxC){ if(window.expCatInst && window.expCatInst.destroy) window.expCatInst.destroy();
+    window.expCatInst=new Chart(ctxC,{ type:'doughnut', data:{ labels:cats, datasets:[{ data:cats.map(c=>cat[c]), backgroundColor:cats.map(catColor), borderColor:'#0c0c0d', borderWidth:2, hoverOffset:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:textColor, font:{size:11} } } }, cutout:'62%' } }); }
+  const sum=document.getElementById('expCatSummary');
+  if(sum) sum.innerHTML=cats.length? cats.map(c=>`<div class="summary-item"><div class="summary-label">${escapeHtml(c)}</div><div class="summary-value" style="color:${catColor(c)}">${cat[c].toFixed(2)}€</div></div>`).join('') : '<div style="color:var(--faint);font-size:13px;font-weight:600">Noch keine Ausgaben</div>';
+}
 
 /* ===== Import / Export / Share ===== */
 async function exportBackup(){ window.location.href='/api/items/export'; }

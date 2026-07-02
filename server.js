@@ -50,6 +50,7 @@ app.use((req, res, next) => { req.db = db; next(); });
 app.use('/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/profile', require('./routes/profile'));
+app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/share', require('./routes/share'));
 app.use('/api/shared', require('./routes/shared'));
 
