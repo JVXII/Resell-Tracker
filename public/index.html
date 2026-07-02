@@ -447,7 +447,7 @@
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
     Übersicht
   </div>
-  <div class="nav-link" data-tab="overview" onclick="showTab('overview');scrollToList()">
+  <div class="nav-link" id="navArtikel" onclick="showTab('overview');scrollToList()">
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
     Artikel
   </div>
@@ -1029,7 +1029,22 @@ function showTab(tab){
   if(tab==='charts'){ renderProfitChart(); renderChart(); renderPlatformChart(); }
   if(tab==='finance'){ renderFinance(); renderExpenseCharts(); }
   window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(updateSidebarSpy, 60);
 }
+
+// Sidebar: nur EIN Eintrag aktiv — "Artikel" wird beim Runterscrollen zur Liste aktiv
+function updateSidebarSpy(){
+  const ov=document.getElementById('overview');
+  const navOv=document.querySelector('.nav-link[data-tab="overview"]');
+  const navArt=document.getElementById('navArtikel');
+  const tx=document.getElementById('txSection');
+  if(!ov||!navOv||!navArt) return;
+  if(!ov.classList.contains('active')){ navArt.classList.remove('active'); return; }
+  const atList = tx && tx.getBoundingClientRect().top < 220;
+  navArt.classList.toggle('active', !!atList);
+  navOv.classList.toggle('active', !atList);
+}
+window.addEventListener('scroll', updateSidebarSpy, { passive:true });
 
 /* ===== Item list (transaction history) ===== */
 function renderItems(){
