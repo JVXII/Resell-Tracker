@@ -231,6 +231,21 @@
   .form-input::placeholder{color:var(--faint);}
   .form-input:focus{outline:none;border-color:var(--hairline-strong);}
   select.form-input option{background:var(--surface-2);}
+  .img-drop{position:relative;border:1.5px dashed var(--hairline-strong);border-radius:14px;background:var(--bg);min-height:130px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .18s,background .18s;overflow:hidden;}
+  .img-drop:hover{border-color:var(--dim);background:var(--surface-hover);}
+  .img-drop:focus-visible{outline:none;border-color:var(--blue);}
+  .img-drop.dragover{border-color:var(--blue);border-style:solid;background:rgba(10,132,255,0.09);}
+  .img-drop.filled{border-style:solid;border-color:var(--hairline);background:#000;}
+  .img-drop-empty{display:flex;flex-direction:column;align-items:center;gap:9px;padding:22px;text-align:center;pointer-events:none;}
+  .img-drop-empty svg{width:30px;height:30px;color:var(--faint);transition:color .18s,transform .18s var(--ease-out);}
+  .img-drop:hover .img-drop-empty svg{color:var(--dim);transform:translateY(-2px);}
+  .img-drop.dragover .img-drop-empty svg{color:var(--blue);transform:translateY(-3px);}
+  .img-drop-title{font-size:14px;font-weight:700;color:var(--text);}
+  .img-drop-sub{font-size:12px;color:var(--dim);font-weight:500;}
+  .img-drop-preview{position:relative;width:100%;height:100%;}
+  .img-drop-preview img{width:100%;max-height:230px;object-fit:contain;display:block;}
+  .img-remove{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,0.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s var(--ease-out);}
+  .img-remove:hover{background:var(--red);transform:scale(1.08);}
   input[type="date"].form-input::-webkit-datetime-edit{color:var(--faint);}
   input[type="date"].form-input.has-value::-webkit-datetime-edit{color:var(--text);}
   input[type="date"].form-input::-webkit-calendar-picker-indicator{filter:invert(0.6);}
@@ -824,7 +839,22 @@
       <select id="status" class="form-input"><option value="Gekauft">Gekauft</option><option value="Lager">Lager</option><option value="Verkauft">Verkauft</option></select>
       <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
       <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
-      <input id="imageUrl" class="form-input" placeholder="Bild-URL (z.B. https://i.ebayimg.com/..." style="grid-column: span 2">
+      <div style="grid-column: span 2">
+        <div class="field-label">Bild</div>
+        <div id="imgDrop" class="img-drop" tabindex="0" role="button" aria-label="Bild hochladen">
+          <input id="imgFile" type="file" accept="image/*" hidden>
+          <div class="img-drop-empty" id="imgDropEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="img-drop-title">Bild hierher ziehen</div>
+            <div class="img-drop-sub">oder klicken zum Auswählen · einfügen mit ⌘V</div>
+          </div>
+          <div class="img-drop-preview" id="imgDropPreview" style="display:none">
+            <img id="imgPreviewImg" alt="Vorschau">
+            <button type="button" class="img-remove" id="imgRemoveBtn" title="Bild entfernen">✕</button>
+          </div>
+        </div>
+        <input id="imageUrl" class="form-input" placeholder="oder Bild-URL einfügen (https://…)" style="margin-top:10px">
+      </div>
       <button class="btn btn-primary" onclick="saveItem()" style="grid-column: span 2; justify-content:center; padding:13px;">Speichern</button>
     </div>
     <div class="edit-extra" id="editExtra">
@@ -985,8 +1015,79 @@ dateEl.addEventListener('change', ()=>{ dateEl.classList.toggle('has-value',!!da
 
 function formatDate(d){ if(!d) return '—'; const p=d.split('-'); if(p.length!==3) return d; return `${p[2]}.${p[1]}.${p[0]}`; }
 
+// ---- Bild: Drag & Drop / Datei / Einfügen ----
+let pickedImage=null; // aktives Bild (data:-URL oder http-URL) oder null
+const imgDrop=document.getElementById('imgDrop');
+const imgFile=document.getElementById('imgFile');
+const imgDropEmpty=document.getElementById('imgDropEmpty');
+const imgDropPreview=document.getElementById('imgDropPreview');
+const imgPreviewImg=document.getElementById('imgPreviewImg');
+const imgRemoveBtn=document.getElementById('imgRemoveBtn');
+
+function setPickedImage(src){
+  pickedImage=src||null;
+  if(pickedImage){
+    imgPreviewImg.src=pickedImage;
+    imgDropPreview.style.display='block';
+    imgDropEmpty.style.display='none';
+    imgDrop.classList.add('filled');
+  }else{
+    imgPreviewImg.removeAttribute('src');
+    imgDropPreview.style.display='none';
+    imgDropEmpty.style.display='flex';
+    imgDrop.classList.remove('filled');
+  }
+}
+
+// Bild im Browser verkleinern & komprimieren, damit die base64-Größe klein bleibt
+function fileToDataURL(file,maxDim=1000,quality=0.82){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('read'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('img'));
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxDim||h>maxDim){ const s=maxDim/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+        const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const isPng=/png$/i.test(file.type);
+        resolve(canvas.toDataURL(isPng?'image/png':'image/jpeg',quality));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageFile(file){
+  if(!file||!file.type.startsWith('image/')){ toast('Bitte eine Bilddatei wählen'); return; }
+  try{ const dataUrl=await fileToDataURL(file); setPickedImage(dataUrl); imageUrlEl.value=''; }
+  catch(_){ toast('Bild konnte nicht geladen werden'); }
+}
+
+if(imgDrop){
+  imgDrop.addEventListener('click', e=>{ if(e.target===imgRemoveBtn) return; imgFile.click(); });
+  imgDrop.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); imgFile.click(); } });
+  imgFile.addEventListener('change', ()=>{ if(imgFile.files[0]) handleImageFile(imgFile.files[0]); imgFile.value=''; });
+  ['dragenter','dragover'].forEach(ev=>imgDrop.addEventListener(ev, e=>{ e.preventDefault(); imgDrop.classList.add('dragover'); }));
+  ['dragleave','dragend'].forEach(ev=>imgDrop.addEventListener(ev, e=>{ e.preventDefault(); imgDrop.classList.remove('dragover'); }));
+  imgDrop.addEventListener('drop', e=>{ e.preventDefault(); imgDrop.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handleImageFile(f); });
+  imgRemoveBtn.addEventListener('click', e=>{ e.stopPropagation(); setPickedImage(null); imageUrlEl.value=''; });
+  // Bild aus Zwischenablage einfügen, solange das Modal offen ist
+  document.addEventListener('paste', e=>{
+    const modal=document.getElementById('item-modal');
+    if(!modal||!modal.classList.contains('open')) return;
+    const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+    if(it){ const f=it.getAsFile(); if(f){ e.preventDefault(); handleImageFile(f); } }
+  });
+  // URL-Eingabe treibt die Vorschau; hochgeladene Bilder bleiben erhalten
+  imageUrlEl.addEventListener('input', ()=>{ const v=imageUrlEl.value.trim(); if(v) setPickedImage(v); else if(pickedImage&&!pickedImage.startsWith('data:')) setPickedImage(null); });
+}
+
 async function saveItem(){
-  const imageData=imageUrlEl.value.trim() || (editId ? (items.find(i=>i.id===editId)?.image||null) : null);
+  const imageData=pickedImage || imageUrlEl.value.trim() || (editId ? (items.find(i=>i.id===editId)?.image||null) : null);
   const data={ platform:platformEl.value, sell_platform:sellPlatformEl.value||null, order_nr:orderEl.value, date:dateEl.value,
     buy_price:parseFloat(buyPriceEl.value)||0, status:statusEl.value, tracking:statusEl.value==='Gekauft'?trackingEl.value:null,
     sell_price:parseFloat(sellPriceEl.value)||null, image:imageData };
@@ -999,7 +1100,7 @@ async function saveItem(){
 
 async function deleteItem(id){ if(!confirm('Produkt löschen?')) return; await fetch(`/api/items/${id}`,{method:'DELETE'}); await loadItems(); toast('Gelöscht'); }
 
-function clearForm(){ orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; trackingEl.value=''; trackingEl.style.display='block'; editId=null; }
+function clearForm(){ orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; editId=null; }
 
 function editItem(id){
   const item=items.find(i=>i.id===id); if(!item) return;
@@ -1007,6 +1108,7 @@ function editItem(id){
   dateEl.value=item.date; dateEl.classList.toggle('has-value',!!item.date); buyPriceEl.value=item.buy_price;
   statusEl.value=item.status; sellPriceEl.value=item.sell_price||'';
   imageUrlEl.value=item.image && !item.image.startsWith('data:') ? item.image : '';
+  setPickedImage(item.image||null);
   trackingEl.value=item.tracking||''; trackingEl.style.display=item.status==='Gekauft'?'block':'none';
   editId=id; document.getElementById('editExtra').style.display='flex'; updateReimbBtn(); openModal('Artikel bearbeiten');
 }
