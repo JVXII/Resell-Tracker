@@ -27,6 +27,10 @@ function applySchema(db) {
       status TEXT NOT NULL CHECK(status IN ('Gekauft','Lager','Verkauft')),
       tracking TEXT,
       image TEXT,
+      owned INTEGER NOT NULL DEFAULT 0,
+      is_lot INTEGER NOT NULL DEFAULT 0,
+      parent_id INTEGER,
+      part_price REAL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -59,6 +63,10 @@ function applySchema(db) {
 function applyMigrations(db) {
   try { db.exec(`ALTER TABLE items ADD COLUMN sell_platform TEXT;`); } catch (_) {}
   try { db.exec(`ALTER TABLE items ADD COLUMN title TEXT;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE items ADD COLUMN owned INTEGER NOT NULL DEFAULT 0;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE items ADD COLUMN is_lot INTEGER NOT NULL DEFAULT 0;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE items ADD COLUMN parent_id INTEGER;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE items ADD COLUMN part_price REAL;`); } catch (_) {}
   try { db.exec(`ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0;`); } catch (_) {}
 }
 

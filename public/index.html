@@ -248,6 +248,35 @@
   .img-drop-preview img{width:100%;max-height:230px;object-fit:contain;display:block;}
   .img-remove{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,0.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s var(--ease-out);}
   .img-remove:hover{background:var(--red);transform:scale(1.08);}
+  /* Options (Haken) im Formular */
+  .opt-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .opt-check{flex:1;min-width:180px;display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border:1px solid var(--hairline);border-radius:12px;background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s;}
+  .opt-check:hover{border-color:var(--hairline-strong);}
+  .opt-check input{position:absolute;opacity:0;pointer-events:none;}
+  .opt-box{flex:none;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--hairline-strong);margin-top:1px;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;}
+  .opt-box::after{content:'';width:10px;height:10px;border-radius:2px;background:#000;transform:scale(0);transition:transform .15s var(--ease-out);}
+  .opt-check input:checked ~ .opt-box{background:var(--text);border-color:var(--text);}
+  .opt-check input:checked ~ .opt-box::after{transform:scale(1);}
+  .opt-check input:checked ~ .opt-txt{color:var(--text);}
+  .opt-txt{font-size:13.5px;font-weight:700;color:var(--dim);display:flex;flex-direction:column;gap:2px;line-height:1.25;}
+  .opt-txt small{font-size:11.5px;font-weight:500;color:var(--faint);}
+  /* Lot-Zeile + Teile in der Liste */
+  .tag-lot{font-size:10px;font-weight:800;letter-spacing:0.06em;color:var(--purple);background:rgba(125,92,255,0.14);padding:2px 7px;border-radius:6px;flex:none;}
+  .tag-owned{font-size:10px;font-weight:700;letter-spacing:0.03em;color:var(--orange);background:rgba(255,159,10,0.13);padding:2px 7px;border-radius:6px;flex:none;}
+  .lot-add,.lot-edit{border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0;transition:color .14s;}
+  .lot-add{color:var(--green);}
+  .lot-add:hover{color:#5be675;}
+  .lot-edit{color:var(--faint);margin-left:8px;}
+  .lot-edit:hover{color:var(--dim);}
+  .row-chev.open svg{transform:rotate(90deg);}
+  .row-chev svg{transition:transform .18s var(--ease-out);}
+  .part-row{display:flex;align-items:center;gap:10px;padding:9px 20px 9px 40px;cursor:pointer;transition:background .12s;position:relative;}
+  .part-row:hover{background:var(--surface-hover);}
+  .part-line{position:absolute;left:26px;top:0;bottom:0;width:1.5px;background:var(--hairline);}
+  .part-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .part-meta{font-size:12px;color:var(--dim);font-weight:500;margin-left:auto;white-space:nowrap;}
+  .part-price{font-size:14px;font-weight:800;min-width:64px;text-align:right;}
+  .part-price.pos{color:var(--green);}
   input[type="date"].form-input::-webkit-datetime-edit{color:var(--faint);}
   input[type="date"].form-input.has-value::-webkit-datetime-edit{color:var(--text);}
   input[type="date"].form-input::-webkit-calendar-picker-indicator{filter:invert(0.6);}
@@ -842,6 +871,14 @@
       <select id="status" class="form-input"><option value="Gekauft">Gekauft</option><option value="Lager">Lager</option><option value="Verkauft">Verkauft</option></select>
       <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
       <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
+      <div class="opt-row" style="grid-column: span 2">
+        <label class="opt-check"><input type="checkbox" id="ownedChk"><span class="opt-box"></span><span class="opt-txt">Schon vorher besessen<small>Einkauf zählt nicht aufs Kapital</small></span></label>
+        <label class="opt-check"><input type="checkbox" id="isLotChk"><span class="opt-box"></span><span class="opt-txt">Als Lot<small>Einzelteile einzeln verkaufen</small></span></label>
+      </div>
+      <div id="partPriceWrap" style="grid-column: span 2; display:none">
+        <div class="field-label">Standard-Verkaufspreis pro Teil €</div>
+        <input id="partPrice" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00 – wird bei jedem Verkauf vorgeschlagen">
+      </div>
       <div style="grid-column: span 2">
         <div class="field-label">Bild</div>
         <div id="imgDrop" class="img-drop" tabindex="0" role="button" aria-label="Bild hochladen">
@@ -864,6 +901,23 @@
       <button class="reimb-toggle" id="reimbToggle" onclick="toggleReimbursedModal()">Privates Geld erstattet</button>
       <button class="btn btn-danger" onclick="deleteFromModal()" style="padding:12px 18px;">Löschen</button>
     </div>
+  </div>
+</div>
+
+<!-- Part-sale modal (Teil eines Lots verkauft) -->
+<div class="modal-overlay" id="part-modal" onclick="onPartOverlay(event)">
+  <div class="modal-card" style="max-width:440px">
+    <div class="modal-header"><span class="modal-title" id="part-title">Teil verkauft</span><button class="modal-close" onclick="closePartModal()">✕</button></div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div style="grid-column:span 2"><div class="field-label">Bezeichnung</div><input id="partName" class="form-input" placeholder="z.B. Taste W"></div>
+      <div><div class="field-label">Verkaufspreis €</div><input id="partSell" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00"></div>
+      <div><div class="field-label">Datum</div><input id="partDate" type="date" class="form-input"></div>
+      <div style="grid-column:span 2"><div class="field-label">Verkaufsplattform (optional)</div>
+        <select id="partPlatform" class="form-input"><option value="">—</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="savePart()" style="grid-column:span 2;justify-content:center;padding:13px">Speichern</button>
+    </div>
+    <div class="edit-extra" id="partEditExtra" style="display:none"><button class="btn btn-danger" onclick="deletePartFromModal()" style="padding:12px 18px;width:100%;justify-content:center">Löschen</button></div>
   </div>
 </div>
 
@@ -933,6 +987,13 @@ function itemLabel(item){
 }
 // Fallback-Buchstabe fürs Thumbnail: erst Titel, dann Nummer
 function itemInitial(item){ return ((item.title||item.order_nr||'?').trim().charAt(0).toUpperCase())||'?'; }
+// Effektiver Einkauf: vorbesessene Artikel kosten das Business 0€
+function effBuy(i){ return i.owned ? 0 : (i.buy_price||0); }
+// Teile (Kinder) eines Lots + zusammengefasste Kennzahlen
+function lotParts(id){ return items.filter(i=>i.parent_id===id); }
+function lotStats(lot){ const parts=lotParts(lot.id); const sold=parts.filter(p=>p.status==='Verkauft'); const revenue=sold.reduce((s,p)=>s+(p.sell_price||0),0); const cost=effBuy(lot); return {parts,sold,soldCount:sold.length,revenue,cost,profit:revenue-cost}; }
+let expandedLots={};
+function toggleLot(id){ expandedLots[id]=!expandedLots[id]; renderItems(); }
 
 function setSort(value){ sortBy=value; currentPage=1; renderItems(); }
 function openModal(title){ document.getElementById('modal-title').textContent=title||'Artikel hinzufügen'; const o=document.getElementById('item-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
@@ -942,7 +1003,7 @@ function onModalOverlayClick(e){ if(e.target===document.getElementById('item-mod
 function toggleSortDropdown(){ document.getElementById('sortDropdown').classList.toggle('open'); }
 function setSortOption(value,label,el){ setSort(value); document.querySelectorAll('.sort-option').forEach(o=>o.classList.remove('active')); el.classList.add('active'); const t=document.getElementById('sortToggle'); t.classList.add('active'); t.textContent='↕ '+label+' ▾'; document.getElementById('sortDropdown').classList.remove('open'); }
 document.addEventListener('click', e=>{ const dd=document.getElementById('sortDropdown'); if(dd && !dd.contains(e.target)) dd.classList.remove('open'); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeBalanceModal(); closeExpenseModal(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeBalanceModal(); closeExpenseModal(); closePartModal(); } });
 
 function soon(name){ toast((name||'Dieses Feature')+' kommt später'); }
 function toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t);} t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2200); }
@@ -964,6 +1025,11 @@ const buyPriceEl=document.getElementById('buyPrice');
 const statusEl=document.getElementById('status');
 const trackingEl=document.getElementById('tracking');
 const sellPriceEl=document.getElementById('sellPrice');
+const ownedChkEl=document.getElementById('ownedChk');
+const isLotChkEl=document.getElementById('isLotChk');
+const partPriceEl=document.getElementById('partPrice');
+const partPriceWrapEl=document.getElementById('partPriceWrap');
+isLotChkEl.addEventListener('change', ()=>{ partPriceWrapEl.style.display=isLotChkEl.checked?'block':'none'; });
 const imageUrlEl=document.getElementById('imageUrl');
 const searchEl=document.getElementById('search');
 const searchTopEl=document.getElementById('searchTop');
@@ -1103,7 +1169,9 @@ async function saveItem(){
   const imageData=pickedImage || imageUrlEl.value.trim() || (editId ? (items.find(i=>i.id===editId)?.image||null) : null);
   const data={ platform:platformEl.value, title:titleEl.value.trim()||null, sell_platform:sellPlatformEl.value||null, order_nr:orderEl.value, date:dateEl.value,
     buy_price:parseFloat(buyPriceEl.value)||0, status:statusEl.value, tracking:statusEl.value==='Gekauft'?trackingEl.value:null,
-    sell_price:parseFloat(sellPriceEl.value)||null, image:imageData };
+    sell_price:parseFloat(sellPriceEl.value)||null, image:imageData,
+    owned:ownedChkEl.checked?1:0, is_lot:isLotChkEl.checked?1:0,
+    part_price:isLotChkEl.checked?(parseFloat(partPriceEl.value)||null):null };
   if(editId) data.id=editId;
   const method=editId?'PUT':'POST'; const url=editId?`/api/items/${editId}`:'/api/items';
   const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -1113,7 +1181,7 @@ async function saveItem(){
 
 async function deleteItem(id){ if(!confirm('Produkt löschen?')) return; await fetch(`/api/items/${id}`,{method:'DELETE'}); await loadItems(); toast('Gelöscht'); }
 
-function clearForm(){ titleEl.value=''; orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; editId=null; }
+function clearForm(){ titleEl.value=''; orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; ownedChkEl.checked=false; isLotChkEl.checked=false; partPriceEl.value=''; partPriceWrapEl.style.display='none'; editId=null; }
 
 function editItem(id){
   const item=items.find(i=>i.id===id); if(!item) return;
@@ -1123,11 +1191,50 @@ function editItem(id){
   imageUrlEl.value=item.image && !item.image.startsWith('data:') ? item.image : '';
   setPickedImage(item.image||null);
   trackingEl.value=item.tracking||''; trackingEl.style.display=item.status==='Gekauft'?'block':'none';
-  editId=id; document.getElementById('editExtra').style.display='flex'; updateReimbBtn(); openModal('Artikel bearbeiten');
+  ownedChkEl.checked=!!item.owned; isLotChkEl.checked=!!item.is_lot; partPriceEl.value=item.part_price!=null?item.part_price:''; partPriceWrapEl.style.display=item.is_lot?'block':'none';
+  editId=id; document.getElementById('editExtra').style.display='flex'; updateReimbBtn(); openModal(item.is_lot?'Lot bearbeiten':'Artikel bearbeiten');
 }
 function updateReimbBtn(){ const b=document.getElementById('reimbToggle'); const on=!!reimbursedItems[editId]; b.classList.toggle('on',on); b.textContent=on?'✓ Privates Geld erstattet':'Privates Geld erstattet'; }
 function toggleReimbursedModal(){ if(!editId) return; reimbursedItems[editId]=!reimbursedItems[editId]; localStorage.setItem('reimbursedItems',JSON.stringify(reimbursedItems)); updateReimbBtn(); renderItems(); }
 function deleteFromModal(){ if(!editId) return; const id=editId; closeModal(); deleteItem(id); }
+
+// ---- Teil-Verkauf eines Lots (part modal) ----
+let partLotId=null, partEditId=null;
+function openPartModal(lotId, partId){
+  const lot=items.find(i=>i.id===lotId); if(!lot) return;
+  partLotId=lotId; partEditId=partId||null;
+  const nameEl=document.getElementById('partName'), sellEl=document.getElementById('partSell'), dEl=document.getElementById('partDate'), pEl=document.getElementById('partPlatform');
+  if(partEditId){
+    const p=items.find(i=>i.id===partId)||{};
+    document.getElementById('part-title').textContent='Teil bearbeiten';
+    nameEl.value=p.title||''; sellEl.value=p.sell_price!=null?p.sell_price:''; dEl.value=p.date||''; pEl.value=p.sell_platform||'';
+    document.getElementById('partEditExtra').style.display='block';
+  } else {
+    document.getElementById('part-title').textContent=`Teil verkauft · ${lot.title||'Lot'}`;
+    nameEl.value=''; sellEl.value=lot.part_price!=null?lot.part_price:''; dEl.value=new Date().toISOString().slice(0,10); pEl.value=lot.sell_platform||'';
+    document.getElementById('partEditExtra').style.display='none';
+  }
+  dEl.classList.toggle('has-value',!!dEl.value);
+  openOverlay('part-modal');
+  setTimeout(()=>nameEl.focus(),120);
+}
+function closePartModal(){ closeOverlay('part-modal'); partLotId=null; partEditId=null; }
+function onPartOverlay(e){ if(e.target.id==='part-modal') closePartModal(); }
+async function savePart(){
+  const lot=items.find(i=>i.id===partLotId); if(!lot){ closePartModal(); return; }
+  const sell=parseFloat(document.getElementById('partSell').value);
+  if(isNaN(sell)){ toast('Bitte einen Verkaufspreis eingeben'); return; }
+  const date=document.getElementById('partDate').value || new Date().toISOString().slice(0,10);
+  const data={ platform:lot.platform, title:document.getElementById('partName').value.trim()||'Teil',
+    sell_platform:document.getElementById('partPlatform').value||null, order_nr:'', date,
+    buy_price:0, sell_price:sell, status:'Verkauft', parent_id:partLotId };
+  const method=partEditId?'PUT':'POST'; const url=partEditId?`/api/items/${partEditId}`:'/api/items';
+  const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  if(!res.ok){ const e=await res.json().catch(()=>({})); toast('Fehler: '+(e.errors?.join(', ')||e.error||'unbekannt')); return; }
+  expandedLots[partLotId]=true; const wasEdit=!!partEditId;
+  closePartModal(); await loadItems(); toast(wasEdit?'Gespeichert ✓':'Teil-Verkauf erfasst ✓');
+}
+function deletePartFromModal(){ if(!partEditId) return; const id=partEditId; if(!confirm('Teil-Verkauf löschen?')) return; closePartModal(); fetch(`/api/items/${id}`,{method:'DELETE'}).then(()=>loadItems()).then(()=>toast('Gelöscht')); }
 
 function setFilter(f,btn){ filter=f; currentPage=1; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); if(btn) btn.classList.add('active'); renderItems(); }
 function changePage(d){ currentPage+=d; renderItems(); }
@@ -1162,6 +1269,38 @@ function updateSidebarSpy(){
 window.addEventListener('scroll', updateSidebarSpy, { passive:true });
 
 /* ===== Item list (transaction history) ===== */
+// Ein Teil-Verkauf als eingerückte Unterzeile eines Lots
+function renderPartRow(p){
+  const sell=p.sell_price||0;
+  return `<div class="part-row" onclick="openPartModal(${p.parent_id},${p.id})">
+    <div class="part-line"></div>
+    <div class="part-name">${itemLabel(p)}</div>
+    <div class="part-meta">${formatDate(p.date)}${p.sell_platform?' · '+fmtPlatform(p.sell_platform):''}</div>
+    <div class="part-price pos">${euroSigned(sell)}</div>
+  </div>`;
+}
+// Lot-Kopf mit Zusammenfassung + einklappbaren Teil-Verkäufen
+function renderLotRow(lot){
+  const {parts,soldCount,revenue,cost,profit}=lotStats(lot);
+  const profitClass=profit>=0?'pos':'neg';
+  const expanded=!!expandedLots[lot.id];
+  const initial=itemInitial(lot);
+  const thumbInner=lot.image?`<img src="${lot.image}">`:initial;
+  const ownedTag=lot.owned?`<span class="tag-owned" title="Schon vorher besessen – Einkauf zählt nicht aufs Kapital">vorbesessen</span>`:'';
+  const partsHtml=(expanded && parts.length)?parts.map(renderPartRow).join(''):'';
+  return `<div class="item-row grid-row lot-row" onclick="toggleLot(${lot.id})">
+      <div class="thumb ${thumbClass(lot.platform)}">${thumbInner}</div>
+      <div class="item-main">
+        <div class="item-title">${itemLabel(lot)}<span class="tag-lot">LOT</span>${ownedTag}</div>
+        <div class="item-sub">${soldCount} verkauft · Einkauf ${cost.toFixed(2)}€ <button class="lot-add" onclick="event.stopPropagation();openPartModal(${lot.id})">+ Teil verkauft</button><button class="lot-edit" onclick="event.stopPropagation();editItem(${lot.id})">bearbeiten</button></div>
+      </div>
+      <div class="col-num col-ek muted">${cost.toFixed(2)}€</div>
+      <div class="col-num col-vk">${revenue?revenue.toFixed(2)+'€':'—'}</div>
+      <div class="col-profit"><div class="amount ${profitClass}">${euroSigned(profit)}</div><span class="badge status-Lager">${soldCount} Teile</span></div>
+      <div class="row-chev ${expanded?'open':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    </div>${partsHtml}`;
+}
+
 function renderItems(){
   const body=tableBodyEl; body.innerHTML='';
   const searchText=searchEl.value.toLowerCase();
@@ -1178,6 +1317,7 @@ function renderItems(){
     }
   });
   const filtered=sorted.filter(item=>{
+    if(item.parent_id) return false;   // Teil-Verkäufe erscheinen unter ihrem Lot, nicht als eigene Zeile
     if(filter!=='all' && item.status!==filter) return false;
     if(searchText && !`${item.title||''} ${item.order_nr||''}`.toLowerCase().includes(searchText)) return false;
     return true;
@@ -1190,25 +1330,28 @@ function renderItems(){
     body.innerHTML=`<div class="empty-state"><div class="es-emoji">📦</div><div class="es-text">Keine Artikel gefunden</div></div>`;
   } else {
     pageItems.forEach((item,idx)=>{
-      const buy=item.buy_price||0, sell=item.sell_price||0, profit=sell-buy;
+      const divider=idx<pageItems.length-1?'<div class="row-divider"></div>':'';
+      if(item.is_lot){ body.innerHTML+=renderLotRow(item)+divider; return; }
+      const buy=effBuy(item), sell=item.sell_price||0, profit=sell-buy;
       const profitClass=sell?(profit>=0?'pos':'neg'):'';
       const profitStr=sell?euroSigned(profit):'—';
       const platformDisplay=item.sell_platform?`${fmtPlatform(item.platform)} <span class="arrow">→</span> ${fmtPlatform(item.sell_platform)}`:fmtPlatform(item.platform);
       const initial=itemInitial(item);
       const thumbInner=item.image?`<img src="${item.image}">`:initial;
       const trackInline=(item.status==='Gekauft' && item.tracking)?`<a class="track-inline" href="${item.tracking}" target="_blank" title="Sendung verfolgen" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12l8.73-5.04M12 22V12"/></svg></a>`:'';
+      const ownedTag=item.owned?`<span class="tag-owned" title="Schon vorher besessen – Einkauf zählt nicht aufs Kapital">vorbesessen</span>`:'';
       const reimbDot=reimbursedItems[item.id]?`<span class="reimb-dot" title="Privates Geld erstattet">●</span>`:'';
       body.innerHTML+=`<div class="item-row grid-row" onclick="editItem(${item.id})">
         <div class="thumb ${thumbClass(item.platform)}">${thumbInner}</div>
         <div class="item-main">
-          <div class="item-title">${itemLabel(item)}${reimbDot}${trackInline}</div>
+          <div class="item-title">${itemLabel(item)}${ownedTag}${reimbDot}${trackInline}</div>
           <div class="item-sub">${platformDisplay} · ${formatDate(item.date)}</div>
         </div>
         <div class="col-num col-ek muted">${buy.toFixed(2)}€</div>
         <div class="col-num col-vk">${sell?sell.toFixed(2)+'€':'—'}</div>
         <div class="col-profit"><div class="amount ${profitClass}">${profitStr}</div><span class="badge status-${item.status}">${item.status}</span></div>
         <div class="row-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
-      </div>${idx<pageItems.length-1?'<div class="row-divider"></div>':''}`;
+      </div>${divider}`;
     });
   }
   document.getElementById('tableCount').textContent=`${filtered.length} Einträge`;
@@ -1224,16 +1367,27 @@ function arrowSvg(up){ return up
   : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>'; }
 
 function mobileRow(item){
-  const buy=item.buy_price||0, sell=item.sell_price||0, profit=sell-buy;
+  const initial=itemInitial(item);
+  const inner=item.image?`<img src="${item.image}">`:initial;
+  if(item.is_lot){
+    const {soldCount,profit}=lotStats(item);
+    const lc=profit>=0?'pos':'neg';
+    return `<div class="mv-row" onclick="editItem(${item.id})">
+      <div class="mv-thumb ${thumbClass(item.platform)}">${inner}</div>
+      <div class="mv-main"><div class="mv-title">${itemLabel(item)}<span class="tag-lot">LOT</span></div><div class="mv-sub">${soldCount} verkauft · <button class="lot-add" onclick="event.stopPropagation();openPartModal(${item.id})">+ Teil verkauft</button></div></div>
+      <div class="mv-right"><div class="mv-amt ${lc}">${euroSigned(profit)}</div><span class="badge status-Lager">Lot</span></div>
+      <div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    </div>`;
+  }
+  const buy=effBuy(item), sell=item.sell_price||0, profit=sell-buy;
   const cls=sell?(profit>=0?'pos':'neg'):'';
   const valStr=sell?euroSigned(profit):buy.toFixed(2)+'€';
   const pd=item.sell_platform?`${fmtPlatform(item.platform)} <span class="ar">→</span> ${fmtPlatform(item.sell_platform)}`:fmtPlatform(item.platform);
-  const initial=itemInitial(item);
-  const inner=item.image?`<img src="${item.image}">`:initial;
+  const ownedTag=item.owned?`<span class="tag-owned">vorbesessen</span>`:'';
   const reimbDot=reimbursedItems[item.id]?`<span class="reimb-dot" title="Privates Geld erstattet">●</span>`:'';
   return `<div class="mv-row" onclick="editItem(${item.id})">
     <div class="mv-thumb ${thumbClass(item.platform)}">${inner}</div>
-    <div class="mv-main"><div class="mv-title">${itemLabel(item)}${reimbDot}</div><div class="mv-sub">${pd} · ${formatDate(item.date)}</div></div>
+    <div class="mv-main"><div class="mv-title">${itemLabel(item)}${ownedTag}${reimbDot}</div><div class="mv-sub">${pd} · ${formatDate(item.date)}</div></div>
     <div class="mv-right"><div class="mv-amt ${cls}">${valStr}</div><span class="badge status-${item.status}">${item.status}</span></div>
     <div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
   </div>`;
@@ -1244,7 +1398,7 @@ function renderMobile(){
   // stats from ALL items
   let totalProfit=0, sold=0, stock=0, stockValue=0, monthProfit=0, spentAll=0, recvSold=0;
   const nowYm=new Date().toISOString().slice(0,7);
-  items.forEach(i=>{ const b=i.buy_price||0,s=i.sell_price||0; spentAll+=b;
+  items.forEach(i=>{ const b=effBuy(i),s=i.sell_price||0; spentAll+=b;
     if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; recvSold+=s; if((i.date||'').slice(0,7)===nowYm) monthProfit+=s-b; }
     else { stock++; stockValue+=b; } });
   let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
@@ -1258,7 +1412,7 @@ function renderMobile(){
   if(dl){ if(monthProfit!==0){ const up=monthProfit>=0; dl.style.display='inline-flex'; dl.className='mv-delta'+(up?'':' neg'); dl.innerHTML=`${arrowSvg(up)} ${up?'+':'−'}${Math.abs(monthProfit).toFixed(2)}€ diesen Monat`; } else dl.style.display='none'; }
   // grouped, filtered list
   const search=searchEl.value.toLowerCase();
-  const filt=items.filter(i=>{ if(filter!=='all' && i.status!==filter) return false; if(search && !`${i.title||''} ${i.order_nr||''}`.toLowerCase().includes(search)) return false; return true; });
+  const filt=items.filter(i=>{ if(i.parent_id) return false; if(filter!=='all' && i.status!==filter) return false; if(search && !`${i.title||''} ${i.order_nr||''}`.toLowerCase().includes(search)) return false; return true; });
   const groups=[['Verkauft','Zuletzt verkauft'],['Lager','Im Lager'],['Gekauft','Gekauft']];
   cont.innerHTML=''; let any=false;
   groups.forEach(([st,label])=>{
@@ -1294,7 +1448,7 @@ function renderDashboard(){
   const prevDate=new Date(now.getFullYear(), now.getMonth()-1, 1); const prevYm=ym(prevDate);
   let curP=0,prevP=0,curR=0,prevR=0,curC=0,prevC=0;
   items.forEach(i=>{
-    const b=i.buy_price||0, s=i.sell_price||0;
+    const b=effBuy(i), s=i.sell_price||0;   // vorbesessene Artikel: Einkauf zählt als 0
     spentAll+=b;                       // jeder erfasste Artikel wurde gekauft
     if(i.status==='Verkauft'){
       totalProfit+=s-b; revenue+=s; soldCount++; recvSold+=s;
@@ -1337,7 +1491,7 @@ function renderRecentSales(){
     .sort((a,b)=> new Date(b.created_at||b.date||0)-new Date(a.created_at||a.date||0)).slice(0,5);
   if(sold.length===0){ el.innerHTML='<div class="recent-empty">Noch keine Verkäufe</div>'; return; }
   el.innerHTML=sold.map(i=>{
-    const profit=(i.sell_price||0)-(i.buy_price||0);
+    const profit=(i.sell_price||0)-effBuy(i);
     const initial=itemInitial(i);
     const inner=i.image?`<img src="${i.image}">`:initial;
     return `<div class="sale-row">
@@ -1358,7 +1512,7 @@ function renderRevenueChart(){
   items.forEach(i=>{
     if(i.status==='Verkauft' && i.date){
       const d=new Date(i.date); d.setHours(0,0,0,0);
-      const profit=(i.sell_price||0)-(i.buy_price||0);
+      const profit=(i.sell_price||0)-effBuy(i);
       const idx=(d.getDay()+6)%7;
       if(d>=thisStart){ thisW[idx]+=profit; }
       else if(d>=lastStart && d<thisStart){ lastW[idx]+=profit; }
@@ -1384,7 +1538,7 @@ function renderRevenueChart(){
 function renderChart(){
   if(typeof Chart==='undefined') return;
   const monthly={};
-  items.forEach(i=>{ if(i.status==='Verkauft' && i.date){ const m=i.date.slice(0,7); monthly[m]=(monthly[m]||0)+((i.sell_price||0)-(i.buy_price||0)); } });
+  items.forEach(i=>{ if(i.status==='Verkauft' && i.date){ const m=i.date.slice(0,7); monthly[m]=(monthly[m]||0)+((i.sell_price||0)-effBuy(i)); } });
   const labels=Object.keys(monthly).sort(); const data=labels.map(k=>monthly[k]);
   const ctx=document.getElementById('chart');
   if(window.monthChart && typeof window.monthChart.destroy==='function') window.monthChart.destroy();
@@ -1444,7 +1598,7 @@ function renderFinance(){
   const nowM=new Date().toISOString().slice(0,7);
   let total=0, monthTotal=0;
   expenses.forEach(e=>{ total+=(e.amount||0); if((e.date||'').slice(0,7)===nowM) monthTotal+=(e.amount||0); });
-  let profit=0; items.forEach(i=>{ if(i.status==='Verkauft') profit+=((i.sell_price||0)-(i.buy_price||0)); });
+  let profit=0; items.forEach(i=>{ if(i.status==='Verkauft') profit+=((i.sell_price||0)-effBuy(i)); });
   const netto=profit-total;
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('fExpTotal', total.toFixed(2)+'€');

@@ -113,6 +113,56 @@ test('POST /api/items/import imports from old JSON format', async () => {
   expect(list.body).toHaveLength(2);
 });
 
+test('POST /api/items creates a lot without order_nr', async () => {
+  const agent = request.agent(app);
+  await login(agent, user.id);
+  const res = await agent.post('/api/items').send({
+    platform: 'eBay', title: 'Tastatur-Keys', date: '2026-01-01',
+    buy_price: 10, status: 'Lager', is_lot: 1, owned: 1, part_price: 2
+  });
+  expect(res.status).toBe(201);
+  expect(res.body.is_lot).toBe(1);
+  expect(res.body.owned).toBe(1);
+  expect(res.body.part_price).toBe(2);
+});
+
+test('POST /api/items creates a part-sale linked to a lot (no order_nr)', async () => {
+  const agent = request.agent(app);
+  await login(agent, user.id);
+  const lot = await agent.post('/api/items').send({
+    platform: 'eBay', title: 'Tastatur', date: '2026-01-01', buy_price: 10, status: 'Lager', is_lot: 1
+  });
+  const part = await agent.post('/api/items').send({
+    platform: 'eBay', title: 'Taste W', date: '2026-02-01',
+    buy_price: 0, sell_price: 2, status: 'Verkauft', parent_id: lot.body.id
+  });
+  expect(part.status).toBe(201);
+  expect(part.body.parent_id).toBe(lot.body.id);
+});
+
+test('DELETE lot also removes its part-sales', async () => {
+  const agent = request.agent(app);
+  await login(agent, user.id);
+  const lot = await agent.post('/api/items').send({
+    platform: 'eBay', title: 'Tastatur', date: '2026-01-01', buy_price: 10, status: 'Lager', is_lot: 1
+  });
+  await agent.post('/api/items').send({
+    platform: 'eBay', title: 'Taste W', date: '2026-02-01', buy_price: 0, sell_price: 2, status: 'Verkauft', parent_id: lot.body.id
+  });
+  await agent.delete(`/api/items/${lot.body.id}`);
+  const list = await agent.get('/api/items');
+  expect(list.body).toHaveLength(0);
+});
+
+test('POST /api/items still requires order_nr for normal items', async () => {
+  const agent = request.agent(app);
+  await login(agent, user.id);
+  const res = await agent.post('/api/items').send({
+    platform: 'eBay', date: '2026-01-01', buy_price: 5, status: 'Lager'
+  });
+  expect(res.status).toBe(400);
+});
+
 test('POST /api/items/import skips duplicate order_nr', async () => {
   const agent = request.agent(app);
   await login(agent, user.id);

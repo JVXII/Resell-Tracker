@@ -6,8 +6,9 @@ const VALID_STATUSES = ['Gekauft', 'Lager', 'Verkauft'];
 
 function validateItem(body) {
   const errors = [];
+  const isLotOrPart = body.is_lot || body.parent_id;
   if (!body.platform) errors.push('platform required');
-  if (!body.order_nr) errors.push('order_nr required');
+  if (!body.order_nr && !isLotOrPart) errors.push('order_nr required');
   if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) errors.push('date must be YYYY-MM-DD');
   if (typeof body.buy_price !== 'number' || body.buy_price < 0) errors.push('buy_price must be a non-negative number');
   if (!VALID_STATUSES.includes(body.status)) errors.push(`status must be one of: ${VALID_STATUSES.join(', ')}`);
@@ -33,8 +34,8 @@ router.post('/import', (req, res) => {
 
   const existsStmt = req.db.prepare('SELECT 1 FROM items WHERE owner_id = ? AND order_nr = ?');
   const insertStmt = req.db.prepare(`
-    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
 
   req.db.exec('BEGIN');
@@ -56,7 +57,11 @@ router.post('/import', (req, res) => {
         typeof e.sell === 'number' ? e.sell : (e.sell_price ?? null),
         status,
         e.tracking || null,
-        e.image || null
+        e.image || null,
+        e.owned ? 1 : 0,
+        e.is_lot ? 1 : 0,
+        e.parent_id ?? null,
+        e.part_price ?? null
       );
       imported++;
     }
@@ -84,6 +89,10 @@ router.get('/export', (req, res) => {
     status: i.status,
     tracking: i.tracking,
     image: i.image,
+    owned: i.owned || 0,
+    is_lot: i.is_lot || 0,
+    parent_id: i.parent_id ?? null,
+    part_price: i.part_price ?? null,
   }));
   res.setHeader('Content-Disposition', 'attachment; filename="resell-backup.json"');
   res.json(exported);
@@ -94,11 +103,11 @@ router.post('/', (req, res) => {
   const errors = validateItem(req.body);
   if (errors.length) return res.status(400).json({ errors });
 
-  const { platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image } = req.body;
+  const { platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price } = req.body;
   const result = req.db.prepare(`
-    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?)
-  `).run(req.userId, platform, title ?? null, sell_platform ?? null, order_nr, date, buy_price, sell_price ?? null, status, tracking ?? null, image ?? null);
+    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(req.userId, platform, title ?? null, sell_platform ?? null, order_nr ?? '', date, buy_price, sell_price ?? null, status, tracking ?? null, image ?? null, owned ? 1 : 0, is_lot ? 1 : 0, parent_id ?? null, part_price ?? null);
 
   const item = req.db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(item);
@@ -123,12 +132,14 @@ router.put('/:id', (req, res) => {
 
   if (!canEdit) return res.status(403).json({ error: 'Forbidden' });
 
-  const allowed = ['platform', 'title', 'sell_platform', 'order_nr', 'date', 'buy_price', 'sell_price', 'status', 'tracking', 'image'];
+  const allowed = ['platform', 'title', 'sell_platform', 'order_nr', 'date', 'buy_price', 'sell_price', 'status', 'tracking', 'image', 'owned', 'is_lot', 'parent_id', 'part_price'];
   const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
 
   if (updates.status && !VALID_STATUSES.includes(updates.status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
+  if ('owned' in updates) updates.owned = updates.owned ? 1 : 0;
+  if ('is_lot' in updates) updates.is_lot = updates.is_lot ? 1 : 0;
 
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No valid fields to update' });
 
@@ -144,6 +155,8 @@ router.delete('/:id', (req, res) => {
   if (!item) return res.status(404).json({ error: 'Not found' });
   if (item.owner_id !== req.userId) return res.status(403).json({ error: 'Forbidden' });
 
+  // Ein Lot löscht seine Teil-Verkäufe (Kinder) mit
+  if (item.is_lot) req.db.prepare('DELETE FROM items WHERE parent_id = ? AND owner_id = ?').run(req.params.id, req.userId);
   req.db.prepare('DELETE FROM items WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
