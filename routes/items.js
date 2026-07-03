@@ -33,8 +33,8 @@ router.post('/import', (req, res) => {
 
   const existsStmt = req.db.prepare('SELECT 1 FROM items WHERE owner_id = ? AND order_nr = ?');
   const insertStmt = req.db.prepare(`
-    INSERT INTO items (owner_id, platform, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image)
-    VALUES (?,?,?,?,?,?,?,?,?,?)
+    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)
   `);
 
   req.db.exec('BEGIN');
@@ -48,6 +48,7 @@ router.post('/import', (req, res) => {
       insertStmt.run(
         req.userId,
         e.platform || '',
+        e.title || null,
         e.sell_platform || null,
         orderNr,
         e.date || new Date().toISOString().split('T')[0],
@@ -74,6 +75,7 @@ router.get('/export', (req, res) => {
   ).all(req.userId);
   const exported = items.map(i => ({
     platform: i.platform,
+    title: i.title || null,
     sell_platform: i.sell_platform || null,
     order: i.order_nr,
     date: i.date,
@@ -92,11 +94,11 @@ router.post('/', (req, res) => {
   const errors = validateItem(req.body);
   if (errors.length) return res.status(400).json({ errors });
 
-  const { platform, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image } = req.body;
+  const { platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image } = req.body;
   const result = req.db.prepare(`
-    INSERT INTO items (owner_id, platform, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image)
-    VALUES (?,?,?,?,?,?,?,?,?,?)
-  `).run(req.userId, platform, sell_platform ?? null, order_nr, date, buy_price, sell_price ?? null, status, tracking ?? null, image ?? null);
+    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, buy_price, sell_price, status, tracking, image)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)
+  `).run(req.userId, platform, title ?? null, sell_platform ?? null, order_nr, date, buy_price, sell_price ?? null, status, tracking ?? null, image ?? null);
 
   const item = req.db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(item);
@@ -121,7 +123,7 @@ router.put('/:id', (req, res) => {
 
   if (!canEdit) return res.status(403).json({ error: 'Forbidden' });
 
-  const allowed = ['platform', 'sell_platform', 'order_nr', 'date', 'buy_price', 'sell_price', 'status', 'tracking', 'image'];
+  const allowed = ['platform', 'title', 'sell_platform', 'order_nr', 'date', 'buy_price', 'sell_price', 'status', 'tracking', 'image'];
   const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
 
   if (updates.status && !VALID_STATUSES.includes(updates.status)) {

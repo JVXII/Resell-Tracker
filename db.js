@@ -19,6 +19,7 @@ function applySchema(db) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       owner_id INTEGER NOT NULL REFERENCES users(id),
       platform TEXT NOT NULL,
+      title TEXT,
       order_nr TEXT NOT NULL,
       date TEXT NOT NULL,
       buy_price REAL NOT NULL DEFAULT 0,
@@ -57,6 +58,7 @@ function applySchema(db) {
 
 function applyMigrations(db) {
   try { db.exec(`ALTER TABLE items ADD COLUMN sell_platform TEXT;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE items ADD COLUMN title TEXT;`); } catch (_) {}
   try { db.exec(`ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0;`); } catch (_) {}
 }
 
