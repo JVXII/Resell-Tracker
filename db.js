@@ -22,6 +22,7 @@ function applySchema(db) {
       title TEXT,
       order_nr TEXT NOT NULL,
       date TEXT NOT NULL,
+      sold_date TEXT,
       buy_price REAL NOT NULL DEFAULT 0,
       sell_price REAL,
       status TEXT NOT NULL CHECK(status IN ('Gekauft','Lager','Verkauft')),
@@ -67,6 +68,7 @@ function applyMigrations(db) {
   try { db.exec(`ALTER TABLE items ADD COLUMN is_lot INTEGER NOT NULL DEFAULT 0;`); } catch (_) {}
   try { db.exec(`ALTER TABLE items ADD COLUMN parent_id INTEGER;`); } catch (_) {}
   try { db.exec(`ALTER TABLE items ADD COLUMN part_price REAL;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE items ADD COLUMN sold_date TEXT;`); } catch (_) {}
   try { db.exec(`ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0;`); } catch (_) {}
 }
 

@@ -866,11 +866,12 @@
         <select id="sell_platform" class="form-input"><option value="">— noch nicht verkauft —</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select>
       </div>
       <input id="order" class="form-input" placeholder="Bestellnummer">
-      <input id="date" type="date" class="form-input">
+      <div><div class="field-label">Kaufdatum</div><input id="date" type="date" class="form-input"></div>
       <input id="buyPrice" type="number" class="form-input" placeholder="Einkaufspreis €">
       <select id="status" class="form-input"><option value="Gekauft">Gekauft</option><option value="Lager">Lager</option><option value="Verkauft">Verkauft</option></select>
       <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
       <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
+      <div id="soldDateWrap" style="display:none"><div class="field-label">Verkaufsdatum</div><input id="soldDate" type="date" class="form-input"></div>
       <div class="opt-row" style="grid-column: span 2">
         <label class="opt-check"><input type="checkbox" id="ownedChk"><span class="opt-box"></span><span class="opt-txt">Schon vorher besessen<small>Einkauf zählt nicht aufs Kapital</small></span></label>
         <label class="opt-check"><input type="checkbox" id="isLotChk"><span class="opt-box"></span><span class="opt-txt">Als Lot<small>Einzelteile einzeln verkaufen</small></span></label>
@@ -989,6 +990,10 @@ function itemLabel(item){
 function itemInitial(item){ return ((item.title||item.order_nr||'?').trim().charAt(0).toUpperCase())||'?'; }
 // Effektiver Einkauf: vorbesessene Artikel kosten das Business 0€
 function effBuy(i){ return i.owned ? 0 : (i.buy_price||0); }
+// Datum, an dem der Gewinn realisiert wurde. Altbestand ohne Verkaufsdatum
+// fällt aufs Kaufdatum zurück (bisheriges Verhalten).
+function saleDate(i){ return i.sold_date || i.date; }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
 // Teile (Kinder) eines Lots + zusammengefasste Kennzahlen
 function lotParts(id){ return items.filter(i=>i.parent_id===id); }
 function lotStats(lot){ const parts=lotParts(lot.id); const sold=parts.filter(p=>p.status==='Verkauft'); const revenue=sold.reduce((s,p)=>s+(p.sell_price||0),0); const cost=effBuy(lot); return {parts,sold,soldCount:sold.length,revenue,cost,profit:revenue-cost}; }
@@ -1025,6 +1030,8 @@ const buyPriceEl=document.getElementById('buyPrice');
 const statusEl=document.getElementById('status');
 const trackingEl=document.getElementById('tracking');
 const sellPriceEl=document.getElementById('sellPrice');
+const soldDateEl=document.getElementById('soldDate');
+const soldDateWrapEl=document.getElementById('soldDateWrap');
 const ownedChkEl=document.getElementById('ownedChk');
 const isLotChkEl=document.getElementById('isLotChk');
 const partPriceEl=document.getElementById('partPrice');
@@ -1089,7 +1096,15 @@ if(searchTopEl) searchTopEl.addEventListener('input', ()=>{ syncSearch(searchTop
 if(mSearchEl) mSearchEl.addEventListener('input', ()=>{ syncSearch(mSearchEl.value); });
 function toggleMobileSearch(){ if(!mSearchEl) return; const show=mSearchEl.style.display==='none'||!mSearchEl.style.display; mSearchEl.style.display=show?'block':'none'; if(show){ mSearchEl.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>mSearchEl.focus(),200);} }
 
-statusEl.addEventListener('change', ()=>{ trackingEl.style.display=statusEl.value==='Gekauft'?'block':'none'; });
+statusEl.addEventListener('change', ()=>{
+  trackingEl.style.display=statusEl.value==='Gekauft'?'block':'none';
+  const sold=statusEl.value==='Verkauft';
+  soldDateWrapEl.style.display=sold?'block':'none';
+  // Beim Umstellen auf "Verkauft" das Verkaufsdatum automatisch auf heute setzen
+  if(sold && !soldDateEl.value){ soldDateEl.value=todayISO(); }
+  soldDateEl.classList.toggle('has-value',!!soldDateEl.value);
+});
+soldDateEl.addEventListener('change', ()=>{ soldDateEl.classList.toggle('has-value',!!soldDateEl.value); });
 dateEl.addEventListener('change', ()=>{ dateEl.classList.toggle('has-value',!!dateEl.value); });
 
 function formatDate(d){ if(!d) return '—'; const p=d.split('-'); if(p.length!==3) return d; return `${p[2]}.${p[1]}.${p[0]}`; }
@@ -1168,6 +1183,7 @@ if(imgDrop){
 async function saveItem(){
   const imageData=pickedImage || imageUrlEl.value.trim() || (editId ? (items.find(i=>i.id===editId)?.image||null) : null);
   const data={ platform:platformEl.value, title:titleEl.value.trim()||null, sell_platform:sellPlatformEl.value||null, order_nr:orderEl.value, date:dateEl.value,
+    sold_date:statusEl.value==='Verkauft'?(soldDateEl.value||todayISO()):null,
     buy_price:parseFloat(buyPriceEl.value)||0, status:statusEl.value, tracking:statusEl.value==='Gekauft'?trackingEl.value:null,
     sell_price:parseFloat(sellPriceEl.value)||null, image:imageData,
     owned:ownedChkEl.checked?1:0, is_lot:isLotChkEl.checked?1:0,
@@ -1181,7 +1197,7 @@ async function saveItem(){
 
 async function deleteItem(id){ if(!confirm('Produkt löschen?')) return; await fetch(`/api/items/${id}`,{method:'DELETE'}); await loadItems(); toast('Gelöscht'); }
 
-function clearForm(){ titleEl.value=''; orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; ownedChkEl.checked=false; isLotChkEl.checked=false; partPriceEl.value=''; partPriceWrapEl.style.display='none'; editId=null; }
+function clearForm(){ titleEl.value=''; orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; soldDateEl.value=''; soldDateEl.classList.remove('has-value'); soldDateWrapEl.style.display='none'; ownedChkEl.checked=false; isLotChkEl.checked=false; partPriceEl.value=''; partPriceWrapEl.style.display='none'; editId=null; }
 
 function editItem(id){
   const item=items.find(i=>i.id===id); if(!item) return;
@@ -1191,6 +1207,7 @@ function editItem(id){
   imageUrlEl.value=item.image && !item.image.startsWith('data:') ? item.image : '';
   setPickedImage(item.image||null);
   trackingEl.value=item.tracking||''; trackingEl.style.display=item.status==='Gekauft'?'block':'none';
+  soldDateEl.value=item.sold_date||''; soldDateEl.classList.toggle('has-value',!!item.sold_date); soldDateWrapEl.style.display=item.status==='Verkauft'?'block':'none';
   ownedChkEl.checked=!!item.owned; isLotChkEl.checked=!!item.is_lot; partPriceEl.value=item.part_price!=null?item.part_price:''; partPriceWrapEl.style.display=item.is_lot?'block':'none';
   editId=id; document.getElementById('editExtra').style.display='flex'; updateReimbBtn(); openModal(item.is_lot?'Lot bearbeiten':'Artikel bearbeiten');
 }
@@ -1226,7 +1243,7 @@ async function savePart(){
   if(isNaN(sell)){ toast('Bitte einen Verkaufspreis eingeben'); return; }
   const date=document.getElementById('partDate').value || new Date().toISOString().slice(0,10);
   const data={ platform:lot.platform, title:document.getElementById('partName').value.trim()||'Teil',
-    sell_platform:document.getElementById('partPlatform').value||null, order_nr:'', date,
+    sell_platform:document.getElementById('partPlatform').value||null, order_nr:'', date, sold_date:date,
     buy_price:0, sell_price:sell, status:'Verkauft', parent_id:partLotId };
   const method=partEditId?'PUT':'POST'; const url=partEditId?`/api/items/${partEditId}`:'/api/items';
   const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -1399,7 +1416,7 @@ function renderMobile(){
   let totalProfit=0, sold=0, stock=0, stockValue=0, monthProfit=0, spentAll=0, recvSold=0;
   const nowYm=new Date().toISOString().slice(0,7);
   items.forEach(i=>{ const b=effBuy(i),s=i.sell_price||0; spentAll+=b;
-    if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; recvSold+=s; if((i.date||'').slice(0,7)===nowYm) monthProfit+=s-b; }
+    if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; recvSold+=s; if((saleDate(i)||'').slice(0,7)===nowYm) monthProfit+=s-b; }
     else { stock++; stockValue+=b; } });
   let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
   const cash=accountBalance - spentAll + recvSold - expTotal;
@@ -1452,7 +1469,7 @@ function renderDashboard(){
     spentAll+=b;                       // jeder erfasste Artikel wurde gekauft
     if(i.status==='Verkauft'){
       totalProfit+=s-b; revenue+=s; soldCount++; recvSold+=s;
-      const m=(i.date||'').slice(0,7);
+      const m=(saleDate(i)||'').slice(0,7);
       if(m===curYm){ curP+=s-b; curR+=s; curC++; }
       else if(m===prevYm){ prevP+=s-b; prevR+=s; prevC++; }
     } else { stockCount++; stockValue+=b; }   // unverkauft (Gekauft+Lager) = Geld im Lager
@@ -1488,7 +1505,7 @@ function setChange(id, cur, prev){
 function renderRecentSales(){
   const el=document.getElementById('recentSales');
   const sold=items.filter(i=>i.status==='Verkauft')
-    .sort((a,b)=> new Date(b.created_at||b.date||0)-new Date(a.created_at||a.date||0)).slice(0,5);
+    .sort((a,b)=> (new Date(saleDate(b)||0)-new Date(saleDate(a)||0)) || (new Date(b.created_at||0)-new Date(a.created_at||0))).slice(0,5);
   if(sold.length===0){ el.innerHTML='<div class="recent-empty">Noch keine Verkäufe</div>'; return; }
   el.innerHTML=sold.map(i=>{
     const profit=(i.sell_price||0)-effBuy(i);
@@ -1496,7 +1513,7 @@ function renderRecentSales(){
     const inner=i.image?`<img src="${i.image}">`:initial;
     return `<div class="sale-row">
       <div class="sale-thumb ${thumbClass(i.sell_platform||i.platform)}">${inner}</div>
-      <div class="sale-main"><div class="sale-name">${itemLabel(i)}</div><div class="sale-time">${fmtPlatform(i.sell_platform||i.platform)} · ${formatDate(i.date)}</div></div>
+      <div class="sale-main"><div class="sale-name">${itemLabel(i)}</div><div class="sale-time">${fmtPlatform(i.sell_platform||i.platform)} · ${formatDate(saleDate(i))}</div></div>
       <div class="sale-price">${euroSigned(profit)}</div>
     </div>`;
   }).join('');
@@ -1511,8 +1528,9 @@ function renderRevenueChart(){
   const nextStart=new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
   const thisW=[0,0,0,0,0,0,0], lastW=[0,0,0,0,0,0,0];
   items.forEach(i=>{
-    if(i.status==='Verkauft' && i.date){
-      const d=new Date(i.date); d.setHours(0,0,0,0);
+    const sd=saleDate(i);
+    if(i.status==='Verkauft' && sd){
+      const d=new Date(sd); d.setHours(0,0,0,0);
       const profit=(i.sell_price||0)-effBuy(i);
       const idx=(d.getDay()+6)%7;
       // Beide Wochen sind oben UND unten begrenzt – sonst landen später datierte
@@ -1521,10 +1539,6 @@ function renderRevenueChart(){
       else if(d>=lastStart && d<thisStart){ lastW[idx]+=profit; }
     }
   });
-  // Noch nicht angebrochene Tage dieser Woche: kein Datenpunkt (null) statt 0€,
-  // damit die grüne Linie bei heute endet und keine Nullwerte vortäuscht.
-  const todayIdx=(new Date().getDay()+6)%7;
-  for(let k=todayIdx+1;k<7;k++) thisW[k]=null;
   if(window.revChart && typeof window.revChart.destroy==='function') window.revChart.destroy();
   window.revChart=new Chart(ctx,{
     type:'line',
@@ -1545,7 +1559,7 @@ function renderRevenueChart(){
 function renderChart(){
   if(typeof Chart==='undefined') return;
   const monthly={};
-  items.forEach(i=>{ if(i.status==='Verkauft' && i.date){ const m=i.date.slice(0,7); monthly[m]=(monthly[m]||0)+((i.sell_price||0)-effBuy(i)); } });
+  items.forEach(i=>{ const sd=saleDate(i); if(i.status==='Verkauft' && sd){ const m=sd.slice(0,7); monthly[m]=(monthly[m]||0)+((i.sell_price||0)-effBuy(i)); } });
   const labels=Object.keys(monthly).sort(); const data=labels.map(k=>monthly[k]);
   const ctx=document.getElementById('chart');
   if(window.monthChart && typeof window.monthChart.destroy==='function') window.monthChart.destroy();
@@ -1556,10 +1570,10 @@ function renderProfitChart(){
   const ctx=document.getElementById('profitChart');
   if(window.profitChart && typeof window.profitChart.destroy==='function') window.profitChart.destroy();
   const buckets={};
-  items.forEach(item=>{ if(item.status==='Verkauft' && item.date){ const date=new Date(item.date); const profit=(item.sell_price||0)-effBuy(item); let key;
+  items.forEach(item=>{ const sd=saleDate(item); if(item.status==='Verkauft' && sd){ const date=new Date(sd); const profit=(item.sell_price||0)-effBuy(item); let key;
     if(chartPeriod==='day'){ key=date.toISOString().split('T')[0]; }
     else if(chartPeriod==='week'){ const ws=new Date(date); ws.setDate(date.getDate()-date.getDay()); key=ws.toISOString().split('T')[0]; }
-    else{ key=item.date.slice(0,7); }
+    else{ key=sd.slice(0,7); }
     buckets[key]=(buckets[key]||0)+profit; } });
   const sortedKeys=Object.keys(buckets).sort(); let sum=0; const cumulative=sortedKeys.map(k=>{ sum+=buckets[k]; return sum; });
   window.profitChart=new Chart(ctx,{ type:'line', data:{ labels:sortedKeys, datasets:[{ label:'Kumulierter Profit €', data:cumulative, borderColor:'#32d74b', backgroundColor:'rgba(50,215,75,0.1)', fill:true, tension:0.4, pointBackgroundColor:'#32d74b', pointRadius:4, pointHoverRadius:6, borderWidth:2 }] }, options:{ ...chartDefaults, maintainAspectRatio:false } });

@@ -154,6 +154,32 @@ test('DELETE lot also removes its part-sales', async () => {
   expect(list.body).toHaveLength(0);
 });
 
+test('POST/PUT /api/items round-trips sold_date', async () => {
+  const agent = request.agent(app);
+  await login(agent, user.id);
+  const created = await agent.post('/api/items').send({
+    platform: 'eBay', order_nr: 'SD-1', date: '2026-07-02',
+    buy_price: 20, sell_price: 35, status: 'Verkauft', sold_date: '2026-07-08'
+  });
+  expect(created.status).toBe(201);
+  expect(created.body.date).toBe('2026-07-02');      // Kaufdatum
+  expect(created.body.sold_date).toBe('2026-07-08'); // Verkaufsdatum
+
+  const upd = await agent.put(`/api/items/${created.body.id}`).send({ sold_date: '2026-07-07' });
+  expect(upd.status).toBe(200);
+  expect(upd.body.sold_date).toBe('2026-07-07');
+});
+
+test('items without sold_date keep it null (fallback to date in UI)', async () => {
+  const agent = request.agent(app);
+  await login(agent, user.id);
+  const res = await agent.post('/api/items').send({
+    platform: 'eBay', order_nr: 'SD-2', date: '2026-07-02', buy_price: 5, status: 'Lager'
+  });
+  expect(res.status).toBe(201);
+  expect(res.body.sold_date).toBeNull();
+});
+
 test('POST /api/items still requires order_nr for normal items', async () => {
   const agent = request.agent(app);
   await login(agent, user.id);
