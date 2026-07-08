@@ -1309,8 +1309,8 @@ function renderItems(){
     switch(sortBy){
       case 'date-asc': return new Date(a.date||'1970-01-01')-new Date(b.date||'1970-01-01');
       case 'status-group':{ const sd=STATUS_ORDER[a.status]-STATUS_ORDER[b.status]; return sd!==0?sd:new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01'); }
-      case 'profit-desc': return ((b.sell_price||0)-(b.buy_price||0))-((a.sell_price||0)-(a.buy_price||0));
-      case 'profit-asc': return ((a.sell_price||0)-(a.buy_price||0))-((b.sell_price||0)-(b.buy_price||0));
+      case 'profit-desc': return ((b.sell_price||0)-effBuy(b))-((a.sell_price||0)-effBuy(a));
+      case 'profit-asc': return ((a.sell_price||0)-effBuy(a))-((b.sell_price||0)-effBuy(b));
       case 'buy-desc': return (b.buy_price||0)-(a.buy_price||0);
       case 'buy-asc': return (a.buy_price||0)-(b.buy_price||0);
       default: return new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01');
@@ -1508,16 +1508,23 @@ function renderRevenueChart(){
   const ctx=document.getElementById('revenueChart'); if(!ctx) return;
   const thisStart=weekStartMon(new Date());
   const lastStart=new Date(thisStart); lastStart.setDate(thisStart.getDate()-7);
+  const nextStart=new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
   const thisW=[0,0,0,0,0,0,0], lastW=[0,0,0,0,0,0,0];
   items.forEach(i=>{
     if(i.status==='Verkauft' && i.date){
       const d=new Date(i.date); d.setHours(0,0,0,0);
       const profit=(i.sell_price||0)-effBuy(i);
       const idx=(d.getDay()+6)%7;
-      if(d>=thisStart){ thisW[idx]+=profit; }
+      // Beide Wochen sind oben UND unten begrenzt – sonst landen später datierte
+      // Verkäufe (z.B. Zukunftsdatum) fälschlich in "Diese Woche".
+      if(d>=thisStart && d<nextStart){ thisW[idx]+=profit; }
       else if(d>=lastStart && d<thisStart){ lastW[idx]+=profit; }
     }
   });
+  // Noch nicht angebrochene Tage dieser Woche: kein Datenpunkt (null) statt 0€,
+  // damit die grüne Linie bei heute endet und keine Nullwerte vortäuscht.
+  const todayIdx=(new Date().getDay()+6)%7;
+  for(let k=todayIdx+1;k<7;k++) thisW[k]=null;
   if(window.revChart && typeof window.revChart.destroy==='function') window.revChart.destroy();
   window.revChart=new Chart(ctx,{
     type:'line',
@@ -1549,7 +1556,7 @@ function renderProfitChart(){
   const ctx=document.getElementById('profitChart');
   if(window.profitChart && typeof window.profitChart.destroy==='function') window.profitChart.destroy();
   const buckets={};
-  items.forEach(item=>{ if(item.status==='Verkauft' && item.date){ const date=new Date(item.date); const profit=(item.sell_price||0)-(item.buy_price||0); let key;
+  items.forEach(item=>{ if(item.status==='Verkauft' && item.date){ const date=new Date(item.date); const profit=(item.sell_price||0)-effBuy(item); let key;
     if(chartPeriod==='day'){ key=date.toISOString().split('T')[0]; }
     else if(chartPeriod==='week'){ const ws=new Date(date); ws.setDate(date.getDate()-date.getDay()); key=ws.toISOString().split('T')[0]; }
     else{ key=item.date.slice(0,7); }
@@ -1560,7 +1567,7 @@ function renderProfitChart(){
 function renderPlatformChart(){
   if(typeof Chart==='undefined') return;
   const counts={}, profits={};
-  items.forEach(item=>{ if(item.status==='Verkauft'){ const p=item.sell_platform||item.platform; counts[p]=(counts[p]||0)+1; profits[p]=(profits[p]||0)+((item.sell_price||0)-(item.buy_price||0)); } });
+  items.forEach(item=>{ if(item.status==='Verkauft'){ const p=item.sell_platform||item.platform; counts[p]=(counts[p]||0)+1; profits[p]=(profits[p]||0)+((item.sell_price||0)-effBuy(item)); } });
   const platforms=Object.keys(counts);
   const platformColors={ 'eBay':{bg:'rgba(10,132,255,0.75)',border:'#0a84ff',text:'#5aa9ff'}, 'Kleinanzeigen':{bg:'rgba(50,215,75,0.75)',border:'#32d74b',text:'#32d74b'} };
   const fallback={bg:'rgba(142,142,147,0.7)',border:'#8e8e93',text:'#8e8e93'};
