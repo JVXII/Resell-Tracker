@@ -53,6 +53,7 @@ app.use('/api/profile', require('./routes/profile'));
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/share', require('./routes/share'));
 app.use('/api/shared', require('./routes/shared'));
+app.use('/api/discord', require('./routes/discord'));
 
 // Version endpoint
 app.get('/api/version', (req, res) => res.json({ commit: GIT_COMMIT }));

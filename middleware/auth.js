@@ -30,4 +30,20 @@ function requireViewMember(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireViewMember };
+/**
+ * requireAdmin laesst nur den in ADMIN_DISCORD_ID hinterlegten Discord-Account
+ * durch. Ist die Variable nicht gesetzt, kommt niemand durch — eine fehlende
+ * Konfiguration darf sich nicht in offenen Zugang verwandeln.
+ * Muss nach requireAuth verkettet werden.
+ */
+function requireAdmin(req, res, next) {
+  const adminId = process.env.ADMIN_DISCORD_ID;
+  if (!adminId) return res.status(403).json({ error: 'Access denied' });
+
+  const user = req.db.prepare('SELECT discord_id FROM users WHERE id = ?').get(req.userId);
+  if (!user || user.discord_id !== adminId) return res.status(403).json({ error: 'Access denied' });
+
+  next();
+}
+
+module.exports = { requireAuth, requireViewMember, requireAdmin };

@@ -229,6 +229,15 @@
   .modal-close:hover{background:var(--surface-hover);color:var(--text);}
   .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:18px;}
   .field-label{font-size:11px;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;}
+  /* Discord-Bot-Reiter */
+  .dc-check{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;font-weight:600;color:var(--dim);cursor:pointer;}
+  .dc-row{display:flex;align-items:center;gap:14px;}
+  .dc-actions{display:flex;gap:6px;flex-shrink:0;}
+  .dc-act{width:34px;height:34px;border-radius:10px;border:1px solid var(--hairline);background:var(--bg);color:var(--dim);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;font-family:inherit;}
+  .dc-act:hover{background:var(--surface-hover);color:var(--text);}
+  .dc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .dc-dot.on{background:var(--green);}
+  .dc-dot.off{background:var(--faint);}
   .form-input{background:var(--bg);border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;color:var(--text);font-size:14px;width:100%;font-family:inherit;transition:border-color .15s;}
   .form-input::placeholder{color:var(--faint);}
   .form-input:focus{outline:none;border-color:var(--hairline-strong);}
@@ -520,6 +529,10 @@
   </div>
 
   <div class="nav-section">Erweitert</div>
+  <div class="nav-link" id="navDiscord" data-tab="discord" onclick="showTab('discord');loadDiscord()" style="display:none">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M7.5 7.2A16 16 0 0 1 12 6.5a16 16 0 0 1 4.5.7l1.8 3.6A13 13 0 0 1 19 16.5c-1.6 1.3-3.3 2.1-5 2.5l-1-1.7"/><path d="M16.5 7.2A16 16 0 0 0 12 6.5a16 16 0 0 0-4.5.7L5.7 10.8A13 13 0 0 0 5 16.5c1.6 1.3 3.3 2.1 5 2.5l1-1.7"/></svg>
+    Discord Bot
+  </div>
   <div class="nav-link" onclick="soon('Einstellungen')">
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Einstellungen
@@ -847,6 +860,19 @@
       </div>
     </div><!-- /finance -->
 
+    <div id="discord" class="tab-content">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Discord Bot</div>
+          <button class="btn-add" onclick="openDiscordModal()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Neue Suche
+          </button>
+        </div>
+        <div id="dc-list"></div>
+      </div>
+    </div><!-- /discord -->
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -951,6 +977,52 @@
     <div class="edit-extra" id="expEditExtra">
       <button class="btn btn-danger" onclick="deleteExpenseFromModal()" style="padding:12px 18px;width:100%;justify-content:center">Löschen</button>
     </div>
+  </div>
+</div>
+
+<!-- Discord-Suchauftrag modal -->
+<div class="modal-overlay" id="dc-modal" onclick="onDcOverlay(event)">
+  <div class="modal-card" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="dc-modal-title">Neue Suche</span>
+      <button class="modal-close" onclick="closeDiscordModal()">✕</button>
+    </div>
+    <input type="hidden" id="dc-id">
+    <div class="form-grid">
+      <div style="grid-column:span 2"><div class="field-label">Name</div>
+        <input id="dc-name" class="form-input" placeholder="z.B. Xbox Controller"></div>
+      <div style="grid-column:span 2"><div class="field-label">Suchbegriff</div>
+        <input id="dc-keyword" class="form-input" placeholder="xbox controller"></div>
+      <div style="grid-column:span 2"><div class="field-label">Plattform</div>
+        <select id="dc-platform" class="form-input">
+          <option value="both">Beide</option>
+          <option value="kleinanzeigen">Kleinanzeigen</option>
+          <option value="ebay">eBay</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="pill" id="dc-adv-toggle" onclick="toggleDcAdvanced()" style="margin-top:16px">Erweitert ▾</button>
+
+    <div id="dc-advanced" style="display:none;margin-top:14px">
+      <div class="form-grid">
+        <div><div class="field-label">Preis ab (€)</div><input id="dc-min" type="number" class="form-input" placeholder="—"></div>
+        <div><div class="field-label">Preis bis (€)</div><input id="dc-max" type="number" class="form-input" placeholder="—"></div>
+        <div style="grid-column:span 2"><div class="field-label">Ausschluss-Wörter (Komma-getrennt)</div>
+          <input id="dc-blacklist" class="form-input" placeholder="defekt, bastler"></div>
+        <div style="grid-column:span 2"><div class="field-label">Pflicht-Wörter (eines genügt)</div>
+          <input id="dc-whitelist" class="form-input" placeholder="elite, series x"></div>
+        <div><div class="field-label">Intervall (Sek.)</div><input id="dc-interval" type="number" class="form-input" placeholder="120"></div>
+        <div><div class="field-label">Blitz-Schwelle (%)</div><input id="dc-threshold" type="number" class="form-input" placeholder="40"></div>
+        <div style="grid-column:span 2"><div class="field-label">Radius (km, leer = egal)</div>
+          <input id="dc-radius" type="number" class="form-input" placeholder="—"></div>
+      </div>
+      <label class="dc-check"><input type="checkbox" id="dc-shipping"> Nur mit Versand</label>
+      <label class="dc-check"><input type="checkbox" id="dc-buynow"> Nur Sofort-Kaufen (eBay)</label>
+      <label class="dc-check"><input type="checkbox" id="dc-mention"> Bei Treffern erwähnen</label>
+    </div>
+
+    <button class="btn btn-primary" id="dc-save" onclick="saveDiscordSearch()" style="margin-top:18px;width:100%;justify-content:center;padding:13px">Anlegen</button>
   </div>
 </div>
 
@@ -1703,7 +1775,191 @@ async function removeMember(userId){ await fetch(`/api/share/members/${userId}`,
 /* ===== Goal gauge animation (placeholder) ===== */
 (function(){ const arc=document.getElementById('gaugeArc'); if(!arc) return; const len=arc.getTotalLength(); arc.style.strokeDasharray=len; arc.style.strokeDashoffset=len; requestAnimationFrame(()=>{ arc.style.transition='stroke-dashoffset 1.4s cubic-bezier(.2,.7,.3,1)'; arc.style.strokeDashoffset=len*(1-0.72); }); })();
 
+/* ===== Discord-Bot-Reiter (Admin) ===== */
+let dcSearches = [];
+
+async function dcApi(path, opts){
+  const r = await fetch('/api/discord' + path, {
+    ...opts,
+    headers: { 'content-type': 'application/json', ...(opts && opts.headers) },
+  });
+  const body = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error((body && body.error) || ('Fehler ' + r.status));
+  return body;
+}
+
+// Der Reiter ist ein Admin-Feature. Sichtbarkeit ist nur Kosmetik — die
+// eigentliche Absicherung ist requireAdmin auf dem Server.
+async function initDiscordTab(){
+  try{
+    const r = await fetch('/api/discord/me');
+    if(!r.ok) return;
+    const { admin } = await r.json();
+    if(admin) document.getElementById('navDiscord').style.display = 'flex';
+  }catch(_){ /* Reiter bleibt aus */ }
+}
+
+function dcAgo(iso){
+  if(!iso) return 'noch nichts gefunden';
+  const min = Math.round((Date.now() - new Date(iso).getTime())/60000);
+  if(min < 60) return 'zuletzt vor ' + min + ' Min';
+  if(min < 1440) return 'zuletzt vor ' + Math.round(min/60) + ' Std';
+  return 'zuletzt vor ' + Math.round(min/1440) + ' Tagen';
+}
+
+// Namen koennen auch per Discord-Slash-Command von anderen Server-Mitgliedern
+// gesetzt werden — hier laeuft aber die Admin-Session. Also escapen.
+function dcEsc(v){
+  return String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function dcEmpty(text){
+  return `<div class="empty-state"><div class="es-emoji">🤖</div><div class="es-text">${text}</div></div>`;
+}
+
+function dcPrice(s){
+  if(s.min_price == null && s.max_price == null) return 'jeder Preis';
+  if(s.min_price == null) return 'bis ' + s.max_price + ' €';
+  if(s.max_price == null) return 'ab ' + s.min_price + ' €';
+  return s.min_price + '–' + s.max_price + ' €';
+}
+
+async function loadDiscord(){
+  const list = document.getElementById('dc-list');
+  list.innerHTML = dcEmpty('Lade…');
+  try{
+    dcSearches = await dcApi('/searches');
+  }catch(e){
+    list.innerHTML = dcEmpty(e.message);
+    return;
+  }
+  if(!dcSearches.length){
+    list.innerHTML = dcEmpty('Noch keine Suchaufträge. Leg oben rechts einen an.');
+    return;
+  }
+  list.innerHTML = dcSearches.map(s => `
+    <div class="item-row dc-row">
+      <span class="dc-dot ${s.status === 'active' ? 'on' : 'off'}"></span>
+      <div class="item-main">
+        <div class="item-title">${dcEsc(s.name)} <span class="pill" style="padding:3px 10px;font-size:11px">${dcEsc(s.platform)}</span></div>
+        <div class="item-sub">#${dcEsc(s.channel_name || s.slug)} · ${dcPrice(s)} · alle ${Number(s.interval_sec)}s</div>
+        <div class="item-sub">${Number(s.posted_count)} Angebote · ${dcAgo(s.last_posted_at)}</div>
+      </div>
+      <div class="dc-actions">
+        <button class="dc-act" title="${s.status === 'active' ? 'Pausieren' : 'Fortsetzen'}" onclick="dcToggle(${s.id})">${s.status === 'active' ? '⏸' : '▶'}</button>
+        <button class="dc-act" title="Jetzt suchen" onclick="dcRun(${s.id})">⟳</button>
+        <button class="dc-act" title="Bearbeiten" onclick="openDiscordModal(${s.id})">✎</button>
+        <button class="dc-act" title="Löschen" onclick="dcDelete(${s.id})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function dcToggle(id){
+  const s = dcSearches.find(x => x.id === id);
+  try{
+    await dcApi('/searches/' + id + (s.status === 'active' ? '/pause' : '/resume'), { method:'POST' });
+    toast(s.status === 'active' ? 'Pausiert' : 'Wieder aktiv');
+    loadDiscord();
+  }catch(e){ toast(e.message); }
+}
+
+async function dcRun(id){
+  try{ await dcApi('/searches/' + id + '/run', { method:'POST' }); toast('Suche läuft'); }
+  catch(e){ toast(e.message); }
+}
+
+async function dcDelete(id){
+  const s = dcSearches.find(x => x.id === id);
+  if(!confirm(`"${s.name}" löschen?\n\nDer Discord-Channel #${s.channel_name || s.slug} wird mitgelöscht, samt aller Angebote darin.`)) return;
+  try{
+    await dcApi('/searches/' + id, { method:'DELETE' });
+    toast('Gelöscht');
+    loadDiscord();
+  }catch(e){ toast(e.message); }
+}
+
+function toggleDcAdvanced(){
+  const box = document.getElementById('dc-advanced');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  document.getElementById('dc-adv-toggle').textContent = open ? 'Erweitert ▾' : 'Erweitert ▴';
+}
+
+function dcSet(id, v){ document.getElementById(id).value = (v === null || v === undefined) ? '' : v; }
+
+function openDiscordModal(id){
+  const s = id ? dcSearches.find(x => x.id === id) : null;
+  document.getElementById('dc-modal-title').textContent = s ? 'Suche bearbeiten' : 'Neue Suche';
+  document.getElementById('dc-save').textContent = s ? 'Speichern' : 'Anlegen';
+  dcSet('dc-id', s ? s.id : '');
+  dcSet('dc-name', s ? s.name : '');
+  dcSet('dc-keyword', s ? s.keyword : '');
+  document.getElementById('dc-platform').value = s ? s.platform : 'both';
+  dcSet('dc-min', s ? s.min_price : '');
+  dcSet('dc-max', s ? s.max_price : '');
+  dcSet('dc-blacklist', s ? (s.blacklist_words || []).join(', ') : '');
+  dcSet('dc-whitelist', s ? (s.whitelist_words || []).join(', ') : '');
+  dcSet('dc-interval', s ? s.interval_sec : '');
+  dcSet('dc-threshold', s ? s.deal_threshold_pct : '');
+  dcSet('dc-radius', s ? s.location_radius_km : '');
+  document.getElementById('dc-shipping').checked = !!(s && s.shipping_only);
+  document.getElementById('dc-buynow').checked = !!(s && s.buy_now_only);
+  document.getElementById('dc-mention').checked = !!(s && s.mention_creator);
+  document.getElementById('dc-advanced').style.display = 'none';
+  document.getElementById('dc-adv-toggle').textContent = 'Erweitert ▾';
+  document.getElementById('dc-modal').classList.add('open');
+}
+
+function closeDiscordModal(){ document.getElementById('dc-modal').classList.remove('open'); }
+function onDcOverlay(e){ if(e.target.id === 'dc-modal') closeDiscordModal(); }
+
+function dcNum(id){
+  const v = document.getElementById(id).value.trim();
+  return v === '' ? null : Number(v);
+}
+function dcWords(id){
+  return document.getElementById(id).value.split(',').map(w => w.trim()).filter(Boolean);
+}
+
+async function saveDiscordSearch(){
+  const id = document.getElementById('dc-id').value;
+  const payload = {
+    name: document.getElementById('dc-name').value.trim(),
+    keyword: document.getElementById('dc-keyword').value.trim(),
+    platform: document.getElementById('dc-platform').value,
+    min_price: dcNum('dc-min'),
+    max_price: dcNum('dc-max'),
+    blacklist_words: dcWords('dc-blacklist'),
+    whitelist_words: dcWords('dc-whitelist'),
+    shipping_only: document.getElementById('dc-shipping').checked,
+    buy_now_only: document.getElementById('dc-buynow').checked,
+    mention_creator: document.getElementById('dc-mention').checked,
+    location_radius_km: dcNum('dc-radius'),
+  };
+  // Leer lassen heisst "Standard nehmen" — der Bot setzt ihn, nicht das Formular.
+  const interval = dcNum('dc-interval'); if(interval !== null) payload.interval_sec = interval;
+  const threshold = dcNum('dc-threshold'); if(threshold !== null) payload.deal_threshold_pct = threshold;
+
+  const btn = document.getElementById('dc-save');
+  btn.disabled = true;
+  try{
+    if(id){
+      await dcApi('/searches/' + id, { method:'PATCH', body: JSON.stringify(payload) });
+      toast('Gespeichert ✓');
+    }else{
+      await dcApi('/searches', { method:'POST', body: JSON.stringify(payload) });
+      toast('Angelegt — Channel wurde erstellt ✓');
+    }
+    closeDiscordModal();
+    loadDiscord();
+  }catch(e){ toast(e.message); }
+  finally{ btn.disabled = false; }
+}
+
 init();
+initDiscordTab();
 
 fetch('/api/version').then(r=>r.json()).then(v=>{ const el=document.createElement('div'); el.style.cssText='position:fixed;bottom:10px;right:14px;font-size:10px;color:#333;font-family:monospace;z-index:9999;user-select:none'; el.textContent=v.commit; document.body.appendChild(el); });
 </script>
