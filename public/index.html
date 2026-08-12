@@ -1807,6 +1807,14 @@ function dcAgo(iso){
   return 'zuletzt vor ' + Math.round(min/1440) + ' Tagen';
 }
 
+// Namen koennen auch per Discord-Slash-Command von anderen Server-Mitgliedern
+// gesetzt werden — hier laeuft aber die Admin-Session. Also escapen.
+function dcEsc(v){
+  return String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 function dcEmpty(text){
   return `<div class="empty-state"><div class="es-emoji">🤖</div><div class="es-text">${text}</div></div>`;
 }
@@ -1835,9 +1843,9 @@ async function loadDiscord(){
     <div class="item-row dc-row">
       <span class="dc-dot ${s.status === 'active' ? 'on' : 'off'}"></span>
       <div class="item-main">
-        <div class="item-title">${s.name} <span class="pill" style="padding:3px 10px;font-size:11px">${s.platform}</span></div>
-        <div class="item-sub">#${s.channel_name || s.slug} · ${dcPrice(s)} · alle ${s.interval_sec}s</div>
-        <div class="item-sub">${s.posted_count} Angebote · ${dcAgo(s.last_posted_at)}</div>
+        <div class="item-title">${dcEsc(s.name)} <span class="pill" style="padding:3px 10px;font-size:11px">${dcEsc(s.platform)}</span></div>
+        <div class="item-sub">#${dcEsc(s.channel_name || s.slug)} · ${dcPrice(s)} · alle ${Number(s.interval_sec)}s</div>
+        <div class="item-sub">${Number(s.posted_count)} Angebote · ${dcAgo(s.last_posted_at)}</div>
       </div>
       <div class="dc-actions">
         <button class="dc-act" title="${s.status === 'active' ? 'Pausieren' : 'Fortsetzen'}" onclick="dcToggle(${s.id})">${s.status === 'active' ? '⏸' : '▶'}</button>

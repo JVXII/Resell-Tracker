@@ -29,6 +29,10 @@ router.get('/me', (req, res) => {
 router.use(requireAdmin);
 
 router.all('/*', async (req, res) => {
+  // req.path bewusst ohne Query: Express dekodiert Pfadsegmente nicht, damit
+  // greifen weder %2e%2e noch ein angehaengtes ?x= an den Regex-Ankern vorbei.
+  // Nebenwirkung: Query-Parameter werden nicht weitergereicht. Braucht der Bot
+  // spaeter Filter, muessen sie hier ausdruecklich freigegeben werden.
   const target = req.path;
   const allowed = ALLOWED.some((a) => a.method === req.method && a.pattern.test(target));
   if (!allowed) return res.status(404).json({ error: 'Unbekannte Route' });
@@ -45,7 +49,9 @@ router.all('/*', async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') init.body = JSON.stringify(req.body ?? {});
 
   try {
-    const upstream = await fetch(process.env.DEALBOT_API_URL + target, init);
+    // Trailing Slash in der Konfiguration wuerde sonst zu "…//searches" fuehren.
+    const base = (process.env.DEALBOT_API_URL || '').replace(/\/$/, '');
+    const upstream = await fetch(base + target, init);
     const body = await upstream.json().catch(() => null);
     res.status(upstream.status).json(body);
   } catch (err) {

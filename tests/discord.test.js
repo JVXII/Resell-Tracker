@@ -181,6 +181,16 @@ describe('/api/discord Proxy', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  test('Proxy-Pfade brauchen einen Login', async () => {
+    process.env.ADMIN_DISCORD_ID = ADMIN_ID;
+    global.fetch = jest.fn();
+
+    const res = await request(makeProxyApp(createTestDb())).get('/api/discord/searches');
+
+    expect(res.status).toBe(401);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   test('nicht erlaubte Pfade werden nicht weitergereicht', async () => {
     const agent = await adminProxyAgent(createTestDb());
     global.fetch = jest.fn();
