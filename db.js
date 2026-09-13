@@ -70,6 +70,10 @@ function applyMigrations(db) {
   try { db.exec(`ALTER TABLE items ADD COLUMN part_price REAL;`); } catch (_) {}
   try { db.exec(`ALTER TABLE items ADD COLUMN sold_date TEXT;`); } catch (_) {}
   try { db.exec(`ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE users ADD COLUMN goal_title TEXT;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE users ADD COLUMN goal_target REAL;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE users ADD COLUMN goal_current REAL NOT NULL DEFAULT 0;`); } catch (_) {}
+  try { db.exec(`ALTER TABLE users ADD COLUMN goal_unit TEXT NOT NULL DEFAULT 'eur';`); } catch (_) {}
 }
 
 let db;
