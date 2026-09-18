@@ -343,6 +343,61 @@
   .page-btn:hover{background:var(--surface-hover);}
   .page-btn svg{width:16px;height:16px;}
 
+
+  /* ===== Artikel-Formular ================================================= */
+  .modal-card.form-card{max-width:520px;padding:0;display:flex;flex-direction:column;max-height:88vh;}
+  .modal-card.form-card .modal-header{padding:24px 24px 6px;margin-bottom:0;}
+  .form-scroll{padding:14px 24px 20px;overflow-y:auto;scrollbar-width:none;}
+  .form-scroll::-webkit-scrollbar{display:none;}
+  .f-block{display:flex;flex-direction:column;gap:16px;padding:18px 0;border-bottom:1px solid var(--hairline);}
+  .f-block:last-of-type{border-bottom:none;}
+  .f-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .f-field{min-width:0;}
+  .f-field .field-label{display:block;margin-bottom:7px;text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:700;color:var(--dim);}
+  .f-opt{color:var(--faint);font-weight:600;font-size:11.5px;margin-left:5px;}
+  .f-hint{font-size:11.5px;color:var(--faint);font-weight:500;margin-top:7px;line-height:1.45;}
+  .f-title{font-size:17px;font-weight:700;padding:15px 16px;letter-spacing:-0.02em;}
+
+  /* Betragsfelder tragen ihr Zeichen im Feld, nicht im Platzhalter */
+  .f-money{position:relative;}
+  .f-money input{padding-right:34px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .f-money span{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--faint);font-weight:700;font-size:14px;pointer-events:none;}
+
+  /* Segmentschalter spiegeln ein verstecktes Auswahlfeld */
+  .seg{display:flex;gap:4px;background:var(--surface);border-radius:12px;padding:4px;}
+  .seg button{flex:1;padding:10px 8px;border:none;border-radius:9px;background:transparent;color:var(--dim);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background .16s,color .16s;white-space:nowrap;}
+  .seg button:hover{color:var(--text);}
+  .seg button.active{background:var(--surface-hover);color:var(--text);}
+  .seg-status{margin-bottom:2px;}
+  .seg-status button.active{background:var(--text);color:#000;}
+  .seg-source{display:none!important;}
+
+  .profit-hint{font-size:13.5px;font-weight:700;color:var(--dim);padding:13px 15px;background:var(--surface);border-radius:12px;display:none;}
+  .profit-hint.on{display:block;}
+  .profit-hint b{font-variant-numeric:tabular-nums;}
+  .profit-hint.pos b{color:var(--green);}
+  .profit-hint.neg b{color:var(--red);}
+
+  .more-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:none;padding:18px 0 0;color:var(--dim);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:color .15s;}
+  .more-toggle:hover{color:var(--text);}
+  .more-toggle svg{width:16px;height:16px;transition:transform .22s var(--ease-out);}
+  .more-toggle.open svg{transform:rotate(180deg);}
+  /* Aufklappen ueber die Rasterhoehe - laeuft weich und kommt ohne feste Hoehe aus */
+  .more-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s var(--ease-out);}
+  .more-wrap.open{grid-template-rows:1fr;}
+  .more-inner{overflow:hidden;display:flex;flex-direction:column;gap:14px;}
+  .more-wrap.open .more-inner{padding-top:18px;}
+
+  .form-foot{padding:16px 24px 20px;border-top:1px solid var(--hairline);background:var(--surface-2);display:flex;flex-direction:column;gap:10px;}
+  .f-save{width:100%;justify-content:center;padding:15px;font-size:15px;border-radius:14px;}
+  .form-card .edit-extra{display:none;margin:0;padding:0;border:none;gap:10px;}
+  .form-card .edit-extra .btn-danger{padding:12px 18px;border-radius:12px;}
+  @media (max-width:640px){
+    .modal-card.form-card{max-height:92vh;}
+    .f-duo{grid-template-columns:1fr;}
+    .seg button{font-size:12.5px;padding:10px 6px;}
+  }
+
   /* ===== Modal ===== */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(0px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .26s var(--ease-out),backdrop-filter .26s var(--ease-out);}
   .modal-overlay.open{opacity:1;pointer-events:all;backdrop-filter:blur(8px);}
@@ -1033,55 +1088,137 @@
 
 <!-- Item modal -->
 <div class="modal-overlay" id="item-modal" onclick="onModalOverlayClick(event)">
-  <div class="modal-card">
+  <div class="modal-card form-card">
     <div class="modal-header">
       <span class="modal-title" id="modal-title">Artikel hinzufügen</span>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="form-grid">
-      <input id="title" class="form-input" placeholder="Titel (z.B. Nike Air Max 90)" style="grid-column: span 2">
-      <div><div class="field-label">Kaufplattform</div>
-        <select id="platform" class="form-input"><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select>
+
+    <div class="form-scroll">
+
+      <!-- Der Status steuert, was das Formular ueberhaupt fragt -->
+      <div class="seg seg-status" data-for="status">
+        <button type="button" data-value="Gekauft">Gekauft</button>
+        <button type="button" data-value="Lager">Im Lager</button>
+        <button type="button" data-value="Verkauft">Verkauft</button>
       </div>
-      <div><div class="field-label">Verkaufsplattform</div>
-        <select id="sell_platform" class="form-input"><option value="">— noch nicht verkauft —</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select>
-      </div>
-      <input id="order" class="form-input" placeholder="Bestellnummer">
-      <div><div class="field-label">Kaufdatum</div><input id="date" type="date" class="form-input"></div>
-      <input id="buyPrice" type="number" class="form-input" placeholder="Einkaufspreis €">
-      <select id="status" class="form-input"><option value="Gekauft">Gekauft</option><option value="Lager">Lager</option><option value="Verkauft">Verkauft</option></select>
-      <input id="tracking" class="form-input" placeholder="Sendungsverfolgung URL">
-      <input id="sellPrice" type="number" class="form-input" placeholder="Verkaufspreis €">
-      <div id="soldDateWrap" style="display:none"><div class="field-label">Verkaufsdatum</div><input id="soldDate" type="date" class="form-input"></div>
-      <div class="opt-row" style="grid-column: span 2">
-        <label class="opt-check"><input type="checkbox" id="ownedChk"><span class="opt-box"></span><span class="opt-txt">Schon vorher besessen<small>Einkauf zählt nicht aufs Kapital</small></span></label>
-        <label class="opt-check"><input type="checkbox" id="isLotChk"><span class="opt-box"></span><span class="opt-txt">Als Lot<small>Einzelteile einzeln verkaufen</small></span></label>
-      </div>
-      <div id="partPriceWrap" style="grid-column: span 2; display:none">
-        <div class="field-label">Standard-Verkaufspreis pro Teil €</div>
-        <input id="partPrice" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00 – wird bei jedem Verkauf vorgeschlagen">
-      </div>
-      <div style="grid-column: span 2">
-        <div class="field-label">Bild</div>
-        <div id="imgDrop" class="img-drop" tabindex="0" role="button" aria-label="Bild hochladen">
-          <input id="imgFile" type="file" accept="image/*" hidden>
-          <div class="img-drop-empty" id="imgDropEmpty">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <div class="img-drop-title">Bild hierher ziehen</div>
-            <div class="img-drop-sub">oder klicken zum Auswählen · einfügen mit ⌘V</div>
+      <select id="status" class="form-input seg-source">
+        <option value="Gekauft">Gekauft</option><option value="Lager">Lager</option><option value="Verkauft">Verkauft</option>
+      </select>
+
+      <!-- Das Noetigste -->
+      <div class="f-block">
+        <input id="title" class="form-input f-title" placeholder="Was ist es? z.B. Nike Air Max 90" autocomplete="off">
+
+        <div class="f-duo">
+          <div class="f-field">
+            <label class="field-label" for="buyPrice">Einkaufspreis</label>
+            <div class="f-money"><input id="buyPrice" type="number" step="0.01" class="form-input" placeholder="0,00" oninput="updateProfitHint()"><span>€</span></div>
           </div>
-          <div class="img-drop-preview" id="imgDropPreview" style="display:none">
-            <img id="imgPreviewImg" alt="Vorschau">
-            <button type="button" class="img-remove" id="imgRemoveBtn" title="Bild entfernen">✕</button>
+          <div class="f-field">
+            <label class="field-label" for="date">Kaufdatum</label>
+            <input id="date" type="date" class="form-input">
           </div>
         </div>
-        <input id="imageUrl" class="form-input" placeholder="oder Bild-URL einfügen (https://…)" style="margin-top:10px">
+
+        <div class="f-field">
+          <span class="field-label">Gekauft bei</span>
+          <div class="seg" data-for="platform">
+            <button type="button" data-value="eBay">eBay</button>
+            <button type="button" data-value="Kleinanzeigen">Kleinanzeigen</button>
+          </div>
+          <select id="platform" class="form-input seg-source">
+            <option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option>
+          </select>
+        </div>
       </div>
-      <button class="btn btn-primary" onclick="saveItem()" style="grid-column: span 2; justify-content:center; padding:13px;">Speichern</button>
+
+      <!-- Nur wenn unterwegs -->
+      <div class="f-block" id="blockShipping">
+        <div class="f-field">
+          <label class="field-label" for="tracking">Sendungsverfolgung <span class="f-opt">optional</span></label>
+          <input id="tracking" class="form-input" placeholder="Link zur Sendungsverfolgung">
+        </div>
+      </div>
+
+      <!-- Nur wenn verkauft -->
+      <div class="f-block" id="blockSale">
+        <div class="f-duo">
+          <div class="f-field">
+            <label class="field-label" for="sellPrice">Verkaufspreis</label>
+            <div class="f-money"><input id="sellPrice" type="number" step="0.01" class="form-input" placeholder="0,00" oninput="updateProfitHint()"><span>€</span></div>
+          </div>
+          <div class="f-field" id="soldDateWrap">
+            <label class="field-label" for="soldDate">Verkaufsdatum</label>
+            <input id="soldDate" type="date" class="form-input">
+          </div>
+        </div>
+
+        <div class="f-field">
+          <span class="field-label">Verkauft über</span>
+          <div class="seg" data-for="sell_platform">
+            <button type="button" data-value="">offen</button>
+            <button type="button" data-value="eBay">eBay</button>
+            <button type="button" data-value="Kleinanzeigen">Kleinanzeigen</button>
+          </div>
+          <select id="sell_platform" class="form-input seg-source">
+            <option value="">— noch nicht verkauft —</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option>
+          </select>
+        </div>
+
+        <div class="profit-hint" id="profitHint"></div>
+      </div>
+
+      <!-- Alles Seltene bleibt zusammengeklappt -->
+      <button type="button" class="more-toggle" id="moreToggle" onclick="toggleMoreFields()">
+        <span>Weitere Angaben</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div class="more-wrap" id="moreWrap">
+        <div class="more-inner">
+
+          <div class="f-field">
+            <label class="field-label" for="order">Bestellnummer <span class="f-opt">optional</span></label>
+            <input id="order" class="form-input" placeholder="z.B. 27-15033-55011">
+          </div>
+
+          <label class="opt-check"><input type="checkbox" id="ownedChk"><span class="opt-box"></span><span class="opt-txt">Schon vorher besessen<small>Einkauf zählt nicht aufs Kapital — der volle Verkaufspreis ist Profit</small></span></label>
+          <label class="opt-check"><input type="checkbox" id="isLotChk"><span class="opt-box"></span><span class="opt-txt">Als Lot erfassen<small>Konvolut kaufen und die Teile einzeln verkaufen</small></span></label>
+
+          <div class="f-field" id="partPriceWrap" style="display:none">
+            <label class="field-label" for="partPrice">Standard-Verkaufspreis pro Teil</label>
+            <div class="f-money"><input id="partPrice" type="number" step="0.01" class="form-input" placeholder="0,00"><span>€</span></div>
+            <div class="f-hint">Wird bei jedem Teil-Verkauf vorgeschlagen.</div>
+          </div>
+
+          <div class="f-field">
+            <span class="field-label">Bild <span class="f-opt">optional</span></span>
+            <div id="imgDrop" class="img-drop" tabindex="0" role="button" aria-label="Bild hochladen">
+              <input id="imgFile" type="file" accept="image/*" hidden>
+              <div class="img-drop-empty" id="imgDropEmpty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div class="img-drop-title">Bild hierher ziehen</div>
+                <div class="img-drop-sub">oder klicken · einfügen mit Strg+V</div>
+              </div>
+              <div class="img-drop-preview" id="imgDropPreview" style="display:none">
+                <img id="imgPreviewImg" alt="Vorschau">
+                <button type="button" class="img-remove" id="imgRemoveBtn" title="Bild entfernen">✕</button>
+              </div>
+            </div>
+            <input id="imageUrl" class="form-input" placeholder="oder Bild-URL einfügen (https://…)" style="margin-top:10px">
+          </div>
+
+        </div>
+      </div>
     </div>
-    <div class="edit-extra" id="editExtra">
-      <button class="reimb-toggle" id="reimbToggle" onclick="toggleReimbursedModal()">Privates Geld erstattet</button>
-      <button class="btn btn-danger" onclick="deleteFromModal()" style="padding:12px 18px;">Löschen</button>
+
+    <div class="form-foot">
+      <div class="edit-extra" id="editExtra">
+        <button class="reimb-toggle" id="reimbToggle" onclick="toggleReimbursedModal()">Privates Geld erstattet</button>
+        <button class="btn btn-danger" onclick="deleteFromModal()">Löschen</button>
+      </div>
+      <button class="btn btn-primary f-save" onclick="saveItem()">Speichern</button>
     </div>
   </div>
 </div>
@@ -1292,7 +1429,77 @@ let expandedLots={};
 function toggleLot(id){ expandedLots[id]=!expandedLots[id]; renderItems(); }
 
 function setSort(value){ sortBy=value; currentPage=1; renderItems(); }
-function openModal(title){ document.getElementById('modal-title').textContent=title||'Artikel hinzufügen'; const o=document.getElementById('item-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
+
+/* ===== Artikel-Formular: Segmentschalter, Sichtbarkeit, Profit-Hinweis =====
+   Die Schalter bedienen weiterhin die urspruenglichen Auswahlfelder, damit
+   saemtliche bestehende Logik (change-Listener, saveItem, editItem) unveraendert
+   greift. */
+function initSegments(){
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const sel=document.getElementById(seg.dataset.for); if(!sel) return;
+    seg.addEventListener('click', e=>{
+      const btn=e.target.closest('button'); if(!btn) return;
+      sel.value=btn.dataset.value;
+      sel.dispatchEvent(new Event('change'));
+      syncSegments();
+    });
+    sel.addEventListener('change', syncSegments);
+  });
+}
+
+function syncSegments(){
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const sel=document.getElementById(seg.dataset.for); if(!sel) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.value===sel.value));
+  });
+}
+
+/* Blendet die Bloecke, die zum gewaehlten Status gehoeren. */
+function syncFormSections(){
+  const status=statusEl.value;
+  const ship=document.getElementById('blockShipping');
+  const sale=document.getElementById('blockSale');
+  if(ship) ship.style.display = status==='Gekauft' ? '' : 'none';
+  if(sale) sale.style.display = status==='Verkauft' ? '' : 'none';
+  if(partPriceWrapEl) partPriceWrapEl.style.display = isLotChkEl.checked ? '' : 'none';
+  if(soldDateWrapEl) soldDateWrapEl.style.display='';
+  if(trackingEl) trackingEl.style.display='';
+  syncSegments();
+  updateProfitHint();
+}
+
+function updateProfitHint(){
+  const el=document.getElementById('profitHint'); if(!el) return;
+  const sell=parseFloat(sellPriceEl.value);
+  if(statusEl.value!=='Verkauft' || !Number.isFinite(sell)){ el.className='profit-hint'; el.innerHTML=''; return; }
+  const buy=ownedChkEl.checked ? 0 : (parseFloat(buyPriceEl.value)||0);
+  const profit=sell-buy;
+  el.className='profit-hint on '+(profit>=0?'pos':'neg');
+  el.innerHTML=`Profit <b>${euroSigned(profit)}</b>` + (ownedChkEl.checked ? ' <span style="color:var(--faint);font-weight:600">— vorbesessen, Einkauf zählt nicht</span>' : '');
+}
+
+/* "Weitere Angaben" oeffnet sich von selbst, wenn dort etwas gefuellt ist. */
+function toggleMoreFields(force){
+  const wrap=document.getElementById('moreWrap'), btn=document.getElementById('moreToggle');
+  if(!wrap||!btn) return;
+  const open = force!==undefined ? force : !wrap.classList.contains('open');
+  wrap.classList.toggle('open', open);
+  btn.classList.toggle('open', open);
+}
+
+function moreFieldsFilled(){
+  return !!(orderEl.value || imageUrlEl.value || pickedImage || ownedChkEl.checked || isLotChkEl.checked);
+}
+
+initSegments();
+
+function openModal(title){
+  document.getElementById('modal-title').textContent=title||'Artikel hinzufügen';
+  syncFormSections();
+  toggleMoreFields(moreFieldsFilled());
+  const o=document.getElementById('item-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden';
+  setTimeout(()=>{ if(!editId) titleEl.focus(); },160);
+}
 function closeModal(){ const o=document.getElementById('item-modal'); if(!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>{ o.classList.remove('closing'); clearForm(); },180); }
 function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function openNewModal(){ clearForm(); dateEl.value=todayStr(); dateEl.classList.add('has-value'); document.getElementById('editExtra').style.display='none'; openModal('Artikel hinzufügen'); }
@@ -1355,7 +1562,8 @@ const ownedChkEl=document.getElementById('ownedChk');
 const isLotChkEl=document.getElementById('isLotChk');
 const partPriceEl=document.getElementById('partPrice');
 const partPriceWrapEl=document.getElementById('partPriceWrap');
-isLotChkEl.addEventListener('change', ()=>{ partPriceWrapEl.style.display=isLotChkEl.checked?'block':'none'; });
+isLotChkEl.addEventListener('change', ()=>{ syncFormSections(); });
+ownedChkEl.addEventListener('change', updateProfitHint);
 const imageUrlEl=document.getElementById('imageUrl');
 const searchEl=document.getElementById('search');
 const searchTopEl=document.getElementById('searchTop');
@@ -1428,12 +1636,11 @@ if(mSearchEl) mSearchEl.addEventListener('input', ()=>{ syncSearch(mSearchEl.val
 function toggleMobileSearch(){ if(!mSearchEl) return; const show=mSearchEl.style.display==='none'||!mSearchEl.style.display; mSearchEl.style.display=show?'block':'none'; if(show){ mSearchEl.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>mSearchEl.focus(),200);} }
 
 statusEl.addEventListener('change', ()=>{
-  trackingEl.style.display=statusEl.value==='Gekauft'?'block':'none';
   const sold=statusEl.value==='Verkauft';
-  soldDateWrapEl.style.display=sold?'block':'none';
   // Beim Umstellen auf "Verkauft" das Verkaufsdatum automatisch auf heute setzen
   if(sold && !soldDateEl.value){ soldDateEl.value=todayISO(); }
   soldDateEl.classList.toggle('has-value',!!soldDateEl.value);
+  syncFormSections();
 });
 soldDateEl.addEventListener('change', ()=>{ soldDateEl.classList.toggle('has-value',!!soldDateEl.value); });
 dateEl.addEventListener('change', ()=>{ dateEl.classList.toggle('has-value',!!dateEl.value); });
