@@ -144,15 +144,15 @@
   .switch.on{background:var(--red);border-color:var(--red);}
   .switch.on::after{transform:translateX(19px);}
   /* Gesperrter Zustand: eine Zeile, rot nur dort, wo es die Sperre benennt */
-  .share-locked{display:flex;align-items:center;gap:9px;padding:0;border:none;background:none;flex-wrap:wrap;}
-  .sl-ico{color:var(--red);display:flex;flex-shrink:0;}
+  .share-locked{display:flex;align-items:flex-start;gap:9px;padding:0;border:none;background:none;flex-wrap:nowrap;}
+  .sl-ico{color:var(--red);display:flex;flex-shrink:0;margin-top:2px;}
   .sl-ico svg{width:15px;height:15px;}
   .sl-body{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;}
   .share-locked strong{color:var(--red);font-weight:800;font-size:13.5px;letter-spacing:-0.02em;}
   .share-locked p{font-size:13px;color:var(--dim);font-weight:500;}
   .sl-btn{background:none;border:none;padding:0;color:var(--red);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,69,58,0.4);}
   .sl-btn:hover{text-decoration-color:var(--red);}
-  .sl-close{margin-left:auto;flex-shrink:0;width:26px;height:26px;border:none;background:none;border-radius:50%;color:var(--faint);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,background .15s;}
+  .sl-close{margin-left:auto;align-self:flex-start;flex-shrink:0;width:26px;height:26px;border:none;background:none;border-radius:50%;color:var(--faint);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,background .15s;}
   .sl-close svg{width:13px;height:13px;}
   .sl-close:hover{color:var(--text);background:var(--surface-hover);}
   .goal-card{position:relative;}
@@ -2447,8 +2447,9 @@ async function loadSharePanel(){
 let shareNoticeDismissed=false;
 function shareNoticeHidden(){ return shareNoticeDismissed; }
 function dismissShareNotice(){
-  shareNoticeDismissed=true;
-  const el=document.getElementById('share-locked'); if(el) el.style.display='none';
+  const panel=document.getElementById('share-panel');
+  if(panel) panel.style.display='none';
+  shareNoticeDismissed=false;   // beim naechsten Oeffnen wieder zeigen
 }
 function renderPrivateMode(){
   const sw=document.getElementById('privateSwitch'); if(sw) sw.classList.toggle('on',privateMode);
