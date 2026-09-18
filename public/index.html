@@ -143,14 +143,15 @@
   .switch::after{content:'';position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .18s ease;}
   .switch.on{background:var(--red);border-color:var(--red);}
   .switch.on::after{transform:translateX(19px);}
-  /* Gesperrter Zustand: Farbe ist hier ein Statussignal, kein Schmuck */
-  .share-locked{display:flex;align-items:flex-start;gap:14px;padding:18px;border:1px solid rgba(255,69,58,0.28);border-radius:var(--r-md);background:rgba(255,69,58,0.08);}
-  .sl-ico{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:rgba(255,69,58,0.16);color:var(--red);display:flex;align-items:center;justify-content:center;}
-  .sl-ico svg{width:19px;height:19px;}
-  .share-locked strong{display:block;color:var(--red);font-weight:800;font-size:14.5px;letter-spacing:-0.02em;margin-bottom:4px;}
-  .share-locked p{font-size:13px;color:var(--dim);line-height:1.55;font-weight:500;}
-  .sl-btn{margin-top:12px;background:rgba(255,69,58,0.14);color:#ff8078;}
-  .sl-btn:hover{background:rgba(255,69,58,0.22);}
+  /* Gesperrter Zustand: eine Zeile, rot nur dort, wo es die Sperre benennt */
+  .share-locked{display:flex;align-items:center;gap:9px;padding:0;border:none;background:none;flex-wrap:wrap;}
+  .sl-ico{color:var(--red);display:flex;flex-shrink:0;}
+  .sl-ico svg{width:15px;height:15px;}
+  .sl-body{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;}
+  .share-locked strong{color:var(--red);font-weight:800;font-size:13.5px;letter-spacing:-0.02em;}
+  .share-locked p{font-size:13px;color:var(--dim);font-weight:500;}
+  .sl-btn{background:none;border:none;padding:0;color:var(--red);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,69,58,0.4);}
+  .sl-btn:hover{text-decoration-color:var(--red);}
   .goal-card{position:relative;}
   .goal-card.clickable{cursor:pointer;}
   .goal-card.clickable:hover{border-color:var(--hairline-strong);}
@@ -778,8 +779,8 @@
         <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
         <div class="sl-body">
           <strong>Privat-Modus ist aktiv</strong>
-          <p>Es wird kein Einladungslink herausgegeben, und bereits eingeladene Personen sehen deine Daten nicht.</p>
-          <button class="btn btn-secondary sl-btn" onclick="openSettingsModal()">In den Einstellungen deaktivieren</button>
+          <p>— kein Einladungslink, eingeladene Personen sehen nichts.</p>
+          <button class="sl-btn" onclick="openSettingsModal()">Deaktivieren</button>
         </div>
       </div>
       <div id="share-open">
