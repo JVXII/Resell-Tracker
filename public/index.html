@@ -152,6 +152,9 @@
   .share-locked p{font-size:13px;color:var(--dim);font-weight:500;}
   .sl-btn{background:none;border:none;padding:0;color:var(--red);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,69,58,0.4);}
   .sl-btn:hover{text-decoration-color:var(--red);}
+  .sl-close{margin-left:auto;flex-shrink:0;width:26px;height:26px;border:none;background:none;border-radius:50%;color:var(--faint);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,background .15s;}
+  .sl-close svg{width:13px;height:13px;}
+  .sl-close:hover{color:var(--text);background:var(--surface-hover);}
   .goal-card{position:relative;}
   .goal-card.clickable{cursor:pointer;}
   .goal-card.clickable:hover{border-color:var(--hairline-strong);}
@@ -782,6 +785,9 @@
           <p>— kein Einladungslink, eingeladene Personen sehen nichts.</p>
           <button class="sl-btn" onclick="openSettingsModal()">Deaktivieren</button>
         </div>
+        <button class="sl-close" onclick="dismissShareNotice()" aria-label="Hinweis ausblenden" title="Ausblenden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
       <div id="share-open">
         <div class="invite-row">
@@ -2437,18 +2443,24 @@ async function loadSharePanel(){
   document.getElementById('invite-link').value=`${location.origin}/api/share/join/${token}`;
   renderMembers(members);
 }
+function shareNoticeHidden(){ try{ return sessionStorage.getItem('resell.shareNotice')==='off'; }catch(_){ return false; } }
+function dismissShareNotice(){
+  try{ sessionStorage.setItem('resell.shareNotice','off'); }catch(_){}
+  const el=document.getElementById('share-locked'); if(el) el.style.display='none';
+}
 function renderPrivateMode(){
   const sw=document.getElementById('privateSwitch'); if(sw) sw.classList.toggle('on',privateMode);
   const sw2=document.getElementById('privateSwitch'); if(sw2) sw2.setAttribute('aria-checked',String(privateMode));
   const sub=document.getElementById('srPrivateSub');
   if(sub) sub.textContent=privateMode?'An — niemand kann deine Ansicht sehen':'Aus — Teilen per Einladungslink möglich';
   const locked=document.getElementById('share-locked'), open=document.getElementById('share-open');
-  if(locked&&open){ locked.style.display=privateMode?'flex':'none'; open.style.display=privateMode?'none':'block'; }
+  if(locked&&open){ locked.style.display=(privateMode && !shareNoticeHidden())?'flex':'none'; open.style.display=privateMode?'none':'block'; }
 }
 async function togglePrivateMode(){
   const next=!privateMode;
   const r=await fetch('/api/profile/private',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({privateMode:next})});
   if(!r.ok){ toast('Konnte nicht gespeichert werden.'); return; }
+  if(next){ try{ sessionStorage.removeItem('resell.shareNotice'); }catch(_){} }  // beim Einschalten wieder zeigen
   privateMode=next; renderPrivateMode();
   toast(next?'Privat-Modus an — Teilen gesperrt':'Privat-Modus aus — Teilen möglich');
   const panel=document.getElementById('share-panel');
