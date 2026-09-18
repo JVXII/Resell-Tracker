@@ -19,9 +19,17 @@ function goalOf(u) {
 // GET /api/profile — current user's account balance (Firmenkonto) + personal goal
 router.get('/', (req, res) => {
   const u = req.db
-    .prepare('SELECT balance, goal_title, goal_target, goal_current, goal_unit, private_mode FROM users WHERE id = ?')
+    .prepare('SELECT discord_id, balance, goal_title, goal_target, goal_current, goal_unit, private_mode FROM users WHERE id = ?')
     .get(req.userId);
-  res.json({ balance: u ? u.balance : 0, goal: goalOf(u), privateMode: !u || u.private_mode === 1 });
+  const adminId = process.env.ADMIN_DISCORD_ID;
+  res.json({
+    balance: u ? u.balance : 0,
+    goal: goalOf(u),
+    privateMode: !u || u.private_mode === 1,
+    // Nur zum Ein-/Ausblenden der Developer Tools. Alles Schutzwuerdige haengt
+    // weiterhin an requireAdmin auf dem Server, nicht an diesem Flag.
+    admin: !!adminId && !!u && u.discord_id === adminId,
+  });
 });
 
 // PUT /api/profile/balance — update account balance

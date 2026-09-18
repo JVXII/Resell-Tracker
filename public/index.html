@@ -119,6 +119,7 @@
   .sr-sub{font-size:12px;color:var(--dim);font-weight:500;margin-top:2px;}
   .sr-chev{margin-left:auto;color:var(--faint);font-size:20px;line-height:1;}
   .settings-row.static{cursor:default;}
+  .settings-section{margin:14px 2px 2px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
   .switch{margin-left:auto;flex-shrink:0;width:46px;height:27px;border-radius:999px;background:var(--hairline);border:1px solid var(--hairline);position:relative;cursor:pointer;transition:background .18s ease;}
   .switch::after{content:'';position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .18s ease;}
   .switch.on{background:var(--red);border-color:var(--red);}
@@ -1023,6 +1024,13 @@
         <div><div class="sr-title">Privat-Modus</div><div class="sr-sub" id="srPrivateSub">Niemand kann deine Ansicht sehen</div></div>
         <div id="privateSwitch" class="switch" role="switch" tabindex="0" aria-label="Privat-Modus" onclick="togglePrivateMode()"></div>
       </div>
+      <div id="devTools" style="display:none">
+        <div class="settings-section">Developer Tools</div>
+        <div class="settings-row" onclick="startDemo()">
+          <div><div class="sr-title">Demo-Dashboard öffnen</div><div class="sr-sub">Platzhalterdaten zum Vorführen — deine echten Daten bleiben unberührt</div></div>
+          <span class="sr-chev">›</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1167,6 +1175,7 @@ const sellPlatformEl=document.getElementById('sell_platform');
 const titleEl=document.getElementById('title');
 const orderEl=document.getElementById('order');
 let privateMode=true;
+let isAdmin=false;
 const dateEl=document.getElementById('date');
 const buyPriceEl=document.getElementById('buyPrice');
 const statusEl=document.getElementById('status');
@@ -1196,6 +1205,8 @@ const textColor='#8e8e93';
 const chartDefaults={ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}}, y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}} } };
 
 async function init(){
+  // Muss vor dem ersten Datenabruf laufen: der Demo-Modus faengt /api und /auth ab.
+  if(window.Demo) Demo.install();
   const res=await fetch('/auth/me');
   if(!res.ok || res.status===401){ window.location.href='/login.html'; return; }
   currentUser=await res.json();
@@ -1222,7 +1233,7 @@ function renderUserBadge(){
 
 async function logout(){ await fetch('/auth/logout',{method:'POST'}); window.location.href='/login.html'; }
 
-async function loadBalance(){ try{ const r=await fetch('/api/profile'); if(r.ok){ const d=await r.json(); accountBalance=d.balance||0; userGoal=d.goal||null; privateMode=d.privateMode!==false; } }catch(_){} renderGoal(); renderPrivateMode(); }
+async function loadBalance(){ try{ const r=await fetch('/api/profile'); if(r.ok){ const d=await r.json(); accountBalance=d.balance||0; userGoal=d.goal||null; privateMode=d.privateMode!==false; isAdmin=!!d.admin; } }catch(_){} renderGoal(); renderPrivateMode(); renderDevTools(); }
 
 async function loadItems(){ const res=await fetch('/api/items'); items=await res.json(); renderItems(); renderDashboard(); }
 
@@ -1955,7 +1966,9 @@ async function deleteGoal(){
 }
 
 /* ===== Einstellungen ===== */
-function openSettingsModal(){ renderGoal(); renderPrivateMode(); const o=document.getElementById('settings-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
+function renderDevTools(){ const el=document.getElementById('devTools'); if(el) el.style.display=isAdmin?'block':'none'; }
+function startDemo(){ if(!window.Demo) return; closeSettingsModal(); toast('Demo-Modus wird gestartet …'); setTimeout(()=>Demo.enter(),260); }
+function openSettingsModal(){ renderGoal(); renderPrivateMode(); renderDevTools(); const o=document.getElementById('settings-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
 function closeSettingsModal(){ const o=document.getElementById('settings-modal'); if(!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>o.classList.remove('closing'),180); }
 function onSettingsOverlay(e){ if(e.target===document.getElementById('settings-modal')) closeSettingsModal(); }
 
@@ -2149,6 +2162,7 @@ initDiscordTab();
 
 fetch('/api/version').then(r=>r.json()).then(v=>{ const el=document.createElement('div'); el.style.cssText='position:fixed;bottom:10px;right:14px;font-size:10px;color:#333;font-family:monospace;z-index:9999;user-select:none'; el.textContent=v.commit; document.body.appendChild(el); });
 </script>
+<script src="/demo.js"></script>
 <script src="/privacy.js"></script>
 <script src="/labels.js"></script>
 
