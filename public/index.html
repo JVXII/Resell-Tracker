@@ -147,7 +147,7 @@
 
 
   /* ===== Uebersicht: Leitzahl links, schmale Kennzahlenspalte rechts ===== */
-  .ov-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:44px;align-items:start;}
+  .ov-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:44px;align-items:start;min-width:0;}
   .ov-main{display:flex;flex-direction:column;gap:42px;min-width:0;}
   .ov-hero{min-width:0;}
   .hero-range{color:var(--faint);font-size:13.5px;font-weight:600;}
@@ -184,7 +184,11 @@
   .ov-btn-secondary{background:var(--surface);color:var(--text);}
   .ov-btn-secondary:hover{background:var(--surface-hover);}
 
-  .ov-duo{display:grid;grid-template-columns:1fr 1fr;gap:42px;}
+  /* Rasterfelder duerfen nicht mit ihrem Inhalt wachsen - sonst schiebt ein
+     langer Artikelname samt Bestellnummer die ganze Spalte ueber die Kante. */
+  .ov-duo{display:grid;grid-template-columns:1fr 1fr;gap:42px;min-width:0;}
+  .ov-duo > section{min-width:0;}
+  .ov-row{min-width:0;}
   .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
   .sec-title{font-size:19px;font-weight:900;letter-spacing:-0.035em;}
   .sec-link{font-size:13px;font-weight:700;color:var(--dim);background:none;border:none;cursor:pointer;font-family:inherit;transition:color .15s;}
