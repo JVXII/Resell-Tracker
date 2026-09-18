@@ -9,6 +9,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<!-- Muessen vor dem Inline-Script stehen: init() ruft Demo.install()/Privacy.init() auf -->
+<script src="/demo.js"></script>
+<script src="/privacy.js"></script>
 <style>
   :root{
     --bg:#000000;--surface:#0c0c0d;--surface-2:#111113;--surface-hover:#161618;--icon-bg:#1a1a1c;
@@ -2162,8 +2165,6 @@ initDiscordTab();
 
 fetch('/api/version').then(r=>r.json()).then(v=>{ const el=document.createElement('div'); el.style.cssText='position:fixed;bottom:10px;right:14px;font-size:10px;color:#333;font-family:monospace;z-index:9999;user-select:none'; el.textContent=v.commit; document.body.appendChild(el); });
 </script>
-<script src="/demo.js"></script>
-<script src="/privacy.js"></script>
 <script src="/labels.js"></script>
 
 </body>
