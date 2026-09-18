@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resell Tracker</title>
 <link rel="icon" type="image/svg+xml" href="/resell_tracker_icon.svg">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
@@ -14,48 +16,49 @@
 <script src="/privacy.js"></script>
 <style>
   :root{
-    --bg:#000000;--surface:#0d0e0f;--surface-2:#141517;--surface-hover:#1a1b1e;--icon-bg:#1a1a1c;
-    --hairline:rgba(255,255,255,0.055);--hairline-strong:rgba(255,255,255,0.1);
-    --text:#f6f6f7;--dim:#8b9099;--faint:#5a5f67;
+    --bg:#08090a;--surface:#101113;--surface-2:#17191c;--surface-hover:#1e2024;--icon-bg:#1e2024;
+    --hairline:rgba(255,255,255,0.07);--hairline-strong:rgba(255,255,255,0.12);
+    --text:#f4f5f6;--dim:#8b9099;--faint:#5a5f67;
     --r-lg:24px;--r-md:16px;--r-sm:12px;
-    --green:#32d74b;--green-soft:rgba(50,215,75,0.12);--red:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;--purple:#7d5cff;--pink:#ff4d8d;
+    --green:#2fd75b;--green-soft:rgba(47,215,91,0.12);--red:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;--purple:#7d5cff;--pink:#ff4d8d;
     --ease-out:cubic-bezier(0.23,1,0.32,1);
     --ease-in-out:cubic-bezier(0.77,0,0.175,1);
     --ease-drawer:cubic-bezier(0.32,0.72,0,1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);font-family:'Satoshi',-apple-system,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;letter-spacing:-0.011em;}
+  body{background:var(--bg);font-family:'Schibsted Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;letter-spacing:-0.011em;}
   /* Zahlen laufen ueberall tabellarisch - sonst zappelt jede Kennzahl beim Zaehlen */
   .metric-value,.mv-hval,.mv-stat .v,.amount,.col-num,.part-price,.summary-value,.gauge-pct,.hero-value,.kpi-val,.sale-price,.mv-amt{font-variant-numeric:tabular-nums;}
   ::selection{background:rgba(50,215,75,0.25);}
   a{color:inherit;text-decoration:none;}
 
   /* ===== Sidebar ===== */
-  .sidebar{width:248px;flex-shrink:0;height:100vh;position:sticky;top:0;background:var(--bg);border-right:1px solid var(--hairline);display:flex;flex-direction:column;padding:20px 16px;gap:4px;overflow-y:auto;scrollbar-width:none;}
+  .sidebar{width:232px;flex-shrink:0;height:100vh;position:sticky;top:0;background:var(--bg);border-right:1px solid var(--hairline);display:flex;flex-direction:column;padding:26px 16px;gap:2px;overflow-y:auto;scrollbar-width:none;}
   .sidebar::-webkit-scrollbar{display:none;}
-  .brand{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 16px;}
+  .brand{display:flex;align-items:center;justify-content:space-between;padding:4px 10px 26px;}
   .brand-left{display:flex;align-items:center;gap:10px;}
   .brand-logo{width:38px;height:38px;display:flex;align-items:center;justify-content:center;}
   /* Testweise weiss eingefaerbt - das Original bleibt die Quelldatei */
   .brand-logo img{width:36px;height:36px;display:block;filter:brightness(0) invert(1);}
   .brand-name{font-size:17px;font-weight:900;letter-spacing:-0.035em;}
   .nav-section{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:14px 10px 6px;}
-  .nav-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:var(--dim);font-size:14px;font-weight:600;cursor:pointer;transition:background .16s,color .16s;}
-  .nav-link svg.ni{width:19px;height:19px;flex-shrink:0;}
-  .nav-link:hover{background:var(--surface-hover);color:var(--text);}
-  .nav-link.active{background:var(--surface-2);color:var(--text);font-weight:800;}
+  .nav-link{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px;color:var(--dim);font-size:14.5px;font-weight:500;cursor:pointer;transition:background .16s,color .16s;}
+  .rail-foot{margin-top:auto;}
+  .nav-link svg.ni{width:19px;height:19px;flex-shrink:0;stroke-width:1.7;}
+  .nav-link:hover{background:rgba(255,255,255,.035);color:var(--text);}
+  .nav-link.active{background:var(--surface-2);color:var(--text);font-weight:700;}
   .nav-link .soon-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--faint);background:var(--bg);border:1px solid var(--hairline);padding:2px 7px;border-radius:100px;}
 
   /* ===== Main / topbar ===== */
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
-  .topbar{display:flex;align-items:center;gap:20px;padding:20px 34px;border-bottom:none;position:sticky;top:0;z-index:30;background:rgba(0,0,0,0.72);backdrop-filter:blur(20px);}
+  .topbar{display:flex;align-items:center;gap:20px;padding:20px 40px;border-bottom:none;position:sticky;top:0;z-index:30;background:rgba(0,0,0,0.72);backdrop-filter:blur(20px);}
   .page-title h1{font-size:21px;font-weight:900;letter-spacing:-0.035em;}
   .page-title p{font-size:13px;color:var(--dim);margin-top:2px;font-weight:500;}
-  .topbar-search{flex:1;max-width:430px;margin:0 auto;display:flex;align-items:center;gap:10px;background:var(--surface);border:none;border-radius:100px;padding:12px 18px;}
+  .topbar-search{flex:1;max-width:420px;margin:0;display:flex;align-items:center;gap:10px;background:var(--surface);border:none;border-radius:100px;padding:12px 18px;}
   .topbar-search svg{width:18px;height:18px;color:var(--faint);}
   .topbar-search input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-family:inherit;}
   .topbar-search input::placeholder{color:var(--faint);}
-  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
   .privacy-btn{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:var(--surface);border:none;color:var(--dim);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:color .18s,background .18s,border-color .18s;}
   .privacy-btn svg{width:19px;height:19px;}
   .privacy-btn:hover{color:var(--text);}
@@ -106,9 +109,9 @@
   /* Leitzahl der Uebersicht - die einzige wirklich grosse Zahl der Seite */
   .hero{padding:4px 0 26px;}
   .hero-label{font-size:14px;color:var(--dim);font-weight:600;margin-bottom:7px;}
-  .hero-value{font-size:clamp(42px,4.4vw,56px);font-weight:900;letter-spacing:-0.045em;line-height:1.02;}
+  .hero-value{font-size:clamp(42px,4.6vw,58px);font-weight:900;letter-spacing:-0.045em;line-height:1.02;}
   .hero-foot{margin-top:11px;min-height:19px;display:flex;align-items:center;gap:10px;}
-  .hero-foot .metric-change{font-size:14px;}
+  .hero-foot .metric-change{font-size:15px;font-weight:800;letter-spacing:-0.02em;}
   .metric-label{font-size:12.5px;color:var(--dim);font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
   .metric-sub{font-size:11.5px;color:var(--faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
   .edit-hint svg{width:12px;height:12px;display:block;color:var(--faint);}
@@ -170,6 +173,12 @@
   .ov-row-num{text-align:right;flex-shrink:0;}
   .ov-row-val{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;}
   .ov-row-delta{font-size:12.5px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;color:var(--faint);}
+  .ov-row-delta.pos{color:var(--green);}
+  .ov-row-delta.neg{color:var(--red);}
+  .spark{width:62px;height:26px;flex-shrink:0;}
+  .spark path{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+  .chg-pct{color:inherit;font-weight:700;}
+  .chg-note{color:var(--faint);font-weight:600;margin-left:8px;}
   .ov-empty{color:var(--faint);font-size:13px;font-weight:600;padding:26px 0;text-align:center;}
 
   /* Seitenspalte */
@@ -581,55 +590,40 @@
     </div>
   </div>
 
-  <div class="nav-section">Dashboard</div>
   <div class="nav-link active" data-tab="overview" onclick="showTab('overview')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
     Übersicht
   </div>
   <div class="nav-link" id="navArtikel" onclick="showTab('overview');scrollToList()">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
     Artikel
   </div>
   <div class="nav-link" data-tab="charts" onclick="showTab('charts')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-    Analytics
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+    Auswertung
   </div>
   <div class="nav-link" data-tab="finance" onclick="showTab('finance')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18M7 15h4"/></svg>
     Finanzen
   </div>
   <div class="nav-link" data-tab="labels" onclick="showTab('labels')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-    DHL Labels
-  </div>
-  <div class="nav-link" onclick="soon('Benachrichtigungen')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-    Benachrichtigungen
-    <span class="soon-tag">bald</span>
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+    Versand
   </div>
   <div class="nav-link" onclick="toggleShare()">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
     Teilen
   </div>
-
-  <div class="nav-section">Erweitert</div>
   <div class="nav-link" id="navDiscord" data-tab="discord" onclick="showTab('discord');loadDiscord()" style="display:none">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M7.5 7.2A16 16 0 0 1 12 6.5a16 16 0 0 1 4.5.7l1.8 3.6A13 13 0 0 1 19 16.5c-1.6 1.3-3.3 2.1-5 2.5l-1-1.7"/><path d="M16.5 7.2A16 16 0 0 0 12 6.5a16 16 0 0 0-4.5.7L5.7 10.8A13 13 0 0 0 5 16.5c1.6 1.3 3.3 2.1 5 2.5l1-1.7"/></svg>
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg>
     Discord Bot
   </div>
-  <div class="nav-link" onclick="openSettingsModal()">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    Einstellungen
-  </div>
-  <div class="nav-link" onclick="soon('Konto')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Konto
-    <span class="soon-tag">bald</span>
-  </div>
-  <div class="nav-link" onclick="soon('Hilfe & Support')">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    Hilfe &amp; Support
-    <span class="soon-tag">bald</span>
+
+  <div class="rail-foot">
+    <div class="nav-link" onclick="openSettingsModal()">
+      <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Einstellungen
+    </div>
   </div>
 </aside>
 
@@ -638,10 +632,6 @@
 
   <!-- Desktop topbar -->
   <div class="topbar">
-    <div class="page-title">
-      <h1 id="page-h1">Übersicht</h1>
-      <p>Behalte deine Verkäufe im Blick</p>
-    </div>
     <div class="topbar-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input id="searchTop" placeholder="Bestellnummer suchen...">
@@ -1251,7 +1241,32 @@ function scrollToList(){ document.getElementById('txSection').scrollIntoView({be
 const PLATFORM_SHORT={ 'eBay':'eBay','Kleinanzeigen':'KA' };
 function fmtPlatform(p){ return PLATFORM_SHORT[p]||p; }
 function thumbClass(p){ if(p==='eBay') return 'b-ebay'; if(p==='Kleinanzeigen') return 'b-ka'; return ''; }
-function euroSigned(v){ return (v>=0?'+':'−')+Math.abs(v).toFixed(2)+'€'; }
+function euroSigned(v){ return (v>=0?'+':'−')+euroDE(Math.abs(v)); }
+/* 1.234,56 € - Tausenderpunkt, Komma, geschuetzter Abstand vor dem Zeichen */
+function euroDE(v){ return (v||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+'\u00a0€'; }
+
+/* Mini-Verlauf fuer eine Listenzeile. Anfang und Ende sind echte Werte
+   (Kostenbasis und erzielter bzw. erwarteter Erloes); die Zwischenpunkte sind
+   nur Zierde und werden aus der Artikel-ID abgeleitet, damit dieselbe Zeile
+   immer dieselbe Kurve zeigt. */
+function sparkline(from, to, seed){
+  const up = to >= from;
+  let a = (seed*2654435761) >>> 0;
+  const rand = () => { a ^= a<<13; a>>>=0; a ^= a>>17; a ^= a<<5; a>>>=0; return a/4294967296; };
+  const pts = [];
+  for(let i=0;i<12;i++){
+    const t = i/11;
+    const wobble = (rand()-0.5)*0.38*(1-Math.abs(t-0.5));
+    pts.push(Math.max(0, Math.min(1, t + wobble)));
+  }
+  pts[0]=0; pts[pts.length-1]=1;
+  const d = pts.map((v,i)=>{
+    const x = (i/(pts.length-1))*58 + 2;
+    const y = up ? 22 - v*17 : 4 + v*17;
+    return (i?'L':'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+  }).join(' ');
+  return `<svg class="spark" viewBox="0 0 62 26" aria-hidden="true"><path d="${d}" stroke="${up?'var(--green)':'var(--red)'}"/></svg>`;
+}
 
 function toggleReimbursed(id){ reimbursedItems[id]=!reimbursedItems[id]; localStorage.setItem('reimbursedItems',JSON.stringify(reimbursedItems)); renderItems(); }
 
@@ -1505,7 +1520,6 @@ function showTab(tab){
   document.querySelectorAll(`.nav-link[data-tab="${tab}"], .bottom-nav-item[data-tab="${tab}"]`).forEach(el=>el.classList.add('active'));
   const titles={overview:'Übersicht',charts:'Analytics',labels:'DHL Labels',finance:'Finanzen'};
   const title=titles[tab]||'Übersicht';
-  const h1=document.getElementById('page-h1'); if(h1) h1.textContent=title;
   if(tab==='charts'){ renderProfitChart(); renderChart(); renderPlatformChart(); }
   if(tab==='finance'){ renderFinance(); renderExpenseCharts(); }
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1718,15 +1732,15 @@ function renderDashboard(){
   let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
   const cash=accountBalance - spentAll + recvSold - expTotal;   // aktuelles Bargeld
   const kapital=cash + stockValue;                    // = Basis + Gesamtprofit − Ausgaben
-  countUp('mProfit', totalProfit, v=>euroSigned(v));
+  countUp('mProfit', totalProfit, v=>euroDE(v));
   countUp('mSold', soldCount, v=>String(Math.round(v)));
-  countUp('mRevenue', revenue, v=>v.toFixed(2)+'€');
-  countUp('mKapital', kapital, v=>v.toFixed(2)+'€');
-  countUp('ovCash', cash, v=>v.toFixed(2)+'€');
-  countUp('ovStockValue', stockValue, v=>v.toFixed(2)+'€');
+  countUp('mRevenue', revenue, v=>euroDE(v));
+  countUp('mKapital', kapital, v=>euroDE(v));
+  countUp('ovCash', cash, v=>euroDE(v));
+  countUp('ovStockValue', stockValue, v=>euroDE(v));
   const kapSub=document.getElementById('mKapitalSub');
   if(kapSub) kapSub.textContent=`Bargeld ${cash.toFixed(2)}€ · Lager ${stockValue.toFixed(2)}€`;
-  setChange('mProfitChg', curP, prevP);
+  setChange('mProfitChg', curP, prevP, curP);
   setChange('mRevenueChg', curR, prevR);
   setChange('mSoldChg', curC, prevC);
   renderRecentSales();
@@ -1806,16 +1820,26 @@ function renderStockList(){
   el.innerHTML=stock.map(i=>{
     const days=daysSince(i.date);
     const inner=i.image?`<img src="${i.image}">`:itemInitial(i);
-    const expect=i.is_lot && i.part_price ? `Teil ${i.part_price.toFixed(2)}€` : '';
+    const cost=effBuy(i);
+    // Erwarteter Erloes: bei Lots die bereits erzielten Teilverkaeufe, sonst der
+    // hinterlegte Verkaufspreis - fehlt beides, bleibt es bei der Kostenbasis.
+    const parts=items.filter(x=>x.parent_id===i.id);
+    const earned=parts.reduce((sum,x)=>sum+(x.sell_price||0),0);
+    const expected=i.is_lot ? (earned || cost) : (i.sell_price || cost);
+    const delta=expected-cost;
+    const sub=[fmtPlatform(i.platform)];
+    if(days!=null) sub.push('seit '+days+' Tagen');
+    if(i.is_lot) sub.push(parts.length+' Teile verkauft');
     return `<div class="ov-row" onclick="editItem(${i.id})">
       <div class="thumb ${thumbClass(i.platform)}">${inner}</div>
       <div class="ov-row-main">
         <div class="ov-row-title">${itemLabel(i)}${i.is_lot?'<span class="tag-lot">LOT</span>':''}</div>
-        <div class="ov-row-sub">${fmtPlatform(i.platform)}${days!=null?' · seit '+days+' Tagen':''}${expect?' · '+expect:''}</div>
+        <div class="ov-row-sub">${sub.join(' · ')}</div>
       </div>
+      ${sparkline(cost, expected, i.id)}
       <div class="ov-row-num">
-        <div class="ov-row-val">${effBuy(i).toFixed(2)}€</div>
-        <div class="ov-row-delta">${i.status}</div>
+        <div class="ov-row-val">${euroDE(expected)}</div>
+        <div class="ov-row-delta ${delta>=0?'pos':'neg'}">${delta===0?i.status:euroSigned(delta)}</div>
       </div>
     </div>`;
   }).join('');
@@ -1837,10 +1861,10 @@ function renderPlatformList(){
     <div class="ov-row" style="cursor:default">
       <div class="ov-row-main">
         <div class="ov-row-title">${escapeHtml(name)}</div>
-        <div class="ov-row-sub">${v.count} ${v.count===1?'Verkauf':'Verkäufe'} · Ø ${(v.profit/v.count).toFixed(2)}€</div>
+        <div class="ov-row-sub">${v.count} ${v.count===1?'Verkauf':'Verkäufe'} · Ø ${euroDE(v.profit/v.count)} Profit</div>
       </div>
       <div class="ov-row-num">
-        <div class="ov-row-val ${v.profit>=0?'up':'down'}" style="color:${v.profit>=0?'var(--green)':'var(--red)'}">${euroSigned(v.profit)}</div>
+        <div class="ov-row-val">${euroDE(v.profit)}</div>
         <div class="ov-row-delta">${Math.round(Math.abs(v.profit)/total*100)} %</div>
       </div>
     </div>`).join('');
@@ -1850,31 +1874,44 @@ function renderPlatformList(){
 function jumpToStock(){ const p=[...document.querySelectorAll('#txSection .pill')].find(b=>b.textContent.trim()==='Lager'); if(p) p.click(); jumpToHistory(); }
 function jumpToHistory(){ const el=document.getElementById('txSection'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
 
-function setChange(id, cur, prev){
+function setChange(id, cur, prev, absolute){
   const el=document.getElementById(id); if(!el) return;
-  if(!prev || prev===0){ el.innerHTML=''; el.className='metric-change'; return; }
+  if(!prev || prev===0){
+    // Ohne Vormonat gibt es keinen Vergleich - der absolute Zuwachs zaehlt trotzdem
+    if(absolute!==undefined && absolute!==0){
+      el.className='metric-change '+(absolute>=0?'up':'down');
+      el.innerHTML=euroSigned(absolute)+'<span class="chg-note">diesen Monat</span>';
+    } else { el.innerHTML=''; el.className='metric-change'; }
+    return;
+  }
   const pct=((cur-prev)/Math.abs(prev))*100;
   const up=pct>=0;
   el.className='metric-change '+(up?'up':'down');
   const arrow=up
     ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
     :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
-  el.innerHTML=`${arrow}${up?'+':'−'}${Math.abs(pct).toFixed(0)}%`;
+  el.innerHTML = absolute!==undefined
+    ? `${euroSigned(absolute)} <span class="chg-pct">(${up?'+':'−'}${Math.abs(pct).toFixed(1).replace('.',',')} %)</span><span class="chg-note">diesen Monat</span>`
+    : `${arrow}${up?'+':'−'}${Math.abs(pct).toFixed(0)}%`;
 }
 
 function renderRecentSales(){
   const el=document.getElementById('recentSales');
   const sold=items.filter(i=>i.status==='Verkauft')
     .sort((a,b)=> (new Date(saleDate(b)||0)-new Date(saleDate(a)||0)) || (new Date(b.created_at||0)-new Date(a.created_at||0))).slice(0,5);
-  if(sold.length===0){ el.innerHTML='<div class="recent-empty">Noch keine Verkäufe</div>'; return; }
+  if(sold.length===0){ el.innerHTML='<div class="ov-empty">Noch keine Verkäufe</div>'; return; }
   el.innerHTML=sold.map(i=>{
-    const profit=(i.sell_price||0)-effBuy(i);
+    const cost=effBuy(i), got=i.sell_price||0, profit=got-cost;
     const initial=itemInitial(i);
     const inner=i.image?`<img src="${i.image}">`:initial;
-    return `<div class="sale-row">
-      <div class="sale-thumb ${thumbClass(i.sell_platform||i.platform)}">${inner}</div>
-      <div class="sale-main"><div class="sale-name">${itemLabel(i)}</div><div class="sale-time">${fmtPlatform(i.sell_platform||i.platform)} · ${formatDate(saleDate(i))}</div></div>
-      <div class="sale-price">${euroSigned(profit)}</div>
+    return `<div class="ov-row" onclick="editItem(${i.id})">
+      <div class="thumb ${thumbClass(i.sell_platform||i.platform)}">${inner}</div>
+      <div class="ov-row-main"><div class="ov-row-title">${itemLabel(i)}</div><div class="ov-row-sub">${fmtPlatform(i.sell_platform||i.platform)} · ${formatDate(saleDate(i))}</div></div>
+      ${sparkline(cost, got, i.id)}
+      <div class="ov-row-num">
+        <div class="ov-row-val">${euroDE(got)}</div>
+        <div class="ov-row-delta ${profit>=0?'pos':'neg'}">${euroSigned(profit)}</div>
+      </div>
     </div>`;
   }).join('');
 }
