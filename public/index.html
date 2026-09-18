@@ -2435,6 +2435,7 @@ async function importBackup(file){ if(!file) return; const text=await file.text(
 
 async function toggleShare(){ const panel=document.getElementById('share-panel'); if(panel.style.display==='none'){ panel.style.display='block'; showTab('overview'); window.scrollTo({top:0,behavior:'smooth'}); await loadSharePanel(); } else { panel.style.display='none'; } }
 async function loadSharePanel(){
+  shareNoticeDismissed=false;
   renderPrivateMode();
   if(privateMode) return;
   const [inviteRes,membersRes]=await Promise.all([fetch('/api/share/invite'),fetch('/api/share/members')]);
@@ -2443,9 +2444,10 @@ async function loadSharePanel(){
   document.getElementById('invite-link').value=`${location.origin}/api/share/join/${token}`;
   renderMembers(members);
 }
-function shareNoticeHidden(){ try{ return sessionStorage.getItem('resell.shareNotice')==='off'; }catch(_){ return false; } }
+let shareNoticeDismissed=false;
+function shareNoticeHidden(){ return shareNoticeDismissed; }
 function dismissShareNotice(){
-  try{ sessionStorage.setItem('resell.shareNotice','off'); }catch(_){}
+  shareNoticeDismissed=true;
   const el=document.getElementById('share-locked'); if(el) el.style.display='none';
 }
 function renderPrivateMode(){
@@ -2460,7 +2462,7 @@ async function togglePrivateMode(){
   const next=!privateMode;
   const r=await fetch('/api/profile/private',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({privateMode:next})});
   if(!r.ok){ toast('Konnte nicht gespeichert werden.'); return; }
-  if(next){ try{ sessionStorage.removeItem('resell.shareNotice'); }catch(_){} }  // beim Einschalten wieder zeigen
+  if(next) shareNoticeDismissed=false;  // beim Einschalten wieder zeigen
   privateMode=next; renderPrivateMode();
   toast(next?'Privat-Modus an — Teilen gesperrt':'Privat-Modus aus — Teilen möglich');
   const panel=document.getElementById('share-panel');
