@@ -38,10 +38,6 @@
   .nav-link:hover{background:var(--surface-hover);color:var(--text);}
   .nav-link.active{background:var(--text);color:#000;}
   .nav-link .soon-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--faint);background:var(--bg);border:1px solid var(--hairline);padding:2px 7px;border-radius:100px;}
-  .upgrade-card{margin-top:auto;background:linear-gradient(160deg,rgba(50,215,75,0.16),rgba(50,215,75,0.04));border:1px solid rgba(50,215,75,0.22);border-radius:18px;padding:18px;}
-  .upgrade-card h4{font-size:15px;font-weight:900;margin-bottom:6px;letter-spacing:-0.02em;}
-  .upgrade-card p{font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:14px;font-weight:500;}
-  .uc-btn{background:var(--green);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;width:100%;font-family:inherit;}
 
   /* ===== Main / topbar ===== */
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
@@ -454,10 +450,10 @@
   }
 
   /* ===== Motion polish (cleane Transitions, Luma/Emil-Stil) ===== */
-  .btn,.btn-add,.lbl-go,.uc-btn,.pill,.page-btn,.icon-btn,.mh-btn,.share-btn,.sort-toggle,.lbl-preset,.period-btn,.modal-close,.logout-btn,.reimb-toggle,.dropdown{
+  .btn,.btn-add,.lbl-go,.pill,.page-btn,.icon-btn,.mh-btn,.share-btn,.sort-toggle,.lbl-preset,.period-btn,.modal-close,.logout-btn,.reimb-toggle,.dropdown{
     transition:transform 150ms var(--ease-out),background .18s ease,color .16s ease,border-color .16s ease,box-shadow .2s var(--ease-out),opacity .18s ease;
   }
-  .btn:active,.btn-add:active,.lbl-go:active,.uc-btn:active,.pill:active,.page-btn:active,.icon-btn:active,.mh-btn:active,.share-btn:active,.sort-toggle:active,.lbl-preset:active,.period-btn:active,.modal-close:active,.logout-btn:active,.reimb-toggle:active,.dropdown:active{transform:scale(0.96);}
+  .btn:active,.btn-add:active,.lbl-go:active,.pill:active,.page-btn:active,.icon-btn:active,.mh-btn:active,.share-btn:active,.sort-toggle:active,.lbl-preset:active,.period-btn:active,.modal-close:active,.logout-btn:active,.reimb-toggle:active,.dropdown:active{transform:scale(0.96);}
   .lbl-go:disabled:active{transform:none;}
   .bottom-nav-item:active,.bottom-nav .fab:active{transform:scale(0.92);}
   .item-row,.mv-row{transition:background .16s ease,transform 130ms var(--ease-out);}
@@ -555,12 +551,6 @@
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     Hilfe &amp; Support
     <span class="soon-tag">bald</span>
-  </div>
-
-  <div class="upgrade-card">
-    <h4>Pro freischalten</h4>
-    <p>Teams, unbegrenzte Artikel & mehr — bald verfügbar.</p>
-    <button class="uc-btn" onclick="soon('Pro')">Mehr erfahren</button>
   </div>
 </aside>
 
