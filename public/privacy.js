@@ -286,7 +286,8 @@
       '.pv-ch.pv-flip{transform:scaleX(-1);}',
       '.pv-ch.pv-scramble{opacity:.72;}',
       /* Charts verraten ohne Zahlen immer noch die Groessenordnung */
-      'body.privacy-on #overview canvas,body.privacy-on #charts canvas,body.privacy-on #finance canvas{filter:blur(9px);pointer-events:none;}',
+      'body.privacy-on #overview canvas,body.privacy-on #charts canvas,body.privacy-on #finance canvas,'+
+      'body.privacy-on .ov-chart,body.privacy-on .spark{filter:blur(9px);pointer-events:none;}',
       '.privacy-btn .pv-slash{stroke-dasharray:26;stroke-dashoffset:26;transition:stroke-dashoffset .3s cubic-bezier(.4,0,.2,1);}',
       '.privacy-btn.on .pv-slash{stroke-dashoffset:0;}',
       '.privacy-btn .pv-eye{transition:transform .3s cubic-bezier(.4,0,.2,1);transform-origin:12px 12px;}',
