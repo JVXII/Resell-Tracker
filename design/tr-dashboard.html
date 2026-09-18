@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resell Tracker — Design-Entwurf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   Entwurf: Resell-Tracker im Trade-Republic-Gestaltungsprinzip.
+   Nahezu monochrom, sehr hoher Kontrast, kaum Rahmen, Farbe nur als Signal.
+   Die Hierarchie traegt die Typografie, nicht die Umrandung.
+   ========================================================================= */
+:root{
+  --bg:#08090a;
+  --surface:#101113;
+  --surface-2:#17191c;
+  --hair:rgba(255,255,255,.07);
+  --text:#f4f5f6;
+  --dim:#8b9099;
+  --faint:#5a5f67;
+  --up:#2fd75b;
+  --down:#ff453a;
+  --r-lg:22px;
+  --r-md:16px;
+  --r-sm:12px;
+  --nav-h:76px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Schibsted Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15px;line-height:1.45;letter-spacing:-.011em;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+/* Zahlen bekommen durchgehend gleiche Laufweite — sonst zappelt jede Kennzahl,
+   sobald sich ein Wert aendert oder der Privatmodus greift. */
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
+a{color:inherit;text-decoration:none;}
+
+/* ---------- Grundgeruest ---------- */
+.shell{display:flex;min-height:100vh;}
+
+.rail{
+  width:232px;flex-shrink:0;position:sticky;top:0;height:100vh;
+  padding:26px 16px;display:flex;flex-direction:column;gap:2px;
+  border-right:1px solid var(--hair);
+}
+.mark{display:flex;align-items:center;gap:11px;padding:4px 10px 26px;}
+.mark svg{width:26px;height:26px;}
+.mark span{font-weight:900;font-size:16px;letter-spacing:-.03em;}
+.nav-item{
+  display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:var(--r-sm);
+  color:var(--dim);font-weight:500;font-size:14.5px;transition:color .16s,background .16s;
+}
+.nav-item svg{width:19px;height:19px;stroke-width:1.7;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.035);}
+.nav-item.active{color:var(--text);background:var(--surface-2);font-weight:700;}
+.rail-foot{margin-top:auto;}
+
+.main{flex:1;min-width:0;padding-bottom:64px;}
+
+.topbar{
+  display:flex;align-items:center;gap:20px;padding:20px 40px;
+  position:sticky;top:0;z-index:20;background:rgba(8,9,10,.82);backdrop-filter:blur(18px);
+}
+.search{
+  flex:1;max-width:420px;display:flex;align-items:center;gap:10px;
+  background:var(--surface);border-radius:100px;padding:11px 16px;color:var(--faint);
+}
+.search svg{width:17px;height:17px;flex-shrink:0;}
+.search input{flex:1;background:none;border:none;outline:none;color:var(--text);font:inherit;}
+.search input::placeholder{color:var(--faint);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.icon-btn{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  color:var(--dim);transition:color .16s,background .16s;
+}
+.icon-btn:hover{color:var(--text);background:var(--surface);}
+.icon-btn svg{width:19px;height:19px;stroke-width:1.8;}
+.icon-btn.on{color:var(--up);}
+.avatar{
+  width:34px;height:34px;border-radius:50%;background:var(--surface-2);
+  display:grid;place-items:center;font-size:12px;font-weight:800;letter-spacing:.02em;
+}
+
+/* ---------- Inhaltsraster ---------- */
+.grid{
+  display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:40px;
+  padding:14px 40px 0;align-items:start;
+}
+.col{display:flex;flex-direction:column;gap:38px;min-width:0;}
+
+/* ---------- Kopfzahl ---------- */
+.hero-label{color:var(--dim);font-size:14px;font-weight:500;margin-bottom:6px;}
+.hero-value{
+  font-size:clamp(40px,4.6vw,58px);font-weight:900;letter-spacing:-.045em;line-height:1.02;
+}
+.hero-delta{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;font-weight:700;}
+.hero-delta .up{color:var(--up);}
+.range-pick{
+  display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-weight:500;
+  font-size:14px;padding:3px 8px;border-radius:8px;
+}
+.range-pick:hover{color:var(--text);background:var(--surface);}
+
+/* ---------- Chart ---------- */
+.chart-shell{position:relative;margin-top:22px;}
+.chart{display:block;width:100%;height:270px;overflow:visible;touch-action:pan-y;cursor:crosshair;}
+.chart-line{fill:none;stroke:var(--text);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;}
+.chart-area{fill:url(#fade);}
+.cross-line{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 4;opacity:0;}
+.cross-dot{fill:var(--text);opacity:0;}
+.chart-shell.live .cross-line,.chart-shell.live .cross-dot{opacity:1;}
+.readout{
+  position:absolute;top:-4px;left:0;pointer-events:none;opacity:0;transform:translateY(4px);
+  transition:opacity .14s ease,transform .14s ease;
+  background:var(--surface-2);border-radius:10px;padding:7px 11px;white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.chart-shell.live .readout{opacity:1;transform:translateY(0);}
+.readout b{font-size:14px;font-weight:800;}
+.readout i{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-top:1px;letter-spacing:.02em;}
+
+.ranges{display:flex;gap:2px;margin-top:6px;}
+.range{
+  flex:1;padding:9px 0;text-align:center;font-size:13px;font-weight:700;color:var(--faint);
+  border-radius:9px;position:relative;transition:color .16s;
+}
+.range:hover{color:var(--dim);}
+.range.active{color:var(--text);}
+.range.active::after{
+  content:'';position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:20px;height:2px;border-radius:2px;background:var(--text);
+}
+
+/* ---------- Aktionen ---------- */
+.cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px;}
+.cta{
+  padding:15px;border-radius:14px;text-align:center;font-weight:800;font-size:15px;
+  transition:transform .14s ease,opacity .16s,background .16s;
+}
+.cta:active{transform:scale(.985);}
+.cta-primary{background:var(--text);color:#08090a;}
+.cta-primary:hover{opacity:.88;}
+.cta-secondary{background:var(--surface);color:var(--text);}
+.cta-secondary:hover{background:var(--surface-2);}
+
+/* ---------- Listen ---------- */
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+.section-title{font-size:19px;font-weight:900;letter-spacing:-.03em;}
+.section-link{font-size:13px;font-weight:600;color:var(--dim);}
+.section-link:hover{color:var(--text);}
+
+.row{
+  display:flex;align-items:center;gap:14px;padding:13px 12px;margin:0 -12px;
+  border-radius:var(--r-md);transition:background .16s;
+}
+.row:hover{background:var(--surface);}
+.badge{
+  width:42px;height:42px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
+  font-size:13px;font-weight:900;letter-spacing:-.02em;color:#08090a;
+}
+.row-main{flex:1;min-width:0;}
+.row-title{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-sub{font-size:12.5px;color:var(--dim);margin-top:2px;letter-spacing:.005em;}
+.row-num{text-align:right;flex-shrink:0;}
+.row-val{font-weight:700;font-size:15px;}
+.row-delta{font-size:12.5px;font-weight:700;margin-top:2px;}
+.up{color:var(--up);}
+.down{color:var(--down);}
+.spark{width:62px;height:26px;flex-shrink:0;}
+.spark path{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+@media(max-width:1180px){.duo{grid-template-columns:1fr;gap:38px;}}
+
+/* ---------- Karten in der Seitenspalte ---------- */
+.card{background:var(--surface);border-radius:var(--r-lg);padding:20px;}
+.card + .card{margin-top:16px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.card-label{color:var(--dim);font-size:13.5px;font-weight:600;}
+.card-value{font-size:27px;font-weight:900;letter-spacing:-.035em;margin-top:2px;}
+.card-note{font-size:12.5px;color:var(--faint);margin-top:5px;}
+.chev{color:var(--faint);width:17px;height:17px;stroke-width:2;}
+
+.split{display:flex;gap:14px;margin-top:16px;padding-top:16px;border-top:1px solid var(--hair);}
+.split div{flex:1;}
+.split .k{font-size:12px;color:var(--dim);font-weight:600;}
+.split .v{font-size:16px;font-weight:800;margin-top:3px;}
+
+.goal-track{height:6px;border-radius:99px;background:rgba(255,255,255,.08);margin-top:14px;overflow:hidden;}
+.goal-fill{height:100%;border-radius:99px;background:var(--up);width:62%;}
+.goal-meta{display:flex;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--dim);}
+
+.side-title{font-size:17px;font-weight:900;letter-spacing:-.03em;margin:30px 0 4px;}
+
+.promo{
+  display:flex;align-items:center;gap:14px;background:var(--surface);
+  border-radius:var(--r-lg);padding:18px 20px;margin-top:16px;
+}
+.promo-ico{width:38px;height:38px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;}
+.promo-ico svg{width:19px;height:19px;stroke-width:1.8;color:var(--up);}
+.promo b{display:block;font-size:14.5px;font-weight:800;}
+.promo span{font-size:12.5px;color:var(--dim);}
+
+/* ---------- Mobile: Bottom-Nav, randlose Inhalte ---------- */
+.bottom-nav{display:none;}
+@media(max-width:940px){
+  .rail{display:none;}
+  .topbar{padding:14px 20px;gap:12px;}
+  .search{max-width:none;}
+  .grid{grid-template-columns:1fr;gap:34px;padding:8px 20px 0;}
+  .main{padding-bottom:calc(var(--nav-h) + 24px);}
+  .hero-value{font-size:clamp(38px,11vw,50px);}
+  .chart{height:210px;}
+  .card{border-radius:var(--r-md);}
+  .bottom-nav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;height:var(--nav-h);z-index:40;
+    background:rgba(8,9,10,.9);backdrop-filter:blur(20px);border-top:1px solid var(--hair);
+    padding:9px 6px calc(9px + env(safe-area-inset-bottom));
+  }
+  .bn{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+    color:var(--faint);font-size:10.5px;font-weight:700;letter-spacing:.01em;
+  }
+  .bn svg{width:21px;height:21px;stroke-width:1.8;}
+  .bn.active{color:var(--text);}
+}
+@media(max-width:420px){
+  .topbar .search{display:none;}
+}
+
+/* ---------- Privatmodus ---------- */
+.pv{display:inline-block;font-variant-numeric:tabular-nums;}
+.pv-ch{display:inline-block;}
+.pv-rot{transform:rotate(180deg);}
+.pv-flip{transform:scaleX(-1);}
+body.private .chart-line,body.private .chart-area,body.private .spark{filter:blur(7px);}
+body.private .chart{cursor:default;}
+
+/* ---------- Eingangs-Inszenierung ---------- */
+@keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+.stagger>*{animation:rise .62s cubic-bezier(.16,1,.3,1) backwards;}
+.stagger>*:nth-child(1){animation-delay:.02s;}
+.stagger>*:nth-child(2){animation-delay:.09s;}
+.stagger>*:nth-child(3){animation-delay:.16s;}
+.stagger>*:nth-child(4){animation-delay:.23s;}
+@media(prefers-reduced-motion:reduce){.stagger>*{animation:none;}*{transition:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ============ Seitenleiste (Desktop) ============ -->
+  <aside class="rail">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5c3.2 0 3.2-4 6.4-4s3.2 4 6.4 4 3.2-4 5.2-4"/><path d="M3 9.5c3.2 0 3.2-4 6.4-4s3.2 4 6.4 4 3.2-4 5.2-4"/></svg>
+      <span>Resell<span style="color:var(--up)">.</span>Tracker</span>
+    </div>
+    <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>Übersicht</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18M7 15h4"/></svg>Finanzen</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Auswertung</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>Versand</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Teilen</a>
+    <div class="rail-foot">
+      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Einstellungen</a>
+    </div>
+  </aside>
+
+  <!-- ============ Hauptbereich ============ -->
+  <div class="main">
+
+    <div class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input placeholder="Artikel oder Bestellnummer suchen …">
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" id="privacyBtn" aria-pressed="false" title="Werte verbergen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path class="pv-eye" d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7z"/>
+            <circle class="pv-iris" cx="12" cy="12" r="3.2"/>
+            <line class="pv-slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5" stroke-dasharray="26" stroke-dashoffset="26" style="transition:stroke-dashoffset .3s cubic-bezier(.4,0,.2,1)"/>
+          </svg>
+        </button>
+        <button class="icon-btn" title="Benachrichtigungen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </button>
+        <div class="avatar">JX</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- ===== linke Spalte ===== -->
+      <div class="col stagger">
+
+        <section>
+          <div class="hero-label">Gesamtprofit</div>
+          <div class="hero-value num" data-value="3.284,50 €">3.284,50 €</div>
+          <div class="hero-delta">
+            <span class="up num" data-value="+412,80 €">+412,80 €</span>
+            <span class="up num" data-value="(+14,4 %)">(+14,4 %)</span>
+            <button class="range-pick">Seit 1 Monat
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div class="chart-shell" id="chartShell">
+            <div class="readout" id="readout"><b class="num">–</b><i>–</i></div>
+            <svg class="chart" id="chart" viewBox="0 0 800 270" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity=".14"/>
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path class="chart-area" id="area"></path>
+              <path class="chart-line" id="line"></path>
+              <line class="cross-line" id="cross" y1="0" y2="270"></line>
+              <circle class="cross-dot" id="dot" r="4"></circle>
+            </svg>
+          </div>
+
+          <div class="ranges" id="ranges">
+            <button class="range" data-range="1W">1W</button>
+            <button class="range active" data-range="1M">1M</button>
+            <button class="range" data-range="3M">3M</button>
+            <button class="range" data-range="1J">1J</button>
+            <button class="range" data-range="MAX">MAX</button>
+          </div>
+
+          <div class="cta-row">
+            <button class="cta cta-primary">Artikel erfassen</button>
+            <button class="cta cta-secondary">Verkauf buchen</button>
+          </div>
+        </section>
+
+        <div class="duo">
+          <section>
+            <div class="section-head">
+              <div class="section-title">Im Lager</div>
+              <a class="section-link">Alle 9 anzeigen</a>
+            </div>
+            <div id="stockList"></div>
+          </section>
+
+          <section>
+            <div class="section-head">
+              <div class="section-title">Letzte Bewegungen</div>
+              <a class="section-link">Alle anzeigen</a>
+            </div>
+            <div id="txList"></div>
+          </section>
+        </div>
+
+      </div>
+
+      <!-- ===== rechte Spalte ===== -->
+      <aside class="col stagger" style="gap:0">
+        <div>
+          <div class="card">
+            <div class="card-head">
+              <div class="card-label">Kapital</div>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="card-value num" data-value="6.128,40 €">6.128,40 €</div>
+            <div class="card-note">Bargeld plus Lagerwert</div>
+            <div class="split">
+              <div><div class="k">Bargeld</div><div class="v num" data-value="2.246,10 €">2.246,10 €</div></div>
+              <div><div class="k">Lagerwert</div><div class="v num" data-value="3.882,30 €">3.882,30 €</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-label">Ziel · Neues Setup</div>
+              <span class="card-label num" data-value="62 %">62 %</span>
+            </div>
+            <div class="card-value num" data-value="1.240,00 €">1.240,00 €</div>
+            <div class="goal-track"><div class="goal-fill"></div></div>
+            <div class="goal-meta"><span>Noch <span class="num" data-value="760,00 €">760,00 €</span></span><span class="num" data-value="2.000,00 €">2.000,00 €</span></div>
+          </div>
+
+          <div class="side-title">Plattformen</div>
+          <div id="platformList"></div>
+
+          <div class="promo">
+            <div class="promo-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg>
+            </div>
+            <div>
+              <b>Lots aufteilen</b>
+              <span>Konvolut kaufen, Teile einzeln verkaufen.</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ Bottom-Nav (Mobile) ============ -->
+<nav class="bottom-nav">
+  <a class="bn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>Übersicht</a>
+  <a class="bn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18M7 15h4"/></svg>Finanzen</a>
+  <a class="bn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Erfassen</a>
+  <a class="bn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Auswertung</a>
+  <a class="bn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>Profil</a>
+</nav>
+
+<script>
+/* ===========================================================================
+   Entwurfs-Logik: Chart mit Scrubbing, Zeitraumwechsel, Privatmodus.
+   Daten sind erfunden, aber in sich stimmig (Kapital = Bargeld + Lagerwert).
+   ========================================================================= */
+const euro = n => n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+
+/* ---- Verlaufskurven: fester Seed, damit der Entwurf reproduzierbar ist --- */
+function seeded(seed){
+  let a = seed >>> 0;
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const RANGES = {
+  '1W':{points:7,  drift:  58, vol:.30, label:'Tag'},
+  '1M':{points:30, drift: 413, vol:.26, label:'Tag'},
+  '3M':{points:45, drift: 940, vol:.34, label:'Woche'},
+  '1J':{points:52, drift:2480, vol:.42, label:'Woche'},
+  'MAX':{points:64,drift:3285, vol:.55, label:'Monat'}
+};
+const TOTAL = 3284.50;
+
+function series(key){
+  const cfg = RANGES[key], rand = seeded(1409 + cfg.points);
+  const start = TOTAL - cfg.drift;
+  const out = [];
+  for(let i=0;i<cfg.points;i++){
+    const t = i/(cfg.points-1);
+    // Grundtrend plus etwas Rauschen — Ausschlaege bleiben klein gegen den Trend
+    const noise = (rand()-.46) * cfg.drift * cfg.vol * (0.35 + t*0.65);
+    out.push(Math.max(0, start + cfg.drift*Math.pow(t,1.08) + noise));
+  }
+  out[out.length-1] = TOTAL;
+  return out;
+}
+
+const W = 800, H = 270, PAD = 14;
+let current = { key:'1M', data:[], min:0, max:0 };
+
+function draw(key){
+  const data = series(key);
+  const min = Math.min(...data), max = Math.max(...data), span = (max-min) || 1;
+  const x = i => (i/(data.length-1)) * W;
+  const y = v => PAD + (1 - (v-min)/span) * (H - PAD*2);
+
+  let d = '';
+  data.forEach((v,i)=>{ d += (i?'L':'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; });
+  document.getElementById('line').setAttribute('d', d);
+  document.getElementById('area').setAttribute('d', d + `L ${W} ${H} L 0 ${H} Z`);
+
+  current = { key, data, min, max, x, y };
+}
+
+/* ---- Press-and-hold / Hover: Wert an der Zeigerposition ablesen ---------- */
+const shell = document.getElementById('chartShell');
+const chart = document.getElementById('chart');
+const cross = document.getElementById('cross');
+const dot   = document.getElementById('dot');
+const readout = document.getElementById('readout');
+
+function inspect(clientX){
+  if(document.body.classList.contains('private')) return;
+  const box = chart.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (clientX - box.left) / box.width));
+  const idx = Math.round(ratio * (current.data.length - 1));
+  const value = current.data[idx];
+
+  const px = current.x(idx), py = current.y(value);
+  cross.setAttribute('x1', px); cross.setAttribute('x2', px);
+  dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+
+  const unit = RANGES[current.key].label;
+  const back = current.data.length - 1 - idx;
+  readout.querySelector('b').textContent = euro(value);
+  readout.querySelector('i').textContent = back === 0 ? 'heute' : `vor ${back} ${unit}${back>1?(unit==='Tag'?'en':unit==='Woche'?'n':'en'):''}`;
+  readout.style.left = Math.min(box.width - 150, Math.max(0, px/W*box.width - 60)) + 'px';
+  shell.classList.add('live');
+}
+const stop = () => shell.classList.remove('live');
+
+chart.addEventListener('mousemove', e => inspect(e.clientX));
+chart.addEventListener('mouseleave', stop);
+chart.addEventListener('touchstart', e => inspect(e.touches[0].clientX), {passive:true});
+chart.addEventListener('touchmove',  e => inspect(e.touches[0].clientX), {passive:true});
+chart.addEventListener('touchend', stop);
+
+document.getElementById('ranges').addEventListener('click', e => {
+  const btn = e.target.closest('.range'); if(!btn) return;
+  document.querySelectorAll('.range').forEach(b => b.classList.toggle('active', b === btn));
+  draw(btn.dataset.range);
+  stop();
+});
+
+/* ---- Listen ------------------------------------------------------------- */
+const tone = s => { // ruhige, leicht unterschiedliche Kachelfarben statt Logos
+  let h = 0; for(const c of s) h = (h*31 + c.charCodeAt(0)) % 360;
+  return `hsl(${h} 42% 62%)`;
+};
+const initials = t => t.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+
+const sparkPath = (seed, up) => {
+  const rand = seeded(seed), pts = [];
+  for(let i=0;i<14;i++) pts.push(rand());
+  const d = pts.map((v,i)=>{
+    const x = (i/(pts.length-1))*60 + 1;
+    const trend = up ? (1 - i/pts.length) : (i/pts.length);
+    const yy = 4 + (v*.55 + trend*.45) * 18;
+    return (i?'L':'M') + x.toFixed(1) + ' ' + yy.toFixed(1);
+  }).join(' ');
+  return `<svg class="spark" viewBox="0 0 62 26"><path d="${d}" stroke="${up?'var(--up)':'var(--down)'}"/></svg>`;
+};
+
+const STOCK = [
+  ['Jordan 4 Military Black 43','eBay · seit 34 Tagen', 240, 320, true],
+  ['iPad Air 4 64GB','Kleinanzeigen · seit 21 Tagen', 255, 289, true],
+  ['Sneaker-Konvolut 8 Paar','Lot · 4 von 8 verkauft', 320, 415, true],
+  ['Nike Air Max 1 Patta 42','Kleinanzeigen · seit 12 Tagen', 165, 158, false],
+  ['Supreme Box Logo Tee M','eBay · seit 8 Tagen', 110, 139, true]
+];
+document.getElementById('stockList').innerHTML = STOCK.map(([title,sub,buy,est,up],i)=>`
+  <div class="row">
+    <div class="badge" style="background:${tone(title)}">${initials(title)}</div>
+    <div class="row-main">
+      <div class="row-title">${title}</div>
+      <div class="row-sub">${sub}</div>
+    </div>
+    ${sparkPath(97+i*13, up)}
+    <div class="row-num">
+      <div class="row-val num" data-value="${euro(est)}">${euro(est)}</div>
+      <div class="row-delta num ${up?'up':'down'}" data-value="${up?'+':'−'}${euro(Math.abs(est-buy)).replace(' €','')} €">${up?'+':'−'}${euro(Math.abs(est-buy))}</div>
+    </div>
+  </div>`).join('');
+
+const TX = [
+  ['Lego Star Wars 75192','Verkauft · gestern', +640, true],
+  ['Stone Island Sweater M','Verkauft · vor 3 Tagen', +210, true],
+  ['Bose QC 45 schwarz','Gekauft · vor 4 Tagen', -130, false],
+  ['DHL Paketmarken','Ausgabe · vor 6 Tagen', -42.5, false],
+  ['Nike Air Force 1 42','Teil-Verkauf · vor 7 Tagen', +75, true]
+];
+document.getElementById('txList').innerHTML = TX.map(([title,sub,amount,up])=>`
+  <div class="row">
+    <div class="badge" style="background:${tone(title)}">${initials(title)}</div>
+    <div class="row-main">
+      <div class="row-title">${title}</div>
+      <div class="row-sub">${sub}</div>
+    </div>
+    <div class="row-num">
+      <div class="row-val num ${up?'up':''}" data-value="${amount>0?'+':'−'}${euro(Math.abs(amount))}">${amount>0?'+':'−'}${euro(Math.abs(amount))}</div>
+    </div>
+  </div>`).join('');
+
+const PLATFORMS = [
+  ['eBay', 'Ø 62 € Profit · 14 Verkäufe', 1842.20, 56],
+  ['Kleinanzeigen', 'Ø 48 € Profit · 9 Verkäufe', 1104.30, 34],
+  ['Direkt / privat', 'Ø 41 € Profit · 3 Verkäufe', 338.00, 10]
+];
+document.getElementById('platformList').innerHTML = PLATFORMS.map(([name,sub,sum,share])=>`
+  <div class="row">
+    <div class="badge" style="background:${tone(name)}">${initials(name)}</div>
+    <div class="row-main">
+      <div class="row-title">${name}</div>
+      <div class="row-sub">${sub}</div>
+    </div>
+    <div class="row-num">
+      <div class="row-val num" data-value="${euro(sum)}">${euro(sum)}</div>
+      <div class="row-delta num" style="color:var(--faint)" data-value="${share} %">${share} %</div>
+    </div>
+  </div>`).join('');
+
+/* ---- Privatmodus: Werte zerfallen zeichenweise --------------------------- */
+const POOL = '0123456789AEFGJLNPRSXZ'.split('');
+const TRANS = ['','','','pv-rot','pv-flip','pv-rot'];
+const btn = document.getElementById('privacyBtn');
+let privateOn = false;
+
+function maskFor(text, seed){
+  const rand = seeded(seed);
+  return [...text].map(c => c === ' ' ? {c:' ',t:''} : {
+    c: POOL[Math.floor(rand()*POOL.length)],
+    t: TRANS[Math.floor(rand()*TRANS.length)]
+  });
+}
+
+function scramble(el, toMask){
+  const real = el.dataset.value;
+  const mask = maskFor(real, [...real].reduce((h,c)=>(h*33+c.charCodeAt(0))>>>0, 7) + el.dataset.seed*17);
+  if(!el.dataset.wrapped){
+    el.innerHTML = [...real].map(c=>`<span class="pv-ch">${c}</span>`).join('');
+    el.dataset.wrapped = '1';
+  }
+  const chars = el.children;
+  [...chars].forEach((ch, i) => {
+    const t0 = performance.now() + i*24 + Math.random()*100;
+    const t1 = t0 + 200 + Math.random()*300;
+    const target = toMask ? mask[i] : {c: real[i], t:''};
+    (function step(now){
+      if(now >= t1){ ch.textContent = target.c; ch.className = 'pv-ch' + (target.t?' '+target.t:''); return; }
+      if(now >= t0){
+        ch.textContent = POOL[Math.floor(Math.random()*POOL.length)];
+        ch.className = 'pv-ch ' + TRANS[Math.floor(Math.random()*TRANS.length)];
+      }
+      requestAnimationFrame(step);
+    })(performance.now());
+  });
+}
+
+btn.addEventListener('click', () => {
+  privateOn = !privateOn;
+  document.body.classList.toggle('private', privateOn);
+  btn.classList.toggle('on', privateOn);
+  btn.setAttribute('aria-pressed', String(privateOn));
+  btn.querySelector('.pv-slash').style.strokeDashoffset = privateOn ? '0' : '26';
+  btn.querySelector('.pv-iris').style.transform = privateOn ? 'scale(.3)' : '';
+  btn.querySelector('.pv-iris').style.transformOrigin = '12px 12px';
+  btn.querySelector('.pv-iris').style.transition = 'transform .3s cubic-bezier(.4,0,.2,1)';
+  document.querySelectorAll('[data-value]').forEach(el => scramble(el, privateOn));
+  if(privateOn) stop();
+});
+
+/* ---- Start -------------------------------------------------------------- */
+document.querySelectorAll('[data-value]').forEach((el,i)=>{ el.dataset.seed = i+1; });
+draw('1M');
+</script>
+</body>
+</html>
