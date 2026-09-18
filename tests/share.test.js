@@ -19,6 +19,9 @@ beforeEach(() => {
   app = makeApp(db);
   owner = insertUser(db, { discord_id: 'owner_discord', username: 'owner' });
   other = insertUser(db, { discord_id: 'other_discord', username: 'other' });
+  // Neue Nutzer starten privat; die Sharing-Tests hier pruefen den offenen Fall,
+  // die Privat-Modus-Tests weiter unten schalten ihn per setPrivate wieder an.
+  db.prepare('UPDATE users SET private_mode = 0').run();
 });
 
 async function login(agent, userId) {
@@ -176,4 +179,81 @@ test('GET /api/shared/:ownerId/items returns 403 for non-members', async () => {
   await login(agent, other.id);
   const res = await agent.get(`/api/shared/${owner.id}/items`);
   expect(res.status).toBe(403);
+});
+
+// ---- Privat-Modus -------------------------------------------------------
+// Ist er aktiv, darf kein Link herausgegeben, kein Beitritt erfolgen und auch
+// bereits beigetretene Mitglieder duerfen die Daten nicht mehr sehen.
+
+function setPrivate(db, userId, on) {
+  db.prepare('UPDATE users SET private_mode = ? WHERE id = ?').run(on ? 1 : 0, userId);
+}
+
+test('neue Nutzer starten im Privat-Modus', () => {
+  const fresh = insertUser(db, { discord_id: 'fresh_discord', username: 'fresh' });
+  const row = db.prepare('SELECT private_mode FROM users WHERE id = ?').get(fresh.id);
+  expect(row.private_mode).toBe(1);
+});
+
+test('Privat-Modus: GET /api/share/invite gibt keinen Link heraus', async () => {
+  const agent = request.agent(app);
+  await login(agent, owner.id);
+  setPrivate(db, owner.id, true);
+  const res = await agent.get('/api/share/invite');
+  expect(res.status).toBe(403);
+  expect(res.body.error).toMatch(/[Pp]rivat/);
+});
+
+test('Privat-Modus: Token-Rotation ist gesperrt', async () => {
+  const agent = request.agent(app);
+  await login(agent, owner.id);
+  setPrivate(db, owner.id, true);
+  expect((await agent.post('/api/share/invite')).status).toBe(403);
+});
+
+test('Privat-Modus: Beitritt ueber gueltigen Link wird abgewiesen', async () => {
+  const ownerAgent = request.agent(app);
+  await login(ownerAgent, owner.id);
+  const { token } = (await ownerAgent.get('/api/share/invite')).body;
+
+  setPrivate(db, owner.id, true);
+
+  const otherAgent = request.agent(app);
+  await login(otherAgent, other.id);
+  const res = await otherAgent.get(`/api/share/join/${token}`);
+  expect(res.status).toBe(403);
+  expect(db.prepare('SELECT COUNT(*) c FROM view_members').get().c).toBe(0);
+});
+
+test('Privat-Modus sperrt auch bereits beigetretene Mitglieder aus', async () => {
+  const ownerAgent = request.agent(app);
+  await login(ownerAgent, owner.id);
+  const { token } = (await ownerAgent.get('/api/share/invite')).body;
+
+  const otherAgent = request.agent(app);
+  await login(otherAgent, other.id);
+  await otherAgent.get(`/api/share/join/${token}`);
+  expect((await otherAgent.get(`/api/shared/${owner.id}/items`)).status).toBe(200);
+
+  setPrivate(db, owner.id, true);
+  expect((await otherAgent.get(`/api/shared/${owner.id}/items`)).status).toBe(403);
+
+  // Mitgliedschaft bleibt bestehen und lebt nach dem Abschalten wieder auf
+  expect(db.prepare('SELECT COUNT(*) c FROM view_members').get().c).toBe(1);
+  setPrivate(db, owner.id, false);
+  expect((await otherAgent.get(`/api/shared/${owner.id}/items`)).status).toBe(200);
+});
+
+test('Privat-Modus des Besitzers sperrt ihn nicht aus seinen eigenen Daten aus', async () => {
+  const agent = request.agent(app);
+  await login(agent, owner.id);
+  setPrivate(db, owner.id, true);
+  expect((await agent.get(`/api/shared/${owner.id}/items`)).status).toBe(200);
+});
+
+test('Mitgliederliste bleibt im Privat-Modus sichtbar (zum Verwalten)', async () => {
+  const agent = request.agent(app);
+  await login(agent, owner.id);
+  setPrivate(db, owner.id, true);
+  expect((await agent.get('/api/share/members')).status).toBe(200);
 });

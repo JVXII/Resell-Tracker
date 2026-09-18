@@ -112,6 +112,14 @@
   .sr-title{font-size:14px;font-weight:700;}
   .sr-sub{font-size:12px;color:var(--dim);font-weight:500;margin-top:2px;}
   .sr-chev{margin-left:auto;color:var(--faint);font-size:20px;line-height:1;}
+  .settings-row.static{cursor:default;}
+  .switch{margin-left:auto;flex-shrink:0;width:46px;height:27px;border-radius:999px;background:var(--hairline);border:1px solid var(--hairline);position:relative;cursor:pointer;transition:background .18s ease;}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .18s ease;}
+  .switch.on{background:var(--green);border-color:var(--green);}
+  .switch.on::after{transform:translateX(19px);}
+  .share-locked{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--hairline);border-radius:14px;background:var(--surface);}
+  .share-locked p{font-size:13px;color:var(--dim);line-height:1.55;font-weight:500;}
+  .share-locked strong{color:var(--text);font-weight:700;}
   .goal-card{position:relative;}
   .goal-card.clickable{cursor:pointer;}
   .goal-card.clickable:hover{border-color:var(--hairline-strong);}
@@ -596,12 +604,19 @@
     <div id="shared-banner" style="display:none" class="shared-banner"></div>
     <div id="share-panel" style="display:none" class="share-panel-card">
       <h3>Ansicht teilen</h3>
-      <div class="invite-row">
-        <input id="invite-link" class="invite-input" readonly>
-        <button class="btn btn-primary" onclick="copyInviteLink()">Kopieren</button>
-        <button class="btn btn-secondary" onclick="rotateToken()">Neu generieren</button>
+      <div id="share-locked" class="share-locked" style="display:none">
+        <p><strong>Privat-Modus ist aktiv.</strong> Es wird kein Einladungslink herausgegeben und
+        bereits eingeladene Personen sehen deine Daten nicht. Zum Teilen den Modus in den
+        Einstellungen deaktivieren.</p>
       </div>
-      <div id="members-list"></div>
+      <div id="share-open">
+        <div class="invite-row">
+          <input id="invite-link" class="invite-input" readonly>
+          <button class="btn btn-primary" onclick="copyInviteLink()">Kopieren</button>
+          <button class="btn btn-secondary" onclick="rotateToken()">Neu generieren</button>
+        </div>
+        <div id="members-list"></div>
+      </div>
     </div>
 
     <!-- ===== Overview / Dashboard ===== -->
@@ -996,6 +1011,10 @@
         <div><div class="sr-title">Bargeld / Konto</div><div class="sr-sub" id="srCashSub">Startguthaben korrigieren</div></div>
         <span class="sr-chev">›</span>
       </div>
+      <div class="settings-row static">
+        <div><div class="sr-title">Privat-Modus</div><div class="sr-sub" id="srPrivateSub">Niemand kann deine Ansicht sehen</div></div>
+        <div id="privateSwitch" class="switch" role="switch" tabindex="0" aria-label="Privat-Modus" onclick="togglePrivateMode()"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1139,6 +1158,7 @@ const platformEl=document.getElementById('platform');
 const sellPlatformEl=document.getElementById('sell_platform');
 const titleEl=document.getElementById('title');
 const orderEl=document.getElementById('order');
+let privateMode=true;
 const dateEl=document.getElementById('date');
 const buyPriceEl=document.getElementById('buyPrice');
 const statusEl=document.getElementById('status');
@@ -1191,7 +1211,7 @@ function renderUserBadge(){
 
 async function logout(){ await fetch('/auth/logout',{method:'POST'}); window.location.href='/login.html'; }
 
-async function loadBalance(){ try{ const r=await fetch('/api/profile'); if(r.ok){ const d=await r.json(); accountBalance=d.balance||0; userGoal=d.goal||null; } }catch(_){} renderGoal(); }
+async function loadBalance(){ try{ const r=await fetch('/api/profile'); if(r.ok){ const d=await r.json(); accountBalance=d.balance||0; userGoal=d.goal||null; privateMode=d.privateMode!==false; } }catch(_){} renderGoal(); renderPrivateMode(); }
 
 async function loadItems(){ const res=await fetch('/api/items'); items=await res.json(); renderItems(); renderDashboard(); }
 
@@ -1807,7 +1827,32 @@ async function exportBackup(){ window.location.href='/api/items/export'; }
 async function importBackup(file){ if(!file) return; const text=await file.text(); let data; try{ data=JSON.parse(text); }catch{ toast('Ungültige JSON-Datei'); return; } const res=await fetch('/api/items/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); const result=await res.json(); await loadItems(); toast(`Import: ${result.imported} importiert, ${result.skipped} übersprungen`); }
 
 async function toggleShare(){ const panel=document.getElementById('share-panel'); if(panel.style.display==='none'){ panel.style.display='block'; showTab('overview'); window.scrollTo({top:0,behavior:'smooth'}); await loadSharePanel(); } else { panel.style.display='none'; } }
-async function loadSharePanel(){ const [inviteRes,membersRes]=await Promise.all([fetch('/api/share/invite'),fetch('/api/share/members')]); const {token}=await inviteRes.json(); const members=await membersRes.json(); document.getElementById('invite-link').value=`${location.origin}/api/share/join/${token}`; renderMembers(members); }
+async function loadSharePanel(){
+  renderPrivateMode();
+  if(privateMode) return;
+  const [inviteRes,membersRes]=await Promise.all([fetch('/api/share/invite'),fetch('/api/share/members')]);
+  if(!inviteRes.ok){ privateMode=true; renderPrivateMode(); return; }
+  const {token}=await inviteRes.json(); const members=await membersRes.json();
+  document.getElementById('invite-link').value=`${location.origin}/api/share/join/${token}`;
+  renderMembers(members);
+}
+function renderPrivateMode(){
+  const sw=document.getElementById('privateSwitch'); if(sw) sw.classList.toggle('on',privateMode);
+  const sw2=document.getElementById('privateSwitch'); if(sw2) sw2.setAttribute('aria-checked',String(privateMode));
+  const sub=document.getElementById('srPrivateSub');
+  if(sub) sub.textContent=privateMode?'An — niemand kann deine Ansicht sehen':'Aus — Teilen per Einladungslink möglich';
+  const locked=document.getElementById('share-locked'), open=document.getElementById('share-open');
+  if(locked&&open){ locked.style.display=privateMode?'flex':'none'; open.style.display=privateMode?'none':'block'; }
+}
+async function togglePrivateMode(){
+  const next=!privateMode;
+  const r=await fetch('/api/profile/private',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({privateMode:next})});
+  if(!r.ok){ toast('Konnte nicht gespeichert werden.'); return; }
+  privateMode=next; renderPrivateMode();
+  toast(next?'Privat-Modus an — Teilen gesperrt':'Privat-Modus aus — Teilen möglich');
+  const panel=document.getElementById('share-panel');
+  if(panel&&panel.style.display!=='none') await loadSharePanel();
+}
 async function rotateToken(){ const res=await fetch('/api/share/invite',{method:'POST'}); const {token}=await res.json(); document.getElementById('invite-link').value=`${location.origin}/api/share/join/${token}`; }
 function copyInviteLink(){ navigator.clipboard.writeText(document.getElementById('invite-link').value); toast('Link kopiert'); }
 function renderMembers(members){ const el=document.getElementById('members-list'); if(!members.length){ el.innerHTML='<p style="color:#5b5b60;font-size:13px;font-weight:500">Noch keine Mitglieder</p>'; return; } el.innerHTML=members.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,0.07)"><span style="flex:1;font-size:14px;color:#f6f6f7;font-weight:600">${m.username}</span><select onchange="setRole(${m.id}, this.value)" style="background:#000;border:1px solid rgba(255,255,255,0.07);color:#f6f6f7;padding:7px 10px;border-radius:10px;font-size:13px;font-family:inherit"><option value="read" ${m.role==='read'?'selected':''}>Lesen</option><option value="edit" ${m.role==='edit'?'selected':''}>Bearbeiten</option></select><button onclick="removeMember(${m.id})" style="background:rgba(255,69,58,0.14);border:1px solid rgba(255,69,58,0.3);color:#ff453a;padding:7px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Entfernen</button></div>`).join(''); }
@@ -1899,7 +1944,7 @@ async function deleteGoal(){
 }
 
 /* ===== Einstellungen ===== */
-function openSettingsModal(){ renderGoal(); const o=document.getElementById('settings-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
+function openSettingsModal(){ renderGoal(); renderPrivateMode(); const o=document.getElementById('settings-modal'); o.classList.remove('closing'); o.classList.add('open'); document.body.style.overflow='hidden'; }
 function closeSettingsModal(){ const o=document.getElementById('settings-modal'); if(!o.classList.contains('open')) return; o.classList.add('closing'); o.classList.remove('open'); document.body.style.overflow=''; setTimeout(()=>o.classList.remove('closing'),180); }
 function onSettingsOverlay(e){ if(e.target===document.getElementById('settings-modal')) closeSettingsModal(); }
 

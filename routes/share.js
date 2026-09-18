@@ -1,12 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, isPrivate } = require('../middleware/auth');
+
+const PRIVATE_MSG = 'Privat-Modus ist aktiv — Teilen ist deaktiviert';
+
+// Blockt jede Route, die Zugriff nach aussen eroeffnen wuerde.
+function blockWhenPrivate(req, res, next) {
+  if (isPrivate(req.db, req.userId)) return res.status(403).json({ error: PRIVATE_MSG });
+  next();
+}
 
 router.use(requireAuth);
 
 // GET /api/share/invite — return current token (create if not exists), never rotates
-router.get('/invite', (req, res) => {
+router.get('/invite', blockWhenPrivate, (req, res) => {
   const db = req.db;
   let view = db.prepare('SELECT * FROM shared_views WHERE owner_id = ?').get(req.userId);
   if (!view) {
@@ -17,7 +25,7 @@ router.get('/invite', (req, res) => {
 });
 
 // POST /api/share/invite — rotate token (old link becomes invalid, members remain)
-router.post('/invite', (req, res) => {
+router.post('/invite', blockWhenPrivate, (req, res) => {
   const db = req.db;
   const newToken = uuidv4();
   const existing = db.prepare('SELECT * FROM shared_views WHERE owner_id = ?').get(req.userId);
@@ -34,6 +42,11 @@ router.get('/join/:token', (req, res) => {
   const db = req.db;
   const view = db.prepare('SELECT * FROM shared_views WHERE invite_token = ?').get(req.params.token);
   if (!view) return res.status(404).json({ error: 'Invalid or expired invite link' });
+
+  // Privat-Modus des Besitzers macht jeden noch kursierenden Link wirkungslos.
+  if (view.owner_id !== req.userId && isPrivate(db, view.owner_id)) {
+    return res.status(403).json({ error: PRIVATE_MSG });
+  }
 
   if (view.owner_id === req.userId) {
     return res.json({ message: 'You are the owner of this view' });

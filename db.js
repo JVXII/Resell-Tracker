@@ -74,6 +74,8 @@ function applyMigrations(db) {
   try { db.exec(`ALTER TABLE users ADD COLUMN goal_target REAL;`); } catch (_) {}
   try { db.exec(`ALTER TABLE users ADD COLUMN goal_current REAL NOT NULL DEFAULT 0;`); } catch (_) {}
   try { db.exec(`ALTER TABLE users ADD COLUMN goal_unit TEXT NOT NULL DEFAULT 'eur';`); } catch (_) {}
+  // Privat-Modus: standardmaessig AN, damit Teilen bewusst freigeschaltet werden muss.
+  try { db.exec(`ALTER TABLE users ADD COLUMN private_mode INTEGER NOT NULL DEFAULT 1;`); } catch (_) {}
 }
 
 let db;

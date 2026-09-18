@@ -10,6 +10,15 @@ function requireAuth(req, res, next) {
  * Sets req.viewRole = 'owner' | 'edit' | 'read' on success.
  * Must be chained after requireAuth.
  */
+/**
+ * isPrivate sagt, ob der Nutzer den Privat-Modus aktiv hat. Fehlt der Nutzer,
+ * gilt privat — eine unklare Lage darf sich nicht in offenen Zugang verwandeln.
+ */
+function isPrivate(db, userId) {
+  const row = db.prepare('SELECT private_mode FROM users WHERE id = ?').get(userId);
+  return !row || row.private_mode === 1;
+}
+
 function requireViewMember(req, res, next) {
   const db = req.db;
   const ownerId = parseInt(req.params.ownerId, 10);
@@ -18,6 +27,9 @@ function requireViewMember(req, res, next) {
     req.viewRole = 'owner';
     return next();
   }
+
+  // Privat-Modus des Besitzers sperrt auch bestehende Mitglieder aus.
+  if (isPrivate(db, ownerId)) return res.status(403).json({ error: 'Access denied' });
 
   const member = db.prepare(`
     SELECT vm.role FROM view_members vm
@@ -46,4 +58,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireViewMember, requireAdmin };
+module.exports = { requireAuth, requireViewMember, requireAdmin, isPrivate };

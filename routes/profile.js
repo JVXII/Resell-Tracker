@@ -19,9 +19,9 @@ function goalOf(u) {
 // GET /api/profile — current user's account balance (Firmenkonto) + personal goal
 router.get('/', (req, res) => {
   const u = req.db
-    .prepare('SELECT balance, goal_title, goal_target, goal_current, goal_unit FROM users WHERE id = ?')
+    .prepare('SELECT balance, goal_title, goal_target, goal_current, goal_unit, private_mode FROM users WHERE id = ?')
     .get(req.userId);
-  res.json({ balance: u ? u.balance : 0, goal: goalOf(u) });
+  res.json({ balance: u ? u.balance : 0, goal: goalOf(u), privateMode: !u || u.private_mode === 1 });
 });
 
 // PUT /api/profile/balance — update account balance
@@ -32,6 +32,16 @@ router.put('/balance', (req, res) => {
   }
   req.db.prepare('UPDATE users SET balance = ? WHERE id = ?').run(balance, req.userId);
   res.json({ balance });
+});
+
+// PUT /api/profile/private — Privat-Modus schalten
+router.put('/private', (req, res) => {
+  const on = req.body.privateMode;
+  if (typeof on !== 'boolean') {
+    return res.status(400).json({ error: 'privateMode must be a boolean' });
+  }
+  req.db.prepare('UPDATE users SET private_mode = ? WHERE id = ?').run(on ? 1 : 0, req.userId);
+  res.json({ privateMode: on });
 });
 
 // PUT /api/profile/goal — set the user's personal goal
