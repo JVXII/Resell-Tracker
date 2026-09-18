@@ -470,7 +470,6 @@
     .card{padding:18px;border-radius:var(--r-lg);}
 
     .btn-add{display:none;}
-    .action-bar .btn-secondary{display:none;}
     .search-input{display:none;}
     .search-input.show{display:block;width:100%;margin-left:0;order:-1;}
     .action-bar{gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
@@ -883,9 +882,6 @@
         </div>
 
         <div class="action-bar">
-          <button class="btn btn-secondary" onclick="exportBackup()">⬇ Export</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('backupFile').click()">⬆ Import</button>
-          <input type="file" id="backupFile" accept=".json" style="display:none" onchange="importBackup(event.target.files[0])">
           <div class="filter-pills">
             <button class="pill active" onclick="setFilter('all', this)">Alle</button>
             <button class="pill" onclick="setFilter('Lager', this)">Lager</button>
@@ -1160,6 +1156,17 @@
         <div><div class="sr-title">Privat-Modus</div><div class="sr-sub" id="srPrivateSub">Niemand kann deine Ansicht sehen</div></div>
         <div id="privateSwitch" class="switch" role="switch" tabindex="0" aria-label="Privat-Modus" onclick="togglePrivateMode()"></div>
       </div>
+      <div class="settings-section">Daten</div>
+      <div class="settings-row" onclick="exportBackup()">
+        <div><div class="sr-title">Daten exportieren</div><div class="sr-sub">Alle Artikel als JSON-Sicherung herunterladen</div></div>
+        <span class="sr-chev">›</span>
+      </div>
+      <div class="settings-row" onclick="document.getElementById('backupFile').click()">
+        <div><div class="sr-title">Daten importieren</div><div class="sr-sub">Sicherung einlesen — vorhandene Artikel bleiben erhalten</div></div>
+        <span class="sr-chev">›</span>
+      </div>
+      <input type="file" id="backupFile" accept=".json" style="display:none" onchange="closeSettingsModal();importBackup(event.target.files[0])">
+
       <div id="devTools" style="display:none">
         <div class="settings-section">Developer Tools</div>
         <div class="settings-row" onclick="startDemo()">
