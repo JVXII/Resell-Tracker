@@ -27,6 +27,10 @@ test('privacy.js wird vor dem Inline-Script geladen', () => {
   expect(srcPos('privacy.js')).toBeLessThan(inlineStart);
 });
 
+test('calc.js wird vor dem Inline-Script geladen', () => {
+  expect(srcPos('calc.js')).toBeLessThan(inlineStart);
+});
+
 test('init() schaltet den Demo-Modus vor dem ersten Datenabruf scharf', () => {
   const init = HTML.slice(HTML.indexOf('async function init(){'));
   const body = init.slice(0, init.indexOf('\n}'));

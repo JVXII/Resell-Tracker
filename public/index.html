@@ -14,6 +14,7 @@
 <!-- Muessen vor dem Inline-Script stehen: init() ruft Demo.install()/Privacy.init() auf -->
 <script src="/demo.js"></script>
 <script src="/privacy.js"></script>
+<script src="/calc.js"></script>
 <style>
   :root{
     --bg:#08090a;--surface:#101113;--surface-2:#17191c;--surface-hover:#1e2024;--icon-bg:#1e2024;
@@ -385,6 +386,9 @@
   .seg button:hover{color:var(--text);}
   .seg button.active{background:var(--surface-hover);color:var(--text);}
   .seg-status{margin-bottom:2px;}
+  .scope-bar{max-width:340px;margin:0 0 18px;}
+  .scope-bar button.active{background:var(--text);color:#000;}
+  .lot-progress{font-size:12.5px;color:var(--faint);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .seg-status button.active{background:var(--text);color:#000;}
   .seg-source{display:none!important;}
 
@@ -484,6 +488,7 @@
   .part-meta{font-size:12px;color:var(--dim);font-weight:500;margin-left:auto;white-space:nowrap;}
   .part-price{font-size:14px;font-weight:800;min-width:64px;text-align:right;}
   .part-price.pos{color:var(--green);}
+  .part-price.neg{color:var(--red);}
   input[type="date"].form-input::-webkit-datetime-edit{color:var(--faint);}
   input[type="date"].form-input.has-value::-webkit-datetime-edit{color:var(--text);}
   input[type="date"].form-input::-webkit-calendar-picker-indicator{filter:invert(0.6);}
@@ -799,6 +804,13 @@
       </div>
     </div>
 
+    <!-- Bereich: filtert Auswertungen, Bargeld und Kapital bleiben gemeinsam -->
+    <div class="seg scope-bar" id="scopeBar" role="group" aria-label="Bereich">
+      <button type="button" data-scope="all" onclick="setScope('all')">Alle</button>
+      <button type="button" data-scope="reselling" onclick="setScope('reselling')">Reselling</button>
+      <button type="button" data-scope="handel" onclick="setScope('handel')">Handel</button>
+    </div>
+
     <!-- ===== Overview / Dashboard ===== -->
     <div id="overview" class="tab-content active">
 
@@ -909,10 +921,10 @@
               <svg class="side-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
             </div>
             <div class="side-value" id="mKapital">0€</div>
-            <div class="side-note">Bargeld plus Lagerwert</div>
+            <div class="side-note" id="kapNote">Bargeld plus Lagerwert</div>
             <div class="side-split">
               <div><div class="k">Bargeld</div><div class="v" id="ovCash">0€</div></div>
-              <div><div class="k">Lagerwert</div><div class="v" id="ovStockValue">0€</div></div>
+              <div><div class="k" id="ovStockLabel">Lagerwert</div><div class="v" id="ovStockValue">0€</div></div>
             </div>
             <div class="side-note" id="mKapitalSub" style="display:none"></div>
           </div>
@@ -1063,7 +1075,7 @@
     <div id="finance" class="tab-content">
       <div class="fin-stats">
         <div class="stat-item"><div class="stat-label">Ausgaben gesamt</div><div class="stat-value" id="fExpTotal" style="color:var(--red)">0.00€</div></div>
-        <div class="stat-item"><div class="stat-label">Netto-Profit <span style="color:var(--faint);font-weight:500">(Profit − Ausgaben)</span></div><div class="stat-value" id="fNet">0.00€</div></div>
+        <div class="stat-item" id="fNetCard"><div class="stat-label">Netto-Profit <span style="color:var(--faint);font-weight:500">(Profit − Ausgaben)</span></div><div class="stat-value" id="fNet">0.00€</div></div>
         <div class="stat-item"><div class="stat-label">Ausgaben diesen Monat</div><div class="stat-value" id="fExpMonth" style="color:var(--red)">0.00€</div></div>
       </div>
 
@@ -1128,6 +1140,17 @@
         <option value="Gekauft">Gekauft</option><option value="Lager">Lager</option><option value="Verkauft">Verkauft</option>
       </select>
 
+      <div class="f-field" style="margin-top:12px">
+        <span class="field-label">Bereich</span>
+        <div class="seg" data-for="segment">
+          <button type="button" data-value="reselling">Reselling</button>
+          <button type="button" data-value="handel">Handel</button>
+        </div>
+        <select id="segment" class="form-input seg-source">
+          <option value="reselling">Reselling</option><option value="handel">Handel</option>
+        </select>
+      </div>
+
       <!-- Das Noetigste -->
       <div class="f-block">
         <input id="title" class="form-input f-title" placeholder="Was ist es? z.B. Nike Air Max 90" autocomplete="off">
@@ -1188,6 +1211,11 @@
           </select>
         </div>
 
+        <div class="f-field">
+          <label class="field-label" for="shippingCost">Versand, selbst bezahlt <span class="f-opt">optional</span></label>
+          <div class="f-money"><input id="shippingCost" type="number" step="0.01" min="0" class="form-input" placeholder="0,00" oninput="updateProfitHint()"><span>€</span></div>
+        </div>
+
         <div class="profit-hint" id="profitHint"></div>
       </div>
 
@@ -1209,9 +1237,20 @@
           <label class="opt-check"><input type="checkbox" id="isLotChk"><span class="opt-box"></span><span class="opt-txt">Als Lot erfassen<small>Konvolut kaufen und die Teile einzeln verkaufen</small></span></label>
 
           <div class="f-field" id="partPriceWrap" style="display:none">
-            <label class="field-label" for="partPrice">Standard-Verkaufspreis pro Teil</label>
-            <div class="f-money"><input id="partPrice" type="number" step="0.01" class="form-input" placeholder="0,00"><span>€</span></div>
-            <div class="f-hint">Wird bei jedem Teil-Verkauf vorgeschlagen.</div>
+            <label class="field-label" for="lotQty">Stückzahl</label>
+            <input id="lotQty" type="number" step="1" min="1" class="form-input" placeholder="z.B. 7" oninput="updateProfitHint()">
+            <div class="f-duo" style="margin-top:12px">
+              <div class="f-field">
+                <label class="field-label" for="partPrice">Verkaufspreis pro Stück</label>
+                <div class="f-money"><input id="partPrice" type="number" step="0.01" class="form-input" placeholder="0,00" oninput="updateProfitHint()"><span>€</span></div>
+              </div>
+              <div class="f-field">
+                <label class="field-label" for="partShipping">Versand pro Stück</label>
+                <div class="f-money"><input id="partShipping" type="number" step="0.01" min="0" class="form-input" placeholder="0,00" oninput="updateProfitHint()"><span>€</span></div>
+              </div>
+            </div>
+            <div class="f-hint">Wird bei jedem Verkauf vorgeschlagen und lässt sich dort ändern.</div>
+            <div class="profit-hint" id="lotPreview" style="margin-top:10px"></div>
           </div>
 
           <div class="f-field">
@@ -1251,11 +1290,13 @@
     <div class="modal-header"><span class="modal-title" id="part-title">Teil verkauft</span><button class="modal-close" onclick="closePartModal()">✕</button></div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr">
       <div style="grid-column:span 2"><div class="field-label">Bezeichnung</div><input id="partName" class="form-input" placeholder="z.B. Taste W"></div>
-      <div><div class="field-label">Verkaufspreis €</div><input id="partSell" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00"></div>
+      <div><div class="field-label">Verkaufspreis €</div><input id="partSell" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00" oninput="updatePartHint()"></div>
+      <div><div class="field-label">Versand €</div><input id="partShip" type="number" step="0.01" min="0" class="form-input" placeholder="0,00" oninput="updatePartHint()"></div>
       <div><div class="field-label">Datum</div><input id="partDate" type="date" class="form-input"></div>
-      <div style="grid-column:span 2"><div class="field-label">Verkaufsplattform (optional)</div>
+      <div><div class="field-label">Verkaufsplattform (optional)</div>
         <select id="partPlatform" class="form-input"><option value="">—</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select>
       </div>
+      <div class="profit-hint" id="partHint" style="grid-column:span 2"></div>
       <button class="btn btn-primary" onclick="savePart()" style="grid-column:span 2;justify-content:center;padding:13px">Speichern</button>
     </div>
     <div class="edit-extra" id="partEditExtra" style="display:none"><button class="btn btn-danger" onclick="deletePartFromModal()" style="padding:12px 18px;width:100%;justify-content:center">Löschen</button></div>
@@ -1438,15 +1479,38 @@ function itemLabel(item){
 }
 // Fallback-Buchstabe fürs Thumbnail: erst Titel, dann Nummer
 function itemInitial(item){ return ((item.title||item.order_nr||'?').trim().charAt(0).toUpperCase())||'?'; }
-// Effektiver Einkauf: vorbesessene Artikel kosten das Business 0€
-function effBuy(i){ return i.owned ? 0 : (i.buy_price||0); }
+const effBuy=Calc.effBuy;
+const profitOf=i=>Calc.saleProfit(i,items);
+const statusOf=i=>Calc.statusOf(i,items);
+/* Aktiver Bereich: filtert Auswertungen und Listen. */
+let scope=['reselling','handel'].includes(localStorage.getItem('resell.scope')) ? localStorage.getItem('resell.scope') : 'all';
+const SCOPE_NAMES={ reselling:'Reselling', handel:'Handel' };
+const inScope=i=>Calc.inSegment(i,items,scope);
+const salesInScope=()=>Calc.sales(items,scope);
+function renderScope(){
+  document.querySelectorAll('#scopeBar button').forEach(b=>b.classList.toggle('active', b.dataset.scope===scope));
+  const label=document.getElementById('ovStockLabel'); if(label) label.textContent=scope==='all'?'Lagerwert':'Lager '+SCOPE_NAMES[scope];
+  const note=document.getElementById('kapNote'); if(note) note.textContent=scope==='all'?'Bargeld plus Lagerwert':'Kapital und Bargeld gelten für beide Bereiche';
+  const net=document.getElementById('fNetCard'); if(net) net.style.display=scope==='all'?'':'none';
+}
+function setScope(next){
+  scope=next; localStorage.setItem('resell.scope',next); currentPage=1;
+  renderScope(); renderItems(); renderDashboard();
+  if(document.getElementById('charts').classList.contains('active')){ renderProfitChart(); renderChart(); renderPlatformChart(); }
+}
 // Datum, an dem der Gewinn realisiert wurde. Altbestand ohne Verkaufsdatum
 // fällt aufs Kaufdatum zurück (bisheriges Verhalten).
 function saleDate(i){ return i.sold_date || i.date; }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
-// Teile (Kinder) eines Lots + zusammengefasste Kennzahlen
-function lotParts(id){ return items.filter(i=>i.parent_id===id); }
-function lotStats(lot){ const parts=lotParts(lot.id); const sold=parts.filter(p=>p.status==='Verkauft'); const revenue=sold.reduce((s,p)=>s+(p.sell_price||0),0); const cost=effBuy(lot); return {parts,sold,soldCount:sold.length,revenue,cost,profit:revenue-cost}; }
+const lotStats=lot=>Calc.lotStats(lot,items);
+// Stand der ganzen Bestellung: Ergebnis und Weg bis in die Gewinnzone
+function lotOrderLine(s){
+  let line='Bestellung '+euroSigned(s.orderResult);
+  if(s.toBreakEven===0) return line+' · im Plus';
+  if(s.toBreakEven===null) return line;
+  if(s.toBreakEven>s.remaining) return line+' · mit dem Rest nicht erreichbar';
+  return line+` · noch ${s.toBreakEven} Stück bis zur Gewinnzone`;
+}
 let expandedLots={};
 function toggleLot(id){ expandedLots[id]=!expandedLots[id]; renderItems(); }
 
@@ -1482,7 +1546,7 @@ function syncFormSections(){
   const ship=document.getElementById('blockShipping');
   const sale=document.getElementById('blockSale');
   if(ship) ship.style.display = status==='Gekauft' ? '' : 'none';
-  if(sale) sale.style.display = status==='Verkauft' ? '' : 'none';
+  if(sale) sale.style.display = status==='Verkauft' && !isLotChkEl.checked ? '' : 'none';   // ein Lot wird über seine Teile verkauft
   if(partPriceWrapEl) partPriceWrapEl.style.display = isLotChkEl.checked ? '' : 'none';
   if(soldDateWrapEl) soldDateWrapEl.style.display='';
   if(trackingEl) trackingEl.style.display='';
@@ -1490,12 +1554,24 @@ function syncFormSections(){
   updateProfitHint();
 }
 
+function updateLotPreview(){
+  const el=document.getElementById('lotPreview'); if(!el) return;
+  const qty=parseInt(lotQtyEl.value,10), price=parseFloat(partPriceEl.value);
+  if(!isLotChkEl.checked || !(qty>=1) || !Number.isFinite(price)){ el.className='profit-hint'; el.innerHTML=''; return; }
+  const lot={ id:0, is_lot:1, owned:ownedChkEl.checked?1:0, buy_price:parseFloat(buyPriceEl.value)||0, lot_qty:qty, part_price:price, part_shipping:parseFloat(partShippingEl.value)||0 };
+  const s=Calc.lotStats(lot,[]), perUnit=s.unitNet-s.unitCost;
+  const breakEven=s.toBreakEven===null||s.toBreakEven>qty ? 'Gewinnzone nicht erreichbar' : `im Plus ab dem ${s.toBreakEven||1}. Stück`;
+  el.className='profit-hint on '+(perUnit>=0?'pos':'neg');
+  el.innerHTML=`Pro Stück <b>${euroSigned(perUnit)}</b> · ${breakEven} · alle verkauft <b>${euroSigned(perUnit*qty)}</b>`;
+}
+
 function updateProfitHint(){
+  updateLotPreview();
   const el=document.getElementById('profitHint'); if(!el) return;
   const sell=parseFloat(sellPriceEl.value);
   if(statusEl.value!=='Verkauft' || !Number.isFinite(sell)){ el.className='profit-hint'; el.innerHTML=''; return; }
   const buy=ownedChkEl.checked ? 0 : (parseFloat(buyPriceEl.value)||0);
-  const profit=sell-buy;
+  const profit=sell-(parseFloat(shippingCostEl.value)||0)-buy;
   el.className='profit-hint on '+(profit>=0?'pos':'neg');
   el.innerHTML=`Profit <b>${euroSigned(profit)}</b>` + (ownedChkEl.checked ? ' <span style="color:var(--faint);font-weight:600">— vorbesessen, Einkauf zählt nicht</span>' : '');
 }
@@ -1584,6 +1660,10 @@ const ownedChkEl=document.getElementById('ownedChk');
 const isLotChkEl=document.getElementById('isLotChk');
 const partPriceEl=document.getElementById('partPrice');
 const partPriceWrapEl=document.getElementById('partPriceWrap');
+const lotQtyEl=document.getElementById('lotQty');
+const partShippingEl=document.getElementById('partShipping');
+const shippingCostEl=document.getElementById('shippingCost');
+const segmentEl=document.getElementById('segment');
 isLotChkEl.addEventListener('change', ()=>{ syncFormSections(); });
 ownedChkEl.addEventListener('change', updateProfitHint);
 const imageUrlEl=document.getElementById('imageUrl');
@@ -1605,6 +1685,7 @@ const chartDefaults={ responsive:true, plugins:{legend:{display:false}}, scales:
 async function init(){
   // Muss vor dem ersten Datenabruf laufen: der Demo-Modus faengt /api und /auth ab.
   if(window.Demo) Demo.install();
+  renderScope();
   const res=await fetch('/auth/me');
   if(!res.ok || res.status===401){ window.location.href='/login.html'; return; }
   currentUser=await res.json();
@@ -1741,13 +1822,17 @@ if(imgDrop){
 }
 
 async function saveItem(){
+  const isLot=isLotChkEl.checked, lotQty=parseInt(lotQtyEl.value,10), sellValue=parseFloat(sellPriceEl.value);
+  if(isLot && !(lotQty>=1 && String(lotQty)===lotQtyEl.value.trim())){ toggleMoreFields(true); toast('Bitte eine Stückzahl für das Lot eingeben'); lotQtyEl.focus(); return; }
   const imageData=pickedImage || imageUrlEl.value.trim() || (editId ? (items.find(i=>i.id===editId)?.image||null) : null);
   const data={ platform:platformEl.value, title:titleEl.value.trim()||null, sell_platform:sellPlatformEl.value||null, order_nr:orderEl.value, date:dateEl.value,
     sold_date:statusEl.value==='Verkauft'?(soldDateEl.value||todayISO()):null,
     buy_price:parseFloat(buyPriceEl.value)||0, status:statusEl.value, tracking:statusEl.value==='Gekauft'?trackingEl.value:null,
-    sell_price:parseFloat(sellPriceEl.value)||null, image:imageData,
-    owned:ownedChkEl.checked?1:0, is_lot:isLotChkEl.checked?1:0,
-    part_price:isLotChkEl.checked?(parseFloat(partPriceEl.value)||null):null };
+    sell_price:!isLot&&Number.isFinite(sellValue)?sellValue:null, image:imageData,
+    owned:ownedChkEl.checked?1:0, is_lot:isLot?1:0,
+    part_price:isLot?(parseFloat(partPriceEl.value)||null):null,
+    segment:segmentEl.value, shipping_cost:isLot?0:(parseFloat(shippingCostEl.value)||0),
+    lot_qty:isLot?lotQty:null, part_shipping:isLot?(parseFloat(partShippingEl.value)||null):null };
   if(editId) data.id=editId;
   const method=editId?'PUT':'POST'; const url=editId?`/api/items/${editId}`:'/api/items';
   const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -1757,13 +1842,14 @@ async function saveItem(){
 
 async function deleteItem(id){ if(!confirm('Produkt löschen?')) return; await fetch(`/api/items/${id}`,{method:'DELETE'}); await loadItems(); toast('Gelöscht'); }
 
-function clearForm(){ titleEl.value=''; orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; soldDateEl.value=''; soldDateEl.classList.remove('has-value'); soldDateWrapEl.style.display='none'; ownedChkEl.checked=false; isLotChkEl.checked=false; partPriceEl.value=''; partPriceWrapEl.style.display='none'; editId=null; }
+function clearForm(){ titleEl.value=''; orderEl.value=''; dateEl.value=''; dateEl.classList.remove('has-value'); buyPriceEl.value=''; statusEl.value='Gekauft'; sellPriceEl.value=''; sellPlatformEl.value=''; imageUrlEl.value=''; setPickedImage(null); trackingEl.value=''; trackingEl.style.display='block'; soldDateEl.value=''; soldDateEl.classList.remove('has-value'); soldDateWrapEl.style.display='none'; ownedChkEl.checked=false; isLotChkEl.checked=false; partPriceEl.value=''; partPriceWrapEl.style.display='none'; lotQtyEl.value=''; partShippingEl.value=''; shippingCostEl.value=''; segmentEl.value=scope==='handel'?'handel':'reselling'; editId=null; }
 
 function editItem(id){
   const item=items.find(i=>i.id===id); if(!item) return;
   platformEl.value=item.platform; titleEl.value=item.title||''; sellPlatformEl.value=item.sell_platform||''; orderEl.value=item.order_nr;
   dateEl.value=item.date; dateEl.classList.toggle('has-value',!!item.date); buyPriceEl.value=item.buy_price;
-  statusEl.value=item.status; sellPriceEl.value=item.sell_price||'';
+  statusEl.value=item.status; sellPriceEl.value=item.sell_price??'';
+  segmentEl.value=item.segment||'reselling'; shippingCostEl.value=item.shipping_cost||''; lotQtyEl.value=item.lot_qty??''; partShippingEl.value=item.part_shipping??'';
   imageUrlEl.value=item.image && !item.image.startsWith('data:') ? item.image : '';
   setPickedImage(item.image||null);
   trackingEl.value=item.tracking||''; trackingEl.style.display=item.status==='Gekauft'?'block':'none';
@@ -1780,20 +1866,31 @@ let partLotId=null, partEditId=null;
 function openPartModal(lotId, partId){
   const lot=items.find(i=>i.id===lotId); if(!lot) return;
   partLotId=lotId; partEditId=partId||null;
-  const nameEl=document.getElementById('partName'), sellEl=document.getElementById('partSell'), dEl=document.getElementById('partDate'), pEl=document.getElementById('partPlatform');
+  const nameEl=document.getElementById('partName'), sellEl=document.getElementById('partSell'), shipEl=document.getElementById('partShip'), dEl=document.getElementById('partDate'), pEl=document.getElementById('partPlatform');
   if(partEditId){
     const p=items.find(i=>i.id===partId)||{};
     document.getElementById('part-title').textContent='Teil bearbeiten';
-    nameEl.value=p.title||''; sellEl.value=p.sell_price!=null?p.sell_price:''; dEl.value=p.date||''; pEl.value=p.sell_platform||'';
+    nameEl.value=p.title||''; sellEl.value=p.sell_price!=null?p.sell_price:''; shipEl.value=p.shipping_cost||''; dEl.value=p.date||''; pEl.value=p.sell_platform||'';
     document.getElementById('partEditExtra').style.display='block';
   } else {
     document.getElementById('part-title').textContent=`Teil verkauft · ${lot.title||'Lot'}`;
-    nameEl.value=''; sellEl.value=lot.part_price!=null?lot.part_price:''; dEl.value=new Date().toISOString().slice(0,10); pEl.value=lot.sell_platform||'';
+    nameEl.value=''; sellEl.value=lot.part_price!=null?lot.part_price:''; shipEl.value=lot.part_shipping||''; dEl.value=new Date().toISOString().slice(0,10); pEl.value=lot.sell_platform||'';
     document.getElementById('partEditExtra').style.display='none';
   }
   dEl.classList.toggle('has-value',!!dEl.value);
+  updatePartHint();
   openOverlay('part-modal');
   setTimeout(()=>nameEl.focus(),120);
+}
+function updatePartHint(){
+  const el=document.getElementById('partHint'); const lot=items.find(i=>i.id===partLotId);
+  const sell=parseFloat(document.getElementById('partSell').value);
+  if(!el||!lot||!Number.isFinite(sell)){ if(el){ el.className='profit-hint'; el.innerHTML=''; } return; }
+  const s=lotStats(lot), overflow=!partEditId && s.remaining===0;
+  const cost=overflow ? s.cost/(s.qty+1) : s.unitCost;
+  const profit=sell-(parseFloat(document.getElementById('partShip').value)||0)-cost;
+  el.className='profit-hint on '+(profit>=0?'pos':'neg');
+  el.innerHTML=`Gewinn <b>${euroSigned(profit)}</b>`+(overflow?` <span style="color:var(--faint);font-weight:600">— alle ${s.qty} Stück sind schon verkauft, die Kosten verteilen sich dann auf ${s.qty+1}</span>`:'');
 }
 function closePartModal(){ closeOverlay('part-modal'); partLotId=null; partEditId=null; }
 function onPartOverlay(e){ if(e.target.id==='part-modal') closePartModal(); }
@@ -1804,7 +1901,7 @@ async function savePart(){
   const date=document.getElementById('partDate').value || new Date().toISOString().slice(0,10);
   const data={ platform:lot.platform, title:document.getElementById('partName').value.trim()||'Teil',
     sell_platform:document.getElementById('partPlatform').value||null, order_nr:'', date, sold_date:date,
-    buy_price:0, sell_price:sell, status:'Verkauft', parent_id:partLotId };
+    buy_price:0, sell_price:sell, shipping_cost:parseFloat(document.getElementById('partShip').value)||0, status:'Verkauft', parent_id:partLotId };
   const method=partEditId?'PUT':'POST'; const url=partEditId?`/api/items/${partEditId}`:'/api/items';
   const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   if(!res.ok){ const e=await res.json().catch(()=>({})); toast('Fehler: '+(e.errors?.join(', ')||e.error||'unbekannt')); return; }
@@ -1821,6 +1918,7 @@ function showTab(tab){
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
+  document.getElementById('scopeBar').style.display=['overview','charts','finance'].includes(tab)?'':'none';
   document.querySelectorAll(`.nav-link[data-tab="${tab}"], .bottom-nav-item[data-tab="${tab}"]`).forEach(el=>el.classList.add('active'));
   const titles={overview:'Übersicht',charts:'Analytics',labels:'DHL Labels',finance:'Finanzen'};
   const title=titles[tab]||'Übersicht';
@@ -1847,17 +1945,18 @@ window.addEventListener('scroll', updateSidebarSpy, { passive:true });
 /* ===== Item list (transaction history) ===== */
 // Ein Teil-Verkauf als eingerückte Unterzeile eines Lots
 function renderPartRow(p){
-  const sell=p.sell_price||0;
+  const profit=profitOf(p);
   return `<div class="part-row" onclick="openPartModal(${p.parent_id},${p.id})">
     <div class="part-line"></div>
     <div class="part-name">${itemLabel(p)}</div>
-    <div class="part-meta">${formatDate(p.date)}${p.sell_platform?' · '+fmtPlatform(p.sell_platform):''}</div>
-    <div class="part-price pos">${euroSigned(sell)}</div>
+    <div class="part-meta">${formatDate(p.date)}${p.sell_platform?' · '+fmtPlatform(p.sell_platform):''} · ${euroDE(p.sell_price||0)}${p.shipping_cost?' − Versand '+euroDE(p.shipping_cost):''}</div>
+    <div class="part-price ${profit>=0?'pos':'neg'}">${euroSigned(profit)}</div>
   </div>`;
 }
 // Lot-Kopf mit Zusammenfassung + einklappbaren Teil-Verkäufen
 function renderLotRow(lot){
-  const {parts,soldCount,revenue,cost,profit}=lotStats(lot);
+  const stats=lotStats(lot);
+  const {parts,soldCount,qty,revenue,cost,realized:profit}=stats;
   const profitClass=profit>=0?'pos':'neg';
   const expanded=!!expandedLots[lot.id];
   const initial=itemInitial(lot);
@@ -1868,11 +1967,12 @@ function renderLotRow(lot){
       <div class="thumb ${thumbClass(lot.platform)}">${thumbInner}</div>
       <div class="item-main">
         <div class="item-title">${itemLabel(lot)}<span class="tag-lot">LOT</span>${ownedTag}</div>
-        <div class="item-sub">${soldCount} verkauft · Einkauf ${cost.toFixed(2)}€ <button class="lot-add" onclick="event.stopPropagation();openPartModal(${lot.id})">+ Teil verkauft</button><button class="lot-edit" onclick="event.stopPropagation();editItem(${lot.id})">bearbeiten</button></div>
+        <div class="item-sub">${soldCount}/${qty} verkauft · Einkauf ${cost.toFixed(2)}€ <button class="lot-add" onclick="event.stopPropagation();openPartModal(${lot.id})">+ Teil verkauft</button><button class="lot-edit" onclick="event.stopPropagation();editItem(${lot.id})">bearbeiten</button></div>
+        <div class="lot-progress">${lotOrderLine(stats)}</div>
       </div>
       <div class="col-num col-ek muted">${cost.toFixed(2)}€</div>
       <div class="col-num col-vk">${revenue?revenue.toFixed(2)+'€':'—'}</div>
-      <div class="col-profit"><div class="amount ${profitClass}">${euroSigned(profit)}</div><span class="badge status-Lager">${soldCount} Teile</span></div>
+      <div class="col-profit"><div class="amount ${profitClass}">${euroSigned(profit)}</div><span class="badge status-Lager">${soldCount}/${qty} Stück</span></div>
       <div class="row-chev ${expanded?'open':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
     </div>${partsHtml}`;
 }
@@ -1881,12 +1981,13 @@ function renderItems(){
   const body=tableBodyEl; body.innerHTML='';
   const searchText=searchEl.value.toLowerCase();
   const STATUS_ORDER={ 'Verkauft':0,'Lager':1,'Gekauft':2 };
+  const rowProfit=i=>i.is_lot?lotStats(i).realized:(i.sell_price||0)-(i.shipping_cost||0)-effBuy(i);
   const sorted=items.slice().sort((a,b)=>{
     switch(sortBy){
       case 'date-asc': return new Date(a.date||'1970-01-01')-new Date(b.date||'1970-01-01');
-      case 'status-group':{ const sd=STATUS_ORDER[a.status]-STATUS_ORDER[b.status]; return sd!==0?sd:new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01'); }
-      case 'profit-desc': return ((b.sell_price||0)-effBuy(b))-((a.sell_price||0)-effBuy(a));
-      case 'profit-asc': return ((a.sell_price||0)-effBuy(a))-((b.sell_price||0)-effBuy(b));
+      case 'status-group':{ const sd=STATUS_ORDER[statusOf(a)]-STATUS_ORDER[statusOf(b)]; return sd!==0?sd:new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01'); }
+      case 'profit-desc': return rowProfit(b)-rowProfit(a);
+      case 'profit-asc': return rowProfit(a)-rowProfit(b);
       case 'buy-desc': return (b.buy_price||0)-(a.buy_price||0);
       case 'buy-asc': return (a.buy_price||0)-(b.buy_price||0);
       default: return new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01');
@@ -1894,7 +1995,8 @@ function renderItems(){
   });
   const filtered=sorted.filter(item=>{
     if(item.parent_id) return false;   // Teil-Verkäufe erscheinen unter ihrem Lot, nicht als eigene Zeile
-    if(filter!=='all' && item.status!==filter) return false;
+    if(!inScope(item)) return false;
+    if(filter!=='all' && statusOf(item)!==filter) return false;
     if(searchText && !`${item.title||''} ${item.order_nr||''}`.toLowerCase().includes(searchText)) return false;
     return true;
   });
@@ -1908,9 +2010,10 @@ function renderItems(){
     pageItems.forEach((item,idx)=>{
       const divider=idx<pageItems.length-1?'<div class="row-divider"></div>':'';
       if(item.is_lot){ body.innerHTML+=renderLotRow(item)+divider; return; }
-      const buy=effBuy(item), sell=item.sell_price||0, profit=sell-buy;
-      const profitClass=sell?(profit>=0?'pos':'neg'):'';
-      const profitStr=sell?euroSigned(profit):'—';
+      const buy=effBuy(item), sell=item.sell_price||0, profit=sell-(item.shipping_cost||0)-buy;
+      const hasSale=sell||item.status==='Verkauft';   // auch ein Verkauf für 0 € ist ein Ergebnis
+      const profitClass=hasSale?(profit>=0?'pos':'neg'):'';
+      const profitStr=hasSale?euroSigned(profit):'—';
       const platformDisplay=item.sell_platform?`${fmtPlatform(item.platform)} <span class="arrow">→</span> ${fmtPlatform(item.sell_platform)}`:fmtPlatform(item.platform);
       const initial=itemInitial(item);
       const thumbInner=item.image?`<img src="${item.image}">`:initial;
@@ -1924,7 +2027,7 @@ function renderItems(){
           <div class="item-sub">${platformDisplay} · ${formatDate(item.date)}</div>
         </div>
         <div class="col-num col-ek muted">${buy.toFixed(2)}€</div>
-        <div class="col-num col-vk">${sell?sell.toFixed(2)+'€':'—'}</div>
+        <div class="col-num col-vk">${hasSale?sell.toFixed(2)+'€':'—'}</div>
         <div class="col-profit"><div class="amount ${profitClass}">${profitStr}</div><span class="badge status-${item.status}">${item.status}</span></div>
         <div class="row-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
       </div>${divider}`;
@@ -1946,18 +2049,20 @@ function mobileRow(item){
   const initial=itemInitial(item);
   const inner=item.image?`<img src="${item.image}">`:initial;
   if(item.is_lot){
-    const {soldCount,profit}=lotStats(item);
+    const stats=lotStats(item);
+    const {soldCount,qty,realized:profit}=stats;
     const lc=profit>=0?'pos':'neg';
     return `<div class="mv-row" onclick="editItem(${item.id})">
       <div class="mv-thumb ${thumbClass(item.platform)}">${inner}</div>
-      <div class="mv-main"><div class="mv-title">${itemLabel(item)}<span class="tag-lot">LOT</span></div><div class="mv-sub">${soldCount} verkauft · <button class="lot-add" onclick="event.stopPropagation();openPartModal(${item.id})">+ Teil verkauft</button></div></div>
+      <div class="mv-main"><div class="mv-title">${itemLabel(item)}<span class="tag-lot">LOT</span></div><div class="mv-sub">${soldCount}/${qty} verkauft · <button class="lot-add" onclick="event.stopPropagation();openPartModal(${item.id})">+ Teil verkauft</button></div><div class="lot-progress">${lotOrderLine(stats)}</div></div>
       <div class="mv-right"><div class="mv-amt ${lc}">${euroSigned(profit)}</div><span class="badge status-Lager">Lot</span></div>
       <div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
     </div>`;
   }
-  const buy=effBuy(item), sell=item.sell_price||0, profit=sell-buy;
-  const cls=sell?(profit>=0?'pos':'neg'):'';
-  const valStr=sell?euroSigned(profit):buy.toFixed(2)+'€';
+  const buy=effBuy(item), sell=item.sell_price||0, profit=sell-(item.shipping_cost||0)-buy;
+  const hasSale=sell||item.status==='Verkauft';
+  const cls=hasSale?(profit>=0?'pos':'neg'):'';
+  const valStr=hasSale?euroSigned(profit):buy.toFixed(2)+'€';
   const pd=item.sell_platform?`${fmtPlatform(item.platform)} <span class="ar">→</span> ${fmtPlatform(item.sell_platform)}`:fmtPlatform(item.platform);
   const ownedTag=item.owned?`<span class="tag-owned">vorbesessen</span>`:'';
   const reimbDot=reimbursedItems[item.id]?`<span class="reimb-dot" title="Privates Geld erstattet">●</span>`:'';
@@ -1971,15 +2076,10 @@ function mobileRow(item){
 
 function renderMobile(){
   const cont=document.getElementById('mGroups'); if(!cont) return;
-  // stats from ALL items
-  let totalProfit=0, sold=0, stock=0, stockValue=0, monthProfit=0, spentAll=0, recvSold=0;
+  const {profit:totalProfit,soldCount:sold,stockCount:stock}=Calc.totals(items,scope);
   const nowYm=new Date().toISOString().slice(0,7);
-  items.forEach(i=>{ const b=effBuy(i),s=i.sell_price||0; spentAll+=b;
-    if(i.status==='Verkauft'){ totalProfit+=s-b; sold++; recvSold+=s; if((saleDate(i)||'').slice(0,7)===nowYm) monthProfit+=s-b; }
-    else { stock++; stockValue+=b; } });
-  let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
-  const cash=accountBalance - spentAll + recvSold - expTotal;
-  const kap=cash + stockValue;
+  const monthProfit=salesInScope().filter(i=>(saleDate(i)||'').slice(0,7)===nowYm).reduce((sum,i)=>sum+profitOf(i),0);
+  const kap=currentCash() + Calc.totals(items).stockValue;   // Kapital gilt immer für beide Bereiche
   countUp('mvProfit', totalProfit, v=>euroSigned(v));
   countUp('mvSold', sold, v=>String(Math.round(v)));
   countUp('mvStock', stock, v=>String(Math.round(v)));
@@ -1988,11 +2088,11 @@ function renderMobile(){
   if(dl){ if(monthProfit!==0){ const up=monthProfit>=0; dl.style.display='inline-flex'; dl.className='mv-delta'+(up?'':' neg'); dl.innerHTML=`${arrowSvg(up)} ${up?'+':'−'}${Math.abs(monthProfit).toFixed(2)}€ diesen Monat`; } else dl.style.display='none'; }
   // grouped, filtered list
   const search=searchEl.value.toLowerCase();
-  const filt=items.filter(i=>{ if(i.parent_id) return false; if(filter!=='all' && i.status!==filter) return false; if(search && !`${i.title||''} ${i.order_nr||''}`.toLowerCase().includes(search)) return false; return true; });
+  const filt=items.filter(i=>{ if(i.parent_id) return false; if(!inScope(i)) return false; if(filter!=='all' && statusOf(i)!==filter) return false; if(search && !`${i.title||''} ${i.order_nr||''}`.toLowerCase().includes(search)) return false; return true; });
   const groups=[['Verkauft','Zuletzt verkauft'],['Lager','Im Lager'],['Gekauft','Gekauft']];
   cont.innerHTML=''; let any=false;
   groups.forEach(([st,label])=>{
-    const arr=filt.filter(i=>i.status===st).sort((a,b)=> new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01'));
+    const arr=filt.filter(i=>statusOf(i)===st).sort((a,b)=> new Date(b.date||'1970-01-01')-new Date(a.date||'1970-01-01'));
     if(arr.length===0) return; any=true;
     cont.innerHTML+=`<div class="mv-sec">${label}</div><div class="mv-list">${arr.map(mobileRow).join('')}</div>`;
   });
@@ -2016,26 +2116,22 @@ function countUp(id, value, fmt){
   })(start);
 }
 function ym(d){ return d.toISOString().slice(0,7); }
-function cashFlows(){ let spent=0,recv=0,exp=0; items.forEach(i=>{ spent+=(i.buy_price||0); if(i.status==='Verkauft') recv+=(i.sell_price||0); }); expenses.forEach(e=>{ exp+=(e.amount||0); }); return {spent,recv,exp}; }
+function cashFlows(){ const {spent,received:recv}=Calc.totals(items); let exp=0; expenses.forEach(e=>{ exp+=(e.amount||0); }); return {spent,recv,exp}; }
 function currentCash(){ const {spent,recv,exp}=cashFlows(); return accountBalance - spent + recv - exp; }
 function renderDashboard(){
-  let totalProfit=0, revenue=0, soldCount=0, stockCount=0, stockValue=0, spentAll=0, recvSold=0;
+  const {profit:totalProfit,revenue,soldCount,stockValue}=Calc.totals(items,scope);
+  const allStock=Calc.totals(items).stockValue;
   const now=new Date(); const curYm=ym(now);
   const prevDate=new Date(now.getFullYear(), now.getMonth()-1, 1); const prevYm=ym(prevDate);
   let curP=0,prevP=0,curR=0,prevR=0,curC=0,prevC=0;
-  items.forEach(i=>{
-    const b=effBuy(i), s=i.sell_price||0;   // vorbesessene Artikel: Einkauf zählt als 0
-    spentAll+=b;                       // jeder erfasste Artikel wurde gekauft
-    if(i.status==='Verkauft'){
-      totalProfit+=s-b; revenue+=s; soldCount++; recvSold+=s;
-      const m=(saleDate(i)||'').slice(0,7);
-      if(m===curYm){ curP+=s-b; curR+=s; curC++; }
-      else if(m===prevYm){ prevP+=s-b; prevR+=s; prevC++; }
-    } else { stockCount++; stockValue+=b; }   // unverkauft (Gekauft+Lager) = Geld im Lager
+  salesInScope().forEach(i=>{
+    const s=i.sell_price||0, p=profitOf(i);
+    const m=(saleDate(i)||'').slice(0,7);
+    if(m===curYm){ curP+=p; curR+=s; curC++; }
+    else if(m===prevYm){ prevP+=p; prevR+=s; prevC++; }
   });
-  let expTotal=0; expenses.forEach(e=>expTotal+=(e.amount||0));
-  const cash=accountBalance - spentAll + recvSold - expTotal;   // aktuelles Bargeld
-  const kapital=cash + stockValue;                    // = Basis + Gesamtprofit − Ausgaben
+  const cash=currentCash();                  // aktuelles Bargeld, immer gemeinsam
+  const kapital=cash + allStock;             // = Basis + Gesamtprofit − Ausgaben
   countUp('mProfit', totalProfit, v=>euroDE(v));
   countUp('mSold', soldCount, v=>String(Math.round(v)));
   countUp('mRevenue', revenue, v=>euroDE(v));
@@ -2043,7 +2139,7 @@ function renderDashboard(){
   countUp('ovCash', cash, v=>euroDE(v));
   countUp('ovStockValue', stockValue, v=>euroDE(v));
   const kapSub=document.getElementById('mKapitalSub');
-  if(kapSub) kapSub.textContent=`Bargeld ${cash.toFixed(2)}€ · Lager ${stockValue.toFixed(2)}€`;
+  if(kapSub) kapSub.textContent=`Bargeld ${cash.toFixed(2)}€ · Lager ${allStock.toFixed(2)}€`;
   setChange('mProfitChg', curP, prevP, curP);
   setChange('mRevenueChg', curR, prevR);
   setChange('mSoldChg', curC, prevC);
@@ -2081,7 +2177,7 @@ function ovSeries(){
   const cfg=OV_RANGES[ovRange];
   // Jeder Verkauf ist ein Ereignis auf der Gewinnkurve
   const events=[];
-  items.forEach(i=>{ if(i.status==='Verkauft'){ const d=saleDate(i); if(d) events.push({date:d, delta:(i.sell_price||0)-effBuy(i)}); } });
+  salesInScope().forEach(i=>{ const d=saleDate(i); if(d) events.push({date:d, delta:profitOf(i)}); });
   events.sort((a,b)=> a.date<b.date?-1:1);
   if(!events.length) return {points:[]};
 
@@ -2157,22 +2253,22 @@ function daysSince(d){ if(!d) return null; return Math.round((Date.now()-new Dat
 
 function renderStockList(){
   const el=document.getElementById('stockList'); if(!el) return;
-  const stock=items.filter(i=>i.status!=='Verkauft' && !i.parent_id)
-    .sort((a,b)=> effBuy(b)-effBuy(a)).slice(0,5);
+  const stockCost=i=>i.is_lot?lotStats(i).stockValue:effBuy(i);
+  const stock=items.filter(i=>!i.parent_id && inScope(i) && statusOf(i)!=='Verkauft')
+    .sort((a,b)=> stockCost(b)-stockCost(a)).slice(0,5);
   if(!stock.length){ el.innerHTML='<div class="ov-empty">Nichts im Lager</div>'; return; }
   el.innerHTML=stock.map(i=>{
     const days=daysSince(i.date);
     const inner=i.image?`<img src="${i.image}">`:itemInitial(i);
-    const cost=effBuy(i);
-    // Erwarteter Erloes: bei Lots die bereits erzielten Teilverkaeufe, sonst der
-    // hinterlegte Verkaufspreis - fehlt beides, bleibt es bei der Kostenbasis.
-    const parts=items.filter(x=>x.parent_id===i.id);
-    const earned=parts.reduce((sum,x)=>sum+(x.sell_price||0),0);
-    const expected=i.is_lot ? (earned || cost) : (i.sell_price || cost);
+    const cost=stockCost(i);
+    // Erwarteter Erloes: bei Lots die Reststuecke zum hinterlegten Stueckerloes, sonst
+    // der hinterlegte Verkaufspreis - fehlt beides, bleibt es bei der Kostenbasis.
+    const lot=i.is_lot?lotStats(i):null;
+    const expected=lot ? ((lot.unitNet*lot.remaining) || cost) : (i.sell_price || cost);
     const delta=expected-cost;
     const sub=[fmtPlatform(i.platform)];
     if(days!=null) sub.push('seit '+days+' Tagen');
-    if(i.is_lot) sub.push(parts.length+' Teile verkauft');
+    if(lot) sub.push(lot.soldCount+'/'+lot.qty+' verkauft');
     return `<div class="ov-row" onclick="editItem(${i.id})">
       <div class="thumb ${thumbClass(i.platform)}">${inner}</div>
       <div class="ov-row-main">
@@ -2191,10 +2287,10 @@ function renderStockList(){
 function renderPlatformList(){
   const el=document.getElementById('platformList'); if(!el) return;
   const acc={};
-  items.filter(i=>i.status==='Verkauft').forEach(i=>{
+  salesInScope().forEach(i=>{
     const key=fmtPlatform(i.sell_platform||i.platform)||'Ohne Angabe';
     if(!acc[key]) acc[key]={profit:0,count:0};
-    acc[key].profit+=(i.sell_price||0)-effBuy(i);
+    acc[key].profit+=profitOf(i);
     acc[key].count++;
   });
   const rows=Object.entries(acc).sort((a,b)=>b[1].profit-a[1].profit);
@@ -2241,14 +2337,15 @@ function setChange(id, cur, prev, absolute){
 
 function renderRecentSales(){
   const el=document.getElementById('recentSales');
-  const sold=items.filter(i=>i.status==='Verkauft')
+  const sold=salesInScope()
     .sort((a,b)=> (new Date(saleDate(b)||0)-new Date(saleDate(a)||0)) || (new Date(b.created_at||0)-new Date(a.created_at||0))).slice(0,5);
   if(sold.length===0){ el.innerHTML='<div class="ov-empty">Noch keine Verkäufe</div>'; return; }
   el.innerHTML=sold.map(i=>{
-    const cost=effBuy(i), got=i.sell_price||0, profit=got-cost;
+    const got=i.sell_price||0, profit=profitOf(i), cost=got-profit;
     const initial=itemInitial(i);
     const inner=i.image?`<img src="${i.image}">`:initial;
-    return `<div class="ov-row" onclick="editItem(${i.id})">
+    const open=i.parent_id?`openPartModal(${i.parent_id},${i.id})`:`editItem(${i.id})`;
+    return `<div class="ov-row" onclick="${open}">
       <div class="thumb ${thumbClass(i.sell_platform||i.platform)}">${inner}</div>
       <div class="ov-row-main"><div class="ov-row-title">${itemLabel(i)}</div><div class="ov-row-sub">${fmtPlatform(i.sell_platform||i.platform)} · ${formatDate(saleDate(i))}</div></div>
       ${sparkline(cost, got, i.id)}
@@ -2268,11 +2365,11 @@ function renderRevenueChart(){
   const lastStart=new Date(thisStart); lastStart.setDate(thisStart.getDate()-7);
   const nextStart=new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
   const thisW=[0,0,0,0,0,0,0], lastW=[0,0,0,0,0,0,0];
-  items.forEach(i=>{
+  salesInScope().forEach(i=>{
     const sd=saleDate(i);
-    if(i.status==='Verkauft' && sd){
+    if(sd){
       const d=new Date(sd); d.setHours(0,0,0,0);
-      const profit=(i.sell_price||0)-effBuy(i);
+      const profit=profitOf(i);
       const idx=(d.getDay()+6)%7;
       // Beide Wochen sind oben UND unten begrenzt – sonst landen später datierte
       // Verkäufe (z.B. Zukunftsdatum) fälschlich in "Diese Woche".
@@ -2300,7 +2397,7 @@ function renderRevenueChart(){
 function renderChart(){
   if(typeof Chart==='undefined') return;
   const monthly={};
-  items.forEach(i=>{ const sd=saleDate(i); if(i.status==='Verkauft' && sd){ const m=sd.slice(0,7); monthly[m]=(monthly[m]||0)+((i.sell_price||0)-effBuy(i)); } });
+  salesInScope().forEach(i=>{ const sd=saleDate(i); if(sd){ const m=sd.slice(0,7); monthly[m]=(monthly[m]||0)+profitOf(i); } });
   const labels=Object.keys(monthly).sort(); const data=labels.map(k=>monthly[k]);
   const ctx=document.getElementById('chart');
   if(window.monthChart && typeof window.monthChart.destroy==='function') window.monthChart.destroy();
@@ -2311,7 +2408,7 @@ function renderProfitChart(){
   const ctx=document.getElementById('profitChart');
   if(window.profitChart && typeof window.profitChart.destroy==='function') window.profitChart.destroy();
   const buckets={};
-  items.forEach(item=>{ const sd=saleDate(item); if(item.status==='Verkauft' && sd){ const date=new Date(sd); const profit=(item.sell_price||0)-effBuy(item); let key;
+  salesInScope().forEach(item=>{ const sd=saleDate(item); if(sd){ const date=new Date(sd); const profit=profitOf(item); let key;
     if(chartPeriod==='day'){ key=date.toISOString().split('T')[0]; }
     else if(chartPeriod==='week'){ const ws=new Date(date); ws.setDate(date.getDate()-date.getDay()); key=ws.toISOString().split('T')[0]; }
     else{ key=sd.slice(0,7); }
@@ -2322,7 +2419,7 @@ function renderProfitChart(){
 function renderPlatformChart(){
   if(typeof Chart==='undefined') return;
   const counts={}, profits={};
-  items.forEach(item=>{ if(item.status==='Verkauft'){ const p=item.sell_platform||item.platform; counts[p]=(counts[p]||0)+1; profits[p]=(profits[p]||0)+((item.sell_price||0)-effBuy(item)); } });
+  salesInScope().forEach(item=>{ const p=item.sell_platform||item.platform; counts[p]=(counts[p]||0)+1; profits[p]=(profits[p]||0)+profitOf(item); });
   const platforms=Object.keys(counts);
   const platformColors={ 'eBay':{bg:'rgba(10,132,255,0.75)',border:'#0a84ff',text:'#5aa9ff'}, 'Kleinanzeigen':{bg:'rgba(50,215,75,0.75)',border:'#32d74b',text:'#32d74b'} };
   const fallback={bg:'rgba(142,142,147,0.7)',border:'#8e8e93',text:'#8e8e93'};
@@ -2360,8 +2457,7 @@ function renderFinance(){
   const nowM=new Date().toISOString().slice(0,7);
   let total=0, monthTotal=0;
   expenses.forEach(e=>{ total+=(e.amount||0); if((e.date||'').slice(0,7)===nowM) monthTotal+=(e.amount||0); });
-  let profit=0; items.forEach(i=>{ if(i.status==='Verkauft') profit+=((i.sell_price||0)-effBuy(i)); });
-  const netto=profit-total;
+  const netto=Calc.totals(items).profit-total;   // Ausgaben sind nicht aufgeteilt, die Karte erscheint nur unter "Alle"
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('fExpTotal', total.toFixed(2)+'€');
   set('fExpMonth', monthTotal.toFixed(2)+'€');

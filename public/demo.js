@@ -149,6 +149,10 @@
         is_lot: 1,
         parent_id: null,
         part_price: lot.partPrice,
+        segment: 'handel',
+        shipping_cost: 0,
+        lot_qty: lot.parts.length + 4,
+        part_shipping: 2.5,
         created_at: daysAgo(bought) + 'T10:00:00.000Z'
       });
       lot.parts.forEach(function (part, pi) {
@@ -171,6 +175,7 @@
           is_lot: 0,
           parent_id: lotId,
           part_price: null,
+          shipping_cost: 2.5,
           created_at: daysAgo(soldAt) + 'T10:00:00.000Z'
         });
       });
@@ -248,6 +253,10 @@
       is_lot: body.is_lot ? 1 : 0,
       parent_id: body.parent_id != null ? body.parent_id : null,
       part_price: body.part_price != null ? Number(body.part_price) : null,
+      segment: body.segment || 'reselling',
+      shipping_cost: Number(body.shipping_cost) || 0,
+      lot_qty: body.lot_qty != null ? Number(body.lot_qty) : null,
+      part_shipping: body.part_shipping != null ? Number(body.part_shipping) : null,
       created_at: new Date().toISOString()
     };
   }

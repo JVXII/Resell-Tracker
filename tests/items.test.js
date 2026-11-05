@@ -118,7 +118,7 @@ test('POST /api/items creates a lot without order_nr', async () => {
   await login(agent, user.id);
   const res = await agent.post('/api/items').send({
     platform: 'eBay', title: 'Tastatur-Keys', date: '2026-01-01',
-    buy_price: 10, status: 'Lager', is_lot: 1, owned: 1, part_price: 2
+    buy_price: 10, status: 'Lager', is_lot: 1, owned: 1, part_price: 2, lot_qty: 5
   });
   expect(res.status).toBe(201);
   expect(res.body.is_lot).toBe(1);
@@ -130,7 +130,7 @@ test('POST /api/items creates a part-sale linked to a lot (no order_nr)', async 
   const agent = request.agent(app);
   await login(agent, user.id);
   const lot = await agent.post('/api/items').send({
-    platform: 'eBay', title: 'Tastatur', date: '2026-01-01', buy_price: 10, status: 'Lager', is_lot: 1
+    platform: 'eBay', title: 'Tastatur', date: '2026-01-01', buy_price: 10, status: 'Lager', is_lot: 1, lot_qty: 5
   });
   const part = await agent.post('/api/items').send({
     platform: 'eBay', title: 'Taste W', date: '2026-02-01',
@@ -144,7 +144,7 @@ test('DELETE lot also removes its part-sales', async () => {
   const agent = request.agent(app);
   await login(agent, user.id);
   const lot = await agent.post('/api/items').send({
-    platform: 'eBay', title: 'Tastatur', date: '2026-01-01', buy_price: 10, status: 'Lager', is_lot: 1
+    platform: 'eBay', title: 'Tastatur', date: '2026-01-01', buy_price: 10, status: 'Lager', is_lot: 1, lot_qty: 5
   });
   await agent.post('/api/items').send({
     platform: 'eBay', title: 'Taste W', date: '2026-02-01', buy_price: 0, sell_price: 2, status: 'Verkauft', parent_id: lot.body.id
@@ -201,4 +201,58 @@ test('POST /api/items/import skips duplicate order_nr', async () => {
   expect(res.status).toBe(200);
   expect(res.body.imported).toBe(0);
   expect(res.body.skipped).toBe(1);
+});
+describe('Bereich, Versand und Stückzahl', () => {
+  const lotBody = { platform: 'eBay', title: 'Plushies', date: '2026-11-04', buy_price: 36.59, status: 'Gekauft', is_lot: 1 };
+
+  test('neue Felder werden gespeichert, Bereich ist standardmäßig Reselling', async () => {
+    const agent = request.agent(app);
+    await login(agent, user.id);
+    const plain = await agent.post('/api/items').send({ platform: 'eBay', order_nr: 'A1', date: '2026-01-01', buy_price: 1, status: 'Lager' });
+    expect(plain.body.segment).toBe('reselling');
+    expect(plain.body.shipping_cost).toBe(0);
+    const lot = await agent.post('/api/items').send({ ...lotBody, segment: 'handel', lot_qty: 7, part_price: 17.99, part_shipping: 4.19 });
+    expect(lot.status).toBe(201);
+    expect(lot.body).toMatchObject({ segment: 'handel', lot_qty: 7, part_price: 17.99, part_shipping: 4.19 });
+    const sold = await agent.put(`/api/items/${plain.body.id}`).send({ status: 'Verkauft', sell_price: 10, shipping_cost: 4.19 });
+    expect(sold.body.shipping_cost).toBe(4.19);
+  });
+
+  test('ein Lot braucht eine Stückzahl von mindestens 1', async () => {
+    const agent = request.agent(app);
+    await login(agent, user.id);
+    expect((await agent.post('/api/items').send(lotBody)).status).toBe(400);
+    expect((await agent.post('/api/items').send({ ...lotBody, lot_qty: 0 })).status).toBe(400);
+    expect((await agent.post('/api/items').send({ ...lotBody, lot_qty: 1.5 })).status).toBe(400);
+    const plain = await agent.post('/api/items').send({ platform: 'eBay', order_nr: 'A2', date: '2026-01-01', buy_price: 1, status: 'Lager' });
+    expect((await agent.put(`/api/items/${plain.body.id}`).send({ is_lot: 1 })).status).toBe(400);
+    expect((await agent.put(`/api/items/${plain.body.id}`).send({ is_lot: 1, lot_qty: 3 })).status).toBe(200);
+  });
+
+  test('ungültiger Bereich und negativer Versand werden abgelehnt', async () => {
+    const agent = request.agent(app);
+    await login(agent, user.id);
+    const base = { platform: 'eBay', order_nr: 'A3', date: '2026-01-01', buy_price: 1, status: 'Lager' };
+    expect((await agent.post('/api/items').send({ ...base, segment: 'dropshipping' })).status).toBe(400);
+    expect((await agent.post('/api/items').send({ ...base, shipping_cost: -1 })).status).toBe(400);
+    const ok = await agent.post('/api/items').send(base);
+    expect((await agent.put(`/api/items/${ok.body.id}`).send({ segment: 'x' })).status).toBe(400);
+    expect((await agent.put(`/api/items/${ok.body.id}`).send({ shipping_cost: -1 })).status).toBe(400);
+  });
+
+  test('Export und Import behalten die neuen Felder, alte Backups bleiben importierbar', async () => {
+    const agent = request.agent(app);
+    await login(agent, user.id);
+    await agent.post('/api/items').send({ ...lotBody, order_nr: 'L1', segment: 'handel', lot_qty: 7, part_shipping: 4.19 });
+    const exported = (await agent.get('/api/items/export')).body;
+    expect(exported[0]).toMatchObject({ segment: 'handel', lot_qty: 7, part_shipping: 4.19, shipping_cost: 0 });
+    const res = await agent.post('/api/items/import').send([
+      { order: 'I1', platform: 'eBay', buy: 5, status: 'Lager', segment: 'handel', shipping_cost: 2 },
+      { order: 'I2', platform: 'eBay', buy: 5, status: 'Lager', is_lot: 1 },
+    ]);
+    expect(res.body.imported).toBe(2);
+    const list = (await agent.get('/api/items')).body;
+    expect(list.find((i) => i.order_nr === 'I1')).toMatchObject({ segment: 'handel', shipping_cost: 2 });
+    expect(list.find((i) => i.order_nr === 'I2').segment).toBe('reselling');
+  });
 });

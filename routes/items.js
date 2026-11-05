@@ -3,10 +3,23 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 
 const VALID_STATUSES = ['Gekauft', 'Lager', 'Verkauft'];
+const VALID_SEGMENTS = ['reselling', 'handel'];
+
+function validateMoneyFields(body) {
+  const errors = [];
+  if ('segment' in body && !VALID_SEGMENTS.includes(body.segment)) errors.push(`segment must be one of: ${VALID_SEGMENTS.join(', ')}`);
+  for (const field of ['shipping_cost', 'part_shipping']) {
+    if (body[field] != null && (typeof body[field] !== 'number' || body[field] < 0)) errors.push(`${field} must be a non-negative number`);
+  }
+  return errors;
+}
+
+function isValidLotQty(qty) { return Number.isInteger(qty) && qty >= 1; }
 
 function validateItem(body) {
-  const errors = [];
+  const errors = validateMoneyFields(body);
   const isLotOrPart = body.is_lot || body.parent_id;
+  if (body.is_lot && !isValidLotQty(body.lot_qty)) errors.push('lot_qty must be a whole number of at least 1');
   if (!body.platform) errors.push('platform required');
   if (!body.order_nr && !isLotOrPart) errors.push('order_nr required');
   if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) errors.push('date must be YYYY-MM-DD');
@@ -34,8 +47,8 @@ router.post('/import', (req, res) => {
 
   const existsStmt = req.db.prepare('SELECT 1 FROM items WHERE owner_id = ? AND order_nr = ?');
   const insertStmt = req.db.prepare(`
-    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, sold_date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, sold_date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price, segment, shipping_cost, lot_qty, part_shipping)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
 
   req.db.exec('BEGIN');
@@ -62,7 +75,11 @@ router.post('/import', (req, res) => {
         e.owned ? 1 : 0,
         e.is_lot ? 1 : 0,
         e.parent_id ?? null,
-        e.part_price ?? null
+        e.part_price ?? null,
+        VALID_SEGMENTS.includes(e.segment) ? e.segment : 'reselling',
+        e.shipping_cost ?? 0,
+        e.lot_qty ?? null,
+        e.part_shipping ?? null
       );
       imported++;
     }
@@ -95,6 +112,10 @@ router.get('/export', (req, res) => {
     is_lot: i.is_lot || 0,
     parent_id: i.parent_id ?? null,
     part_price: i.part_price ?? null,
+    segment: i.segment,
+    shipping_cost: i.shipping_cost,
+    lot_qty: i.lot_qty ?? null,
+    part_shipping: i.part_shipping ?? null,
   }));
   res.setHeader('Content-Disposition', 'attachment; filename="resell-backup.json"');
   res.json(exported);
@@ -105,11 +126,11 @@ router.post('/', (req, res) => {
   const errors = validateItem(req.body);
   if (errors.length) return res.status(400).json({ errors });
 
-  const { platform, title, sell_platform, order_nr, date, sold_date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price } = req.body;
+  const { platform, title, sell_platform, order_nr, date, sold_date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price, segment, shipping_cost, lot_qty, part_shipping } = req.body;
   const result = req.db.prepare(`
-    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, sold_date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `).run(req.userId, platform, title ?? null, sell_platform ?? null, order_nr ?? '', date, sold_date ?? null, buy_price, sell_price ?? null, status, tracking ?? null, image ?? null, owned ? 1 : 0, is_lot ? 1 : 0, parent_id ?? null, part_price ?? null);
+    INSERT INTO items (owner_id, platform, title, sell_platform, order_nr, date, sold_date, buy_price, sell_price, status, tracking, image, owned, is_lot, parent_id, part_price, segment, shipping_cost, lot_qty, part_shipping)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(req.userId, platform, title ?? null, sell_platform ?? null, order_nr ?? '', date, sold_date ?? null, buy_price, sell_price ?? null, status, tracking ?? null, image ?? null, owned ? 1 : 0, is_lot ? 1 : 0, parent_id ?? null, part_price ?? null, segment ?? 'reselling', shipping_cost ?? 0, lot_qty ?? null, part_shipping ?? null);
 
   const item = req.db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(item);
@@ -134,11 +155,18 @@ router.put('/:id', (req, res) => {
 
   if (!canEdit) return res.status(403).json({ error: 'Forbidden' });
 
-  const allowed = ['platform', 'title', 'sell_platform', 'order_nr', 'date', 'sold_date', 'buy_price', 'sell_price', 'status', 'tracking', 'image', 'owned', 'is_lot', 'parent_id', 'part_price'];
+  const allowed = ['platform', 'title', 'sell_platform', 'order_nr', 'date', 'sold_date', 'buy_price', 'sell_price', 'status', 'tracking', 'image', 'owned', 'is_lot', 'parent_id', 'part_price', 'segment', 'shipping_cost', 'lot_qty', 'part_shipping'];
   const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
 
   if (updates.status && !VALID_STATUSES.includes(updates.status)) {
     return res.status(400).json({ error: 'Invalid status' });
+  }
+  const fieldErrors = validateMoneyFields(updates);
+  if (fieldErrors.length) return res.status(400).json({ errors: fieldErrors });
+  if ('shipping_cost' in updates) updates.shipping_cost = updates.shipping_cost ?? 0;
+  const merged = { ...item, ...updates };
+  if (('is_lot' in updates || 'lot_qty' in updates) && merged.is_lot && !isValidLotQty(merged.lot_qty)) {
+    return res.status(400).json({ errors: ['lot_qty must be a whole number of at least 1'] });
   }
   if ('owned' in updates) updates.owned = updates.owned ? 1 : 0;
   if ('is_lot' in updates) updates.is_lot = updates.is_lot ? 1 : 0;
