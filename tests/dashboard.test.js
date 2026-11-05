@@ -155,5 +155,65 @@ test('Teil-Dialog: Versand ist vorbelegt und landet im Verkauf', async () => {
 test('Teil-Dialog warnt, wenn alle Stück verkauft sind', async () => {
   await boot();
   window.openPartModal(3);
-  expect(text('partHint')).toContain('alle 1 Stück sind schon verkauft');
+  expect(text('partHint')).toContain('nur noch 0 von 1 Stück offen');
+});
+
+const partPosts = () => window.fetch.mock.calls.filter(([, o]) => o && o.method === 'POST').map(([, o]) => JSON.parse(o.body));
+
+test('Teil-Dialog: mehrere Stück mit einmal Versand', async () => {
+  await boot();
+  window.openPartModal(1);
+  document.getElementById('partQty').value = '3';
+  window.updatePartHint();
+  // 3 × 17,99 − 4,19 − 3 × 5,2271
+  expect(text('partHint')).toContain('+34,10');
+  expect(text('partShipLabel')).toContain('gesamt');
+  window.fetch.mockClear();
+  await window.savePart();
+  const posts = partPosts();
+  expect(posts).toHaveLength(3);
+  expect(posts.map((p) => p.shipping_cost)).toEqual([1.4, 1.4, 1.39]);
+  expect(posts.every((p) => p.parent_id === 1 && p.sell_price === 17.99)).toBe(true);
+});
+
+test('Teil-Dialog: ungültige Menge speichert nichts, mehr als offen warnt', async () => {
+  await boot();
+  window.openPartModal(1);
+  window.fetch.mockClear();
+  document.getElementById('partQty').value = '0';
+  await window.savePart();
+  expect(partPosts()).toHaveLength(0);
+  document.getElementById('partQty').value = '8';
+  window.updatePartHint();
+  expect(text('partHint')).toContain('nur noch 6 von 7 Stück offen');
+  expect(text('partHint')).toContain('auf 9');
+});
+
+test('Teil-Dialog: beim Bearbeiten gibt es keine Menge', async () => {
+  await boot();
+  window.openPartModal(1);
+  expect(document.getElementById('partQtyWrap').style.display).toBe('');
+  window.closePartModal();
+  window.openPartModal(1, 2);
+  expect(document.getElementById('partQtyWrap').style.display).toBe('none');
+  window.fetch.mockClear();
+  await window.savePart();
+  const put = window.fetch.mock.calls.filter(([, o]) => o && o.method === 'PUT');
+  expect(put).toHaveLength(1);
+  expect(partPosts()).toHaveLength(0);
+});
+
+test('Teil-Dialog: scheitert ein Stück, stoppt das Speichern und meldet den Stand', async () => {
+  await boot();
+  window.openPartModal(1);
+  document.getElementById('partQty').value = '3';
+  let posts = 0;
+  const ok = window.fetch.getMockImplementation();
+  window.fetch.mockImplementation((url, o) => {
+    if (o && o.method === 'POST' && ++posts === 2) return Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: 'kaputt' }) });
+    return ok(url, o);
+  });
+  await window.savePart();
+  expect(posts).toBe(2);
+  expect(document.getElementById('toast').textContent).toContain('1 von 3');
 });

@@ -75,6 +75,8 @@ Teile erben den Bereich zur Laufzeit von ihrem Lot; ihre eigene Spalte wird igno
   Verkaufsblock, bei Lots Stückzahl, Verkaufspreis, Versand und eine Live-Vorschau.
 - **Teil-Dialog:** Versandfeld, vorbelegt aus dem Lot; Hinweis, wenn die Stückzahl
   überschritten wird.
+- **Menge im Teil-Dialog:** Kauft jemand mehrere Stück, zahlt das Paket den Versand nur
+  einmal. Es entsteht je Stück ein eigener Verkauf; der Versand wird centgenau verteilt.
 - **Lot-Zeile:** `1/7 verkauft · +8,57 €`, darunter `Bestellung −22,79 € · noch 2 Stück bis zur Gewinnzone`.
 - **Fehlerbehebungen:** Verkauf für 0 € zeigt den Verlust statt „—“ und bleibt beim Speichern
   0 statt `null`. `cashFlows` zählt vorbesessene Artikel nicht mehr als Einkauf.

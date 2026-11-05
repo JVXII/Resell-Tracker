@@ -1290,10 +1290,11 @@
     <div class="modal-header"><span class="modal-title" id="part-title">Teil verkauft</span><button class="modal-close" onclick="closePartModal()">✕</button></div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr">
       <div style="grid-column:span 2"><div class="field-label">Bezeichnung</div><input id="partName" class="form-input" placeholder="z.B. Taste W"></div>
-      <div><div class="field-label">Verkaufspreis €</div><input id="partSell" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00" oninput="updatePartHint()"></div>
-      <div><div class="field-label">Versand €</div><input id="partShip" type="number" step="0.01" min="0" class="form-input" placeholder="0,00" oninput="updatePartHint()"></div>
+      <div id="partQtyWrap"><div class="field-label">Menge</div><input id="partQty" type="number" step="1" min="1" class="form-input" value="1" oninput="updatePartHint()"></div>
+      <div><div class="field-label">Preis pro Stück €</div><input id="partSell" type="number" step="0.01" class="form-input" placeholder="z.B. 2.00" oninput="updatePartHint()"></div>
+      <div><div class="field-label" id="partShipLabel">Versand €</div><input id="partShip" type="number" step="0.01" min="0" class="form-input" placeholder="0,00" oninput="updatePartHint()"></div>
       <div><div class="field-label">Datum</div><input id="partDate" type="date" class="form-input"></div>
-      <div><div class="field-label">Verkaufsplattform (optional)</div>
+      <div id="partPlatformWrap"><div class="field-label">Verkaufsplattform (optional)</div>
         <select id="partPlatform" class="form-input"><option value="">—</option><option value="eBay">eBay</option><option value="Kleinanzeigen">Kleinanzeigen</option></select>
       </div>
       <div class="profit-hint" id="partHint" style="grid-column:span 2"></div>
@@ -1878,6 +1879,9 @@ function openPartModal(lotId, partId){
     document.getElementById('partEditExtra').style.display='none';
   }
   dEl.classList.toggle('has-value',!!dEl.value);
+  document.getElementById('partQty').value='1';
+  document.getElementById('partQtyWrap').style.display=partEditId?'none':'';
+  document.getElementById('partPlatformWrap').style.gridColumn=partEditId?'':'span 2';   // mit Menge bleibt sie sonst allein in der Zeile
   updatePartHint();
   openOverlay('part-modal');
   setTimeout(()=>nameEl.focus(),120);
@@ -1885,12 +1889,20 @@ function openPartModal(lotId, partId){
 function updatePartHint(){
   const el=document.getElementById('partHint'); const lot=items.find(i=>i.id===partLotId);
   const sell=parseFloat(document.getElementById('partSell').value);
-  if(!el||!lot||!Number.isFinite(sell)){ if(el){ el.className='profit-hint'; el.innerHTML=''; } return; }
-  const s=lotStats(lot), overflow=!partEditId && s.remaining===0;
-  const cost=overflow ? s.cost/(s.qty+1) : s.unitCost;
-  const profit=sell-(parseFloat(document.getElementById('partShip').value)||0)-cost;
+  const count=partCount();
+  document.getElementById('partShipLabel').textContent=count>1?'Versand gesamt €':'Versand €';
+  if(!el||!lot||!Number.isFinite(sell)||!count){ if(el){ el.className='profit-hint'; el.innerHTML=''; } return; }
+  const s=lotStats(lot), overflow=!partEditId && count>s.remaining;
+  const qty=overflow ? s.soldCount+count : s.qty;
+  const profit=(sell-s.cost/qty)*count-(parseFloat(document.getElementById('partShip').value)||0);
   el.className='profit-hint on '+(profit>=0?'pos':'neg');
-  el.innerHTML=`Gewinn <b>${euroSigned(profit)}</b>`+(overflow?` <span style="color:var(--faint);font-weight:600">— alle ${s.qty} Stück sind schon verkauft, die Kosten verteilen sich dann auf ${s.qty+1}</span>`:'');
+  el.innerHTML=`Gewinn <b>${euroSigned(profit)}</b>`+(count>1?` · <b>${euroSigned(profit/count)}</b> pro Stück`:'')+(overflow?` <span style="color:var(--faint);font-weight:600">— nur noch ${s.remaining} von ${s.qty} Stück offen, die Kosten verteilen sich dann auf ${qty}</span>`:'');
+}
+// Beim Bearbeiten ist es immer genau ein Stück; ungültige Eingabe ergibt 0
+function partCount(){
+  if(partEditId) return 1;
+  const raw=document.getElementById('partQty').value.trim(), count=parseInt(raw,10);
+  return count>=1 && String(count)===raw ? count : 0;
 }
 function closePartModal(){ closeOverlay('part-modal'); partLotId=null; partEditId=null; }
 function onPartOverlay(e){ if(e.target.id==='part-modal') closePartModal(); }
@@ -1898,15 +1910,26 @@ async function savePart(){
   const lot=items.find(i=>i.id===partLotId); if(!lot){ closePartModal(); return; }
   const sell=parseFloat(document.getElementById('partSell').value);
   if(isNaN(sell)){ toast('Bitte einen Verkaufspreis eingeben'); return; }
+  const count=partCount();
+  if(!count){ toast('Bitte eine gültige Menge eingeben'); return; }
   const date=document.getElementById('partDate').value || new Date().toISOString().slice(0,10);
   const data={ platform:lot.platform, title:document.getElementById('partName').value.trim()||'Teil',
     sell_platform:document.getElementById('partPlatform').value||null, order_nr:'', date, sold_date:date,
-    buy_price:0, sell_price:sell, shipping_cost:parseFloat(document.getElementById('partShip').value)||0, status:'Verkauft', parent_id:partLotId };
+    buy_price:0, sell_price:sell, status:'Verkauft', parent_id:partLotId };
   const method=partEditId?'PUT':'POST'; const url=partEditId?`/api/items/${partEditId}`:'/api/items';
-  const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  if(!res.ok){ const e=await res.json().catch(()=>({})); toast('Fehler: '+(e.errors?.join(', ')||e.error||'unbekannt')); return; }
+  // Jedes Stück bleibt ein eigener Verkauf, das Paket zahlt den Versand nur einmal
+  const shipping=Calc.splitShipping(parseFloat(document.getElementById('partShip').value)||0, count);
+  for(let k=0;k<count;k++){
+    const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,shipping_cost:shipping[k]})});
+    if(!res.ok){
+      const e=await res.json().catch(()=>({})); const detail=e.errors?.join(', ')||e.error||'unbekannt';
+      if(k>0) await loadItems();   // die schon gespeicherten Stücke sichtbar machen
+      toast(k>0?`Nur ${k} von ${count} Stück gespeichert: ${detail}`:'Fehler: '+detail);
+      return;
+    }
+  }
   expandedLots[partLotId]=true; const wasEdit=!!partEditId;
-  closePartModal(); await loadItems(); toast(wasEdit?'Gespeichert ✓':'Teil-Verkauf erfasst ✓');
+  closePartModal(); await loadItems(); toast(wasEdit?'Gespeichert ✓':(count>1?`${count} Teil-Verkäufe erfasst ✓`:'Teil-Verkauf erfasst ✓'));
 }
 function deletePartFromModal(){ if(!partEditId) return; const id=partEditId; if(!confirm('Teil-Verkauf löschen?')) return; closePartModal(); fetch(`/api/items/${id}`,{method:'DELETE'}).then(()=>loadItems()).then(()=>toast('Gelöscht')); }
 

@@ -49,6 +49,13 @@
   }
   function saleProfit(i, items) { return (i.sell_price || 0) - (i.shipping_cost || 0) - saleCost(i, items); }
 
+  // Ein Paket, mehrere Stueck: Versand centgenau verteilen, Restcents tragen die ersten
+  function splitShipping(total, count) {
+    const cents = Math.round((total || 0) * 100);
+    const base = Math.floor(cents / count);
+    return Array.from({ length: count }, (_, k) => (base + (k < cents % count ? 1 : 0)) / 100);
+  }
+
   function isSale(i) { return i.status === 'Verkauft' && !i.is_lot; }
   function sales(items, segment) { return items.filter((i) => isSale(i) && inSegment(i, items, segment)); }
 
@@ -80,7 +87,7 @@
     return t;
   }
 
-  const api = { effBuy, segmentOf, inSegment, lotStats, saleCost, saleProfit, sales, statusOf, totals };
+  const api = { effBuy, segmentOf, inSegment, lotStats, saleCost, saleProfit, splitShipping, sales, statusOf, totals };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Calc = api;
 })(this);

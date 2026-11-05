@@ -67,6 +67,15 @@ test('Einzelartikel: Versand mindert Gewinn, Verlust bei 0 €', () => {
   expect(Calc.saleProfit(loss, [loss])).toBe(-10);
 });
 
+describe('splitShipping', () => {
+  test('verteilt den Versand auf die Stücke, die Summe stimmt auf den Cent', () => {
+    expect(Calc.splitShipping(1.8, 3)).toEqual([0.6, 0.6, 0.6]);
+    expect(Calc.splitShipping(4.19, 3)).toEqual([1.4, 1.4, 1.39]);
+    expect(Calc.splitShipping(4.19, 1)).toEqual([4.19]);
+    expect(Calc.splitShipping(0, 2)).toEqual([0, 0]);
+  });
+});
+
 test('sales: Lot-Kopf zählt nie als Verkauf, auch nicht mit Status Verkauft', () => {
   const items = [lot({ status: 'Verkauft', sell_price: 99 }), part()];
   expect(Calc.sales(items).map((i) => i.id)).toEqual([100]);
