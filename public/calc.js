@@ -101,10 +101,13 @@
   function isSale(i) { return i.status === 'Verkauft' && !i.is_lot; }
   function sales(items, segment) { return items.filter((i) => isSale(i) && inSegment(i, items, segment)); }
 
-  // Ein Lot ohne Reststueck ist abgeschlossen, auch wenn der Kopf noch "Gekauft" sagt
+  // Ein Lot ohne Reststueck ist abgeschlossen. Wurde schon etwas verkauft, ist die
+  // Ware angekommen und der Rest liegt im Lager, auch wenn der Kopf noch "Gekauft" sagt.
   function statusOf(i, items) {
     if (!i.is_lot) return i.status;
-    return lotStats(i, items).remaining === 0 ? 'Verkauft' : (i.status === 'Verkauft' ? 'Lager' : i.status);
+    const s = lotStats(i, items);
+    if (s.remaining === 0) return 'Verkauft';
+    return s.soldCount > 0 || i.status === 'Verkauft' ? 'Lager' : i.status;
   }
 
   function totals(items, segment) {

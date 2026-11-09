@@ -38,7 +38,7 @@ Kapital  = Bargeld + Lagerwert
   mehrfach verteilt. Das deckt auch alte Lots ohne Stückzahl ab: Sie buchen ab dem
   ersten Verkauf ihre vollen Kosten.
 - Ein Lot-Kopf ist nie selbst ein Verkauf, auch nicht mit Status „Verkauft“.
-- Ein Lot ohne Reststück gilt in Listen und Filtern als „Verkauft“.
+- Ein Lot ohne Reststück gilt in Listen und Filtern als „Verkauft“, ein angefangenes Lot mit Rest als „Lager“.
 - Umsatz bleibt der volle `sell_price`.
 - Prüfsumme, die immer gelten muss: Bargeld + Lagerwert = Start + Gesamtprofit − Ausgaben.
 

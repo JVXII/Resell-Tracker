@@ -89,7 +89,9 @@ test('segmentOf: Teile erben den Bereich ihres Lots, Standard ist Reselling', ()
 
 test('statusOf: ausverkauftes Lot gilt als Verkauft', () => {
   const open = [lot(), part()];
-  expect(Calc.statusOf(open[0], open)).toBe('Gekauft');
+  expect(Calc.statusOf(open[0], open)).toBe('Lager');
+  const fresh = [lot()];
+  expect(Calc.statusOf(fresh[0], fresh)).toBe('Gekauft');
   const done = [lot(), ...parts(7)];
   expect(Calc.statusOf(done[0], done)).toBe('Verkauft');
   const a = { id: 2, status: 'Lager' };

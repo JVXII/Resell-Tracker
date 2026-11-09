@@ -102,6 +102,10 @@ test('ein ausverkauftes Lot zählt nicht mehr als Lagerbestand', async () => {
   window.setFilter('Verkauft');
   expect(text('tableBody')).toContain('Weiß');
   expect(text('tableBody')).not.toContain('Monster Plushi');
+  window.setFilter('Lager');
+  expect(text('tableBody')).toContain('Monster Plushi');
+  window.setFilter('Gekauft');
+  expect(text('tableBody')).not.toContain('Monster Plushi');
 });
 
 test('ein Verkauf für 0 € zeigt den Verlust und bleibt beim Speichern 0', async () => {
