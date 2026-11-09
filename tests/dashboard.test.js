@@ -268,3 +268,29 @@ describe('Flammen', () => {
     expect(document.querySelector('.heat-panel')).toBeNull();
   });
 });
+
+describe('Lot-Status und Lagerliste', () => {
+  test('die Lot-Zeile nennt den Status', async () => {
+    await boot();
+    const row = [...document.querySelectorAll('#tableBody .lot-row')].find((r) => r.textContent.includes('Monster Plushi'));
+    const badge = row.querySelector('.col-profit .badge');
+    expect(badge.textContent).toBe('Lager · 1/7');
+    expect(badge.className).toContain('status-Lager');
+  });
+
+  test('das Formular zeigt beim angefangenen Lot Lager', async () => {
+    await boot();
+    window.editItem(1);
+    expect(document.getElementById('status').value).toBe('Lager');
+  });
+
+  test('Im Lager zeigt bei Lots den Einkaufswert der Reststücke', async () => {
+    await boot();
+    const row = [...document.querySelectorAll('#stockList .ov-row')].find((r) => r.textContent.includes('Monster Plushi'));
+    const text = row.textContent.replace(/\s+/g, ' ');
+    // 6 von 7 Stück à 5,2271 €, nicht der erhoffte Erlös von 82,80 €
+    expect(text).toContain('31,36');
+    expect(text).toContain('6 Stück übrig');
+    expect(text).not.toContain('82,80');
+  });
+});

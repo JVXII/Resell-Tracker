@@ -1875,7 +1875,7 @@ function editItem(id){
   const item=items.find(i=>i.id===id); if(!item) return;
   platformEl.value=item.platform; titleEl.value=item.title||''; sellPlatformEl.value=item.sell_platform||''; orderEl.value=item.order_nr;
   dateEl.value=item.date; dateEl.classList.toggle('has-value',!!item.date); buyPriceEl.value=item.buy_price;
-  statusEl.value=item.status; sellPriceEl.value=item.sell_price??'';
+  statusEl.value=statusOf(item); sellPriceEl.value=item.sell_price??'';
   segmentEl.value=item.segment||'reselling'; shippingCostEl.value=item.shipping_cost||''; lotQtyEl.value=item.lot_qty??''; partShippingEl.value=item.part_shipping??'';
   imageUrlEl.value=item.image && !item.image.startsWith('data:') ? item.image : '';
   setPickedImage(item.image||null);
@@ -2023,7 +2023,7 @@ function renderLotRow(lot){
       </div>
       <div class="col-num col-ek muted">${cost.toFixed(2)}€</div>
       <div class="col-num col-vk">${revenue?revenue.toFixed(2)+'€':'—'}</div>
-      <div class="col-profit"><div class="amount ${profitClass}">${euroSigned(profit)}</div><span class="badge status-Lager">${soldCount}/${qty} Stück</span></div>
+      <div class="col-profit"><div class="amount ${profitClass}">${euroSigned(profit)}</div><span class="badge status-${statusOf(lot)}">${statusOf(lot)} · ${soldCount}/${qty}</span></div>
       <div class="row-chev ${expanded?'open':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
     </div>${heatHtml}${partsHtml}`;
 }
@@ -2313,10 +2313,10 @@ function renderStockList(){
     const days=daysSince(i.date);
     const inner=i.image?`<img src="${i.image}">`:itemInitial(i);
     const cost=stockCost(i);
-    // Erwarteter Erloes: bei Lots die Reststuecke zum hinterlegten Stueckerloes, sonst
-    // der hinterlegte Verkaufspreis - fehlt beides, bleibt es bei der Kostenbasis.
+    // Lots zeigen wie Einzelartikel, was die Ware im Lager gekostet hat; die Zeilen
+    // ergeben so zusammen den Lagerwert. Sonst zaehlt ein hinterlegter Verkaufspreis.
     const lot=i.is_lot?lotStats(i):null;
-    const expected=lot ? ((lot.unitNet*lot.remaining) || cost) : (i.sell_price || cost);
+    const expected=lot ? cost : (i.sell_price || cost);
     const delta=expected-cost;
     const sub=[fmtPlatform(i.platform)];
     if(days!=null) sub.push('seit '+days+' Tagen');
@@ -2330,7 +2330,7 @@ function renderStockList(){
       ${sparkline(cost, expected, i.id)}
       <div class="ov-row-num">
         <div class="ov-row-val">${euroDE(expected)}</div>
-        <div class="ov-row-delta ${delta>=0?'pos':'neg'}">${delta===0?i.status:euroSigned(delta)}</div>
+        <div class="ov-row-delta ${delta>=0?'pos':'neg'}">${lot?lot.remaining+' Stück übrig':(delta===0?i.status:euroSigned(delta))}</div>
       </div>
     </div>`;
   }).join('');
