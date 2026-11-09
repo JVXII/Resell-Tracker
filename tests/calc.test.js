@@ -143,3 +143,70 @@ test('Live-Daten: 520,61 € werden zu 450,40 €', () => {
   ];
   expect(Calc.totals(items).profit).toBeCloseTo(450.40, 2);
 });
+
+describe('lotHeat', () => {
+  const TODAY = '2026-11-09';
+  const sale = (id, parent_id, sold_date, sell_price, shipping_cost = 0) => ({ id, parent_id, status: 'Verkauft', buy_price: 0, sell_price, shipping_cost, sold_date, date: sold_date });
+  const heatOf = (lot, parts, today = TODAY) => Calc.lotHeat(lot, [lot, ...parts], today);
+
+  const plushi = { id: 61, is_lot: 1, status: 'Gekauft', buy_price: 36.59, lot_qty: 7, segment: 'handel', date: '2026-11-04' };
+  const plushiSales = [sale(1, 61, '2026-11-05', 17.99, 4.19), sale(2, 61, '2026-11-05', 17.99, 4.19), sale(3, 61, '2026-11-09', 17.99, 4.19)];
+
+  const totem = { id: 39, is_lot: 1, status: 'Gekauft', buy_price: 52.57, lot_qty: 19, segment: 'handel', date: '2026-09-24' };
+  const totemSales = ['2026-10-19', '2026-10-19', '2026-10-19', '2026-10-19', '2026-10-22', '2026-10-22', '2026-10-25', '2026-10-25', '2026-10-25'].map((d, k) => sale(10 + k, 39, d, 7.8));
+
+  const white = { id: 38, is_lot: 1, status: 'Gekauft', buy_price: 35.31, lot_qty: 5, segment: 'handel', date: '2026-09-24' };
+  const whiteSales = ['2026-10-06', '2026-10-07', '2026-10-19', '2026-10-22', '2026-10-22'].map((d, k) => sale(30 + k, 38, d, 13.8));
+
+  test('Monster Plushi läuft heiß', () => {
+    const h = heatOf(plushi, plushiSales);
+    expect(h).toMatchObject({ rated: true, flames: 3, label: 'Läuft heiß', risk: 'Niedrig', daysSinceLast: 0 });
+    expect(h.perWeek).toBeCloseTo(5.25, 2);
+    expect(h.margin).toBeCloseTo(0.621, 2);
+  });
+
+  test('Totem verliert nach 15 Tagen ohne Verkauf eine Flamme', () => {
+    const h = heatOf(totem, totemSales);
+    expect(h).toMatchObject({ flames: 2, label: 'Abgekühlt', risk: 'Niedrig', daysSinceLast: 15 });
+    expect(h.perWeek).toBeCloseTo(3, 2);
+  });
+
+  test('ausverkauftes Lot kühlt nicht ab und rechnet nur bis zum letzten Verkauf', () => {
+    const h = heatOf(white, whiteSales);
+    expect(h).toMatchObject({ flames: 2, label: 'Ausverkauft', risk: 'Keins mehr' });
+    expect(h.perWeek).toBeCloseTo(2.19, 2);
+  });
+
+  test('nach 30 Tagen ohne Verkauf ist das Lot eingeschlafen', () => {
+    expect(heatOf(plushi, plushiSales, '2026-12-09')).toMatchObject({ flames: 0, label: 'Eingeschlafen' });
+  });
+
+  test('unter 2 Verkäufen gibt es keine Flammen', () => {
+    expect(heatOf(plushi, [])).toMatchObject({ rated: false, flames: null, label: 'Neu' });
+    expect(heatOf(plushi, plushiSales.slice(0, 1))).toMatchObject({ rated: false, label: 'Neu' });
+    const single = { ...plushi, lot_qty: 1 };
+    expect(heatOf(single, plushiSales.slice(0, 1))).toMatchObject({ rated: false, label: 'Ausverkauft' });
+  });
+
+  test('Risikostufen nach zurückverdientem Einkauf', () => {
+    const lot = { ...plushi, buy_price: 100, lot_qty: 10 };
+    const two = [sale(1, 61, '2026-11-08', 20), sale(2, 61, '2026-11-09', 20)];
+    expect(heatOf(lot, two).risk).toBe('Hoch');
+    const three = [...two, sale(3, 61, '2026-11-09', 20)];
+    expect(heatOf(lot, three).risk).toBe('Mittel');
+    expect(heatOf({ ...lot, lot_qty: 2 }, two).risk).toBe('Verlust');
+  });
+
+  test('vorbesessen gilt als zurückverdient, Verlustmarge gibt keine Punkte', () => {
+    expect(heatOf({ ...plushi, owned: 1 }, plushiSales).risk).toBe('Niedrig');
+    const lot = { ...plushi, buy_price: 700, lot_qty: 7 };
+    const h = heatOf(lot, plushiSales);
+    expect(h.marginScore).toBe(0);
+    expect(h.flames).toBe(1);
+  });
+
+  test('Verkäufe am selben Tag teilen nicht durch null', () => {
+    const h = heatOf(plushi, plushiSales.slice(0, 2), '2026-11-05');
+    expect(h.perWeek).toBeCloseTo(14, 2);
+  });
+});

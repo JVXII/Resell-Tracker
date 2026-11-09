@@ -41,6 +41,48 @@
       realized: net - unitCost * soldCount, stockValue: unitCost * remaining };
   }
 
+  // Grenzwerte der Flammen-Bewertung
+  const HEAT = { tempoPoints: 40, marginPoints: 30, riskPoints: 30, fullPerWeek: 3, fullMargin: 0.6,
+    tiers: [[90, 3], [65, 2], [40, 1]], labels: ['Schwach', 'Läuft ruhig', 'Läuft gut', 'Läuft heiß'], coolDays: 14, sleepDays: 30, minSales: 2 };
+
+  function dayDiff(from, to) { return Math.round((Date.parse(to) - Date.parse(from)) / 864e5); }
+  function share(value, full) { return Math.max(0, Math.min(1, value / full)); }
+
+  function lotRisk(recovered, soldOut) {
+    if (soldOut) return recovered >= 1 ? 'Keins mehr' : 'Verlust';
+    if (recovered >= 1) return 'Niedrig';
+    return recovered >= 0.5 ? 'Mittel' : 'Hoch';
+  }
+
+  // Wie gut ein Lot laeuft: Tempo, Marge und zurueckverdienter Einkauf ergeben die Flammen
+  function lotHeat(lot, items, today) {
+    const s = lotStats(lot, items);
+    const soldOut = s.remaining === 0;
+    if (s.soldCount < HEAT.minSales) return { rated: false, flames: null, label: soldOut ? 'Ausverkauft' : 'Neu' };
+
+    const dates = s.sold.map((p) => (p.sold_date || p.date).slice(0, 10)).sort();
+    const last = dates[dates.length - 1];
+    // Ab dem ersten Verkauf, damit die Lieferzeit nicht als langsamer Absatz zaehlt
+    const perWeek = s.soldCount / Math.max(1, dayDiff(dates[0], soldOut ? last : today)) * 7;
+    const margin = s.net > 0 ? s.realized / s.net : 0;
+    const recovered = s.cost > 0 ? s.net / s.cost : 1;
+    const tempoScore = share(perWeek, HEAT.fullPerWeek);
+    const marginScore = share(margin, HEAT.fullMargin);
+    const riskScore = share(recovered, 1);
+    const score = tempoScore * HEAT.tempoPoints + marginScore * HEAT.marginPoints + riskScore * HEAT.riskPoints;
+    const tier = HEAT.tiers.find(([min]) => score >= min);
+    let flames = tier ? tier[1] : 0;
+    let label = HEAT.labels[flames];
+
+    const daysSinceLast = dayDiff(last, today);
+    if (soldOut) label = 'Ausverkauft';
+    else if (daysSinceLast >= HEAT.sleepDays) { flames = 0; label = 'Eingeschlafen'; }
+    else if (daysSinceLast >= HEAT.coolDays) { flames = Math.max(0, flames - 1); label = 'Abgekühlt'; }
+
+    return { rated: true, flames, label, score, perWeek, margin, recovered, tempoScore, marginScore, riskScore,
+      risk: lotRisk(recovered, soldOut), daysSinceLast };
+  }
+
   // Was ein Verkauf das Business gekostet hat
   function saleCost(i, items) {
     const lot = parentOf(i, items);
@@ -87,7 +129,7 @@
     return t;
   }
 
-  const api = { effBuy, segmentOf, inSegment, lotStats, saleCost, saleProfit, splitShipping, sales, statusOf, totals };
+  const api = { effBuy, segmentOf, inSegment, lotStats, lotHeat, saleCost, saleProfit, splitShipping, sales, statusOf, totals };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Calc = api;
 })(this);

@@ -389,6 +389,13 @@
   .scope-bar{max-width:340px;margin:0 0 18px;}
   .scope-bar button.active{background:var(--text);color:#000;}
   .lot-progress{font-size:12.5px;color:var(--faint);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .heat{color:var(--text);font-weight:700;}
+  .heat-panel{display:grid;gap:8px;max-width:620px;padding:6px 18px 12px 18px;}
+  .heat-metric{display:grid;grid-template-columns:56px 1fr 170px;align-items:center;gap:12px;font-size:12.5px;font-weight:600;color:var(--dim);}
+  .heat-metric b{color:var(--text);font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
+  .heat-bar{height:5px;border-radius:3px;background:var(--surface);overflow:hidden;}
+  .heat-bar i{display:block;height:100%;border-radius:3px;background:var(--text);}
+  .heat-note{font-size:12px;font-weight:600;color:var(--faint);}
   .seg-status button.active{background:var(--text);color:#000;}
   .seg-source{display:none!important;}
 
@@ -1512,6 +1519,25 @@ function lotOrderLine(s){
   if(s.toBreakEven>s.remaining) return line+' · mit dem Rest nicht erreichbar';
   return line+` · noch ${s.toBreakEven} Stück bis zur Gewinnzone`;
 }
+/* Flammen gibt es nur im Handel: Dort zählt, wie schnell Ware auf Vorrat weggeht. */
+const lotHeat=lot=>lot.segment==='handel'?Calc.lotHeat(lot,items,todayStr()):null;
+const deOne=v=>v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+function heatTag(h){
+  if(!h) return '';
+  const icon=h.rated?(h.flames?'🔥'.repeat(h.flames):'❄️')+' ':'';
+  return `<span class="heat">${icon}${h.label}</span> · `;
+}
+function heatFacts(h){ return `${deOne(h.perWeek)}/Woche · Marge ${Math.round(h.margin*100)} % · Risiko ${h.risk}`; }
+function renderHeatPanel(h){
+  const metric=(name,fill,value)=>`<div class="heat-metric"><span>${name}</span><div class="heat-bar"><i style="width:${Math.round(fill*100)}%"></i></div><b>${value}</b></div>`;
+  const last=h.daysSinceLast===0?'heute':(h.daysSinceLast===1?'gestern':`vor ${h.daysSinceLast} Tagen`);
+  return `<div class="heat-panel">
+    ${metric('Tempo',h.tempoScore,`${deOne(h.perWeek)} Stück/Woche`)}
+    ${metric('Marge',h.marginScore,`${Math.round(h.margin*100)} %`)}
+    ${metric('Risiko',h.riskScore,`${h.risk} · ${Math.round(h.recovered*100)} % zurück`)}
+    <div class="heat-note">Letzter Verkauf ${last}</div>
+  </div>`;
+}
 let expandedLots={};
 function toggleLot(id){ expandedLots[id]=!expandedLots[id]; renderItems(); }
 
@@ -1986,18 +2012,20 @@ function renderLotRow(lot){
   const thumbInner=lot.image?`<img src="${lot.image}">`:initial;
   const ownedTag=lot.owned?`<span class="tag-owned" title="Schon vorher besessen – Einkauf zählt nicht aufs Kapital">vorbesessen</span>`:'';
   const partsHtml=(expanded && parts.length)?parts.map(renderPartRow).join(''):'';
+  const heat=lotHeat(lot);
+  const heatHtml=(expanded && heat && heat.rated)?renderHeatPanel(heat):'';
   return `<div class="item-row grid-row lot-row" onclick="toggleLot(${lot.id})">
       <div class="thumb ${thumbClass(lot.platform)}">${thumbInner}</div>
       <div class="item-main">
         <div class="item-title">${itemLabel(lot)}<span class="tag-lot">LOT</span>${ownedTag}</div>
         <div class="item-sub">${soldCount}/${qty} verkauft · Einkauf ${cost.toFixed(2)}€ <button class="lot-add" onclick="event.stopPropagation();openPartModal(${lot.id})">+ Teil verkauft</button><button class="lot-edit" onclick="event.stopPropagation();editItem(${lot.id})">bearbeiten</button></div>
-        <div class="lot-progress">${lotOrderLine(stats)}</div>
+        <div class="lot-progress">${heatTag(heat)}${lotOrderLine(stats)}</div>
       </div>
       <div class="col-num col-ek muted">${cost.toFixed(2)}€</div>
       <div class="col-num col-vk">${revenue?revenue.toFixed(2)+'€':'—'}</div>
       <div class="col-profit"><div class="amount ${profitClass}">${euroSigned(profit)}</div><span class="badge status-Lager">${soldCount}/${qty} Stück</span></div>
       <div class="row-chev ${expanded?'open':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
-    </div>${partsHtml}`;
+    </div>${heatHtml}${partsHtml}`;
 }
 
 function renderItems(){
@@ -2075,9 +2103,10 @@ function mobileRow(item){
     const stats=lotStats(item);
     const {soldCount,qty,realized:profit}=stats;
     const lc=profit>=0?'pos':'neg';
+    const heat=lotHeat(item);
     return `<div class="mv-row" onclick="editItem(${item.id})">
       <div class="mv-thumb ${thumbClass(item.platform)}">${inner}</div>
-      <div class="mv-main"><div class="mv-title">${itemLabel(item)}<span class="tag-lot">LOT</span></div><div class="mv-sub">${soldCount}/${qty} verkauft · <button class="lot-add" onclick="event.stopPropagation();openPartModal(${item.id})">+ Teil verkauft</button></div><div class="lot-progress">${lotOrderLine(stats)}</div></div>
+      <div class="mv-main"><div class="mv-title">${itemLabel(item)}<span class="tag-lot">LOT</span></div><div class="mv-sub">${soldCount}/${qty} verkauft · <button class="lot-add" onclick="event.stopPropagation();openPartModal(${item.id})">+ Teil verkauft</button></div><div class="lot-progress">${heatTag(heat)}${lotOrderLine(stats)}</div>${heat&&heat.rated?`<div class="lot-progress">${heatFacts(heat)}</div>`:''}</div>
       <div class="mv-right"><div class="mv-amt ${lc}">${euroSigned(profit)}</div><span class="badge status-Lager">Lot</span></div>
       <div class="mv-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
     </div>`;

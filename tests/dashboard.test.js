@@ -217,3 +217,50 @@ test('Teil-Dialog: scheitert ein Stück, stoppt das Speichern und meldet den Sta
   expect(posts).toBe(2);
   expect(document.getElementById('toast').textContent).toContain('1 von 3');
 });
+
+describe('Flammen', () => {
+  const lotDay = (offset) => new Date(Date.now() - offset * 864e5).toISOString().slice(0, 10);
+  const hotLot = { id: 20, title: 'Heiß', platform: 'eBay', order_nr: '', date: lotDay(10), buy_price: 10, status: 'Gekauft', is_lot: 1, owned: 0, segment: 'handel', lot_qty: 9, part_price: 10 };
+  const sold = (id, parent_id, day) => ({ ...part(id, parent_id, 10), date: lotDay(day), sold_date: lotDay(day) });
+  const resellLot = { ...hotLot, id: 30, title: 'Reselllot', segment: 'reselling' };
+  let original;
+
+  beforeEach(() => { original = responses['/api/items']; responses['/api/items'] = [hotLot, sold(21, 20, 3), sold(22, 20, 1), sold(23, 20, 0), resellLot, sold(31, 30, 1), sold(32, 30, 0)]; });
+  afterEach(() => { responses['/api/items'] = original; });
+
+  test('Handel-Lots zeigen Flammen, Reselling-Lots nicht', async () => {
+    await boot();
+    const rows = [...document.querySelectorAll('#tableBody .lot-row')].map((r) => r.textContent);
+    expect(rows.find((r) => r.includes('Heiß'))).toContain('🔥🔥🔥 Läuft heiß');
+    expect(rows.find((r) => r.includes('Reselllot'))).not.toContain('🔥');
+  });
+
+  test('aufgeklappt stehen Tempo, Marge und Risiko mit Zahlen da', async () => {
+    await boot();
+    expect(document.querySelector('.heat-panel')).toBeNull();
+    window.toggleLot(20);
+    const panel = document.querySelector('.heat-panel').textContent.replace(/\s+/g, ' ');
+    expect(panel).toContain('Tempo');
+    expect(panel).toContain('Stück/Woche');
+    expect(panel).toContain('Marge');
+    expect(panel).toContain('Risiko');
+    expect(panel).toContain('Niedrig');
+    expect(document.querySelectorAll('.heat-bar i')).toHaveLength(3);
+  });
+
+  test('das Handy zeigt die Zahlen in einer Zeile', async () => {
+    await boot();
+    const row = [...document.querySelectorAll('#mGroups .mv-row')].find((r) => r.textContent.includes('Heiß')).textContent;
+    expect(row).toContain('🔥🔥🔥');
+    expect(row).toContain('/Woche');
+    expect(row).toContain('Risiko Niedrig');
+  });
+
+  test('ein Lot mit zu wenig Verkäufen zeigt Neu', async () => {
+    responses['/api/items'] = [hotLot];
+    await boot();
+    expect(document.querySelector('#tableBody .lot-row').textContent).toContain('Neu');
+    window.toggleLot(20);
+    expect(document.querySelector('.heat-panel')).toBeNull();
+  });
+});
