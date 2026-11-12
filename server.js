@@ -20,6 +20,9 @@ const app = express();
 // `secure` session cookies are set even though the Node<->Caddy hop is plain HTTP.
 app.set('trust proxy', 1);
 
+// Old/alternate domains → OAuth host, otherwise login fails with "Invalid OAuth state".
+app.use(require('./middleware/canonical-host').canonicalHost(process.env.DISCORD_REDIRECT_URI));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
